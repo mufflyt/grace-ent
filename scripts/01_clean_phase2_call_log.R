@@ -26,8 +26,7 @@ dir.create(OUT_DIR, showWarnings = FALSE, recursive = TRUE)
 # 1. Load raw data
 # -----------------------------------------------------------------------------
 message("Loading raw Phase 2 call log ...")
-raw <- read_excel(RAW_XLSX, sheet = "all data export 7-6",
-                  col_types = "text")   # read all as text; parse below
+raw <- read_excel(RAW_XLSX, sheet = "all data export 7-6")
 message(sprintf("  Loaded %d rows x %d columns.", nrow(raw), ncol(raw)))
 
 # -----------------------------------------------------------------------------
@@ -96,31 +95,43 @@ message("Parsing column types ...")
 
 phase2 <- phase2 |>
   mutate(
-    record_id  = as.integer(record_id),
-    npi        = as.character(npi),
-    ruca_code  = as.numeric(ruca_code),
-    call_date  = as_date(call_date),
-    appointment_date = as_date(appointment_date),
-    zip        = stringr::str_pad(zip, width = 5, side = "left", pad = "0")
+    record_id        = as.integer(record_id),
+    npi              = as.character(npi),
+    ruca_code        = as.numeric(ruca_code),
+    call_date        = as_date(call_date),        # POSIXct -> Date
+    appointment_date = as_date(appointment_date), # POSIXct -> Date
+    zip              = stringr::str_pad(as.character(zip), width = 5, side = "left", pad = "0")
   )
 
 # -----------------------------------------------------------------------------
 # 4. Validate NPIs
 # -----------------------------------------------------------------------------
 message("Validating NPIs ...")
-phase2 <- mysterycall_validate_npi(phase2)
+npi_validated <- mysterycall_validate_npi(phase2)
 
-n_invalid_npi <- sum(!phase2$npi_valid, na.rm = TRUE)
+# mysterycall_validate_npi() drops rows with blank/NA NPIs and adds npi_is_valid
+# join result back so we keep all 960 rows
+phase2 <- phase2 |>
+  left_join(
+    npi_validated |> select(npi, npi_is_valid) |> distinct(npi, .keep_all = TRUE),
+    by = "npi"
+  )
+
+n_invalid_npi <- sum(!phase2$npi_is_valid, na.rm = TRUE)
 if (n_invalid_npi > 0) {
   message(sprintf("  WARNING: %d record(s) have invalid NPIs.", n_invalid_npi))
+} else {
+  message("  All NPIs passed validation.")
 }
 
 # -----------------------------------------------------------------------------
 # 5. Validate and normalise phone numbers
 # -----------------------------------------------------------------------------
 message("Validating phone numbers ...")
-phase2 <- phase2 |>
-  mutate(phone_clean = mysterycall_validate_phone(phone))
+phone_result <- mysterycall_validate_phone(phase2$phone)
+phase2 <- bind_cols(phase2, phone_result)
+message(sprintf("  Valid phones: %d / %d",
+                sum(phase2$phone_e164_valid, na.rm = TRUE), nrow(phase2)))
 
 # -----------------------------------------------------------------------------
 # 6. Classify RUCA codes → Urban / Suburban / Rural
@@ -238,7 +249,8 @@ phase2 <- phase2 |>
 # -----------------------------------------------------------------------------
 message("Checking for duplicate records ...")
 dup_check <- mysterycall_check_duplicates(phase2, id_col = "npi", max_calls = 1L)
-message(sprintf("  Duplicate NPI records: %d", sum(dup_check$is_duplicate, na.rm = TRUE)))
+# returns rows where n_calls > max_calls
+message(sprintf("  NPIs appearing more than once: %d", nrow(dup_check)))
 
 # -----------------------------------------------------------------------------
 # 11. Data completeness quality check
@@ -249,16 +261,14 @@ key_cols <- c("npi", "state", "ruca_code", "ent_type",
               "call_date", "office_answered", "taking_new_patients",
               "appointment_with_physician", "complete")
 
-completeness <- mysterycall_check_data_completeness(
-  phase2,
-  required = key_cols,
-  id_cols  = "record_id"
+completeness_tbl <- tibble::tibble(
+  column       = key_cols,
+  n_complete   = sapply(key_cols, \(col) sum(!is.na(phase2[[col]]))),
+  pct_complete = sapply(key_cols, \(col) mean(!is.na(phase2[[col]]))) * 100
 )
-
-message(sprintf("  Overall data quality: %s (score = %.1f%%)",
-                completeness$quality,
-                completeness$score * 100))
-print(completeness$summary)
+overall_pct <- mean(completeness_tbl$pct_complete)
+message(sprintf("  Overall completeness: %.1f%%", overall_pct))
+print(completeness_tbl)
 
 # -----------------------------------------------------------------------------
 # 12. Restrict to complete records for analysis dataset
@@ -280,8 +290,13 @@ timestamp  <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
 path_all   <- file.path(OUT_DIR, paste0("ent_phase2_all_",      timestamp, ".csv"))
 path_clean <- file.path(OUT_DIR, paste0("ent_phase2_complete_", timestamp, ".csv"))
 
-readr::write_csv(phase2,          path_all)
-readr::write_csv(phase2_complete, path_clean)
+# Flatten any list columns created by validation helpers before writing
+flatten_lists <- function(df) {
+  df |> mutate(across(where(is.list), \(col) sapply(col, \(x) paste(unlist(x), collapse = "|"))))
+}
+
+readr::write_csv(flatten_lists(phase2),          path_all)
+readr::write_csv(flatten_lists(phase2_complete), path_clean)
 
 message(sprintf("Saved all records (%d rows) to:      %s", nrow(phase2),          path_all))
 message(sprintf("Saved complete records (%d rows) to: %s", nrow(phase2_complete), path_clean))
