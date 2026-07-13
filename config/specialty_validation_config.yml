@@ -1,0 +1,793 @@
+---
+# ===============================================================================
+# SPECIALTY VALIDATION CONFIGURATION - SPECIALTY-AGNOSTIC
+# ===============================================================================
+#
+# Purpose: Configure physician specialty validation for any medical specialty
+# Validates: Claimed specialty matches actual practice patterns (billing, board certification)
+# Last updated: 2025-10-13
+#
+# HOW THIS WORKS:
+# 1. Load ground truth from board certification (ABOG for OB/GYN, ABO for ENT, etc.)
+# 2. Load Medicare billing patterns (HCPCS procedure codes)
+# 3. Calculate concordance: Does claimed subspecialty match billing?
+# 4. Generate validation report with precision/recall metrics
+#
+# TO SWITCH SPECIALTIES: Change active_specialty below (obgyn -> ent -> ortho)
+# Zero code changes needed - all validation parameters in this config!
+#
+# ===============================================================================
+
+# Currently active specialty for validation
+active_specialty: "obgyn"  # Options: "obgyn", "ent", "ortho", "cardio", etc.
+
+# ===============================================================================
+# OB/GYN VALIDATION PROFILE
+# ===============================================================================
+obgyn:
+  name: "Obstetrics & Gynecology Subspecialty Validation"
+  description: "Validate ABOG subspecialty classifications against Medicare billing patterns"
+
+  # Ground truth: Board certification data (GOLD STANDARD)
+  ground_truth:
+    source: "ABOG"
+    full_name: "American Board of Obstetrics and Gynecology"
+    file: "data/0-Download/output/abog_provider_dataframe_8_17_2025_1948_only_workforce_directory1.csv"
+    subspecialty_field: "subspecialty_name"  # Column name in ABOG file
+    npi_field: "npi"
+
+    # Subspecialty name mappings (ABOG uses different names than we do)
+    subspecialty_mappings:
+      GEN_OBGYN:
+        - "General OB/GYN"
+        - "General Obstetrics"
+        - "General Gynecology"
+        - "OB/GYN"
+      FPMRS:
+        - "FPMRS"
+        - "Female Pelvic Medicine"
+        - "Urogynecology"
+      GO:
+        - "GO"
+        - "Gynecologic Oncology"
+        - "General"
+      MFM:
+        - "MFM"
+        - "Maternal-Fetal Medicine"
+        - "Maternal"
+      REI:
+        - "REI"
+        - "Reproductive Endocrinology"
+        - "Reproductive"
+      MIGS:
+        - "MIGS"
+        - "MIG"
+        - "Minimally Invasive"
+        - "MIS"
+      PAG:
+        - "PAG"
+        - "Pediatric and Adolescent"
+        - "Pediatric"
+
+  # Target subspecialties for validation
+  subspecialties:
+    - GEN_OBGYN  # General Obstetrics & Gynecology
+    - FPMRS      # Female Pelvic Medicine and Reconstructive Surgery
+    - GO         # Gynecologic Oncology
+    - MFM        # Maternal-Fetal Medicine
+    - REI        # Reproductive Endocrinology and Infertility
+    - MIGS       # Minimally Invasive Gynecologic Surgery
+    - PAG        # Pediatric and Adolescent Gynecology
+
+  # NPPES taxonomy codes for this specialty
+  taxonomy_codes:
+    primary: "207V00000X"   # Obstetrics & Gynecology (general)
+    subspecialty:
+      GO: "207VG0400X"      # Gynecologic Oncology
+      MFM: "207VM0101X"     # Maternal & Fetal Medicine
+      REI: "207VX0201X"     # Reproductive Endocrinology
+      # Note: FPMRS, MIG, PAG don't have unique taxonomy codes
+
+  # Medicare billing patterns: HCPCS procedure codes by subspecialty
+  # Source: Clinical knowledge + Medicare billing data analysis
+  procedure_codes:
+    GEN_OBGYN:
+      # Preventive care and screening
+      - "88142"  # Cytopathology, cervical or vaginal (Pap smear)
+      - "88143"  # Cytopathology, cervical or vaginal, with manual screening
+      - "88147"  # Cytopathology smears, cervical or vaginal; screening by automated system
+      - "88175"  # Cytopathology, cervical or vaginal (including evaluation of atypical cells)
+      - "99384"  # Initial comprehensive preventive medicine (adolescent)
+      - "99385"  # Initial comprehensive preventive medicine (18-39 years)
+      - "99386"  # Initial comprehensive preventive medicine (40-64 years)
+      - "99387"  # Initial comprehensive preventive medicine (65+ years)
+      # Routine office visits
+      - "99213"  # Office visit, established patient
+      - "99214"  # Office visit, established patient, moderate complexity
+      - "99215"  # Office visit, established patient, high complexity
+      # Common procedures
+      - "57452"  # Colposcopy of cervix including upper/adjacent vagina
+      - "57454"  # Colposcopy of cervix with biopsy
+      - "57455"  # Colposcopy of cervix with endocervical curettage
+      - "58300"  # Insertion of intrauterine device (IUD)
+      - "58301"  # Removal of intrauterine device (IUD)
+      - "76830"  # Ultrasound, transvaginal
+      - "76856"  # Ultrasound, pelvic (non-obstetric)
+      # Obstetric care
+      - "59400"  # Routine obstetric care including delivery
+      - "59409"  # Vaginal delivery only
+      - "59410"  # Vaginal delivery including postpartum care
+      - "59510"  # Routine obstetric care including cesarean delivery
+      - "59610"  # VBAC (vaginal birth after cesarean)
+      - "59618"  # VBAC including postpartum care
+      # Common gynecologic procedures
+      - "58150"  # Total abdominal hysterectomy
+      - "58552"  # Hysteroscopy, surgical; with removal of intrauterine foreign body
+      - "58558"  # Hysteroscopy, surgical; with biopsy
+      - "58563"  # Hysteroscopy, surgical; with endometrial ablation
+
+    FPMRS:
+      # Urodynamic testing (DIAGNOSTIC - specific to urogynecology)
+      - "51725"  # Simple cystometrogram
+      - "51726"  # Complex cystometrogram
+      - "51727"  # Complex cystometrogram with voiding pressure studies
+      - "51728"  # Complex cystometrogram with voiding pressure studies and uroflowmetry
+      - "51729"  # Complex cystometrogram with electromyography
+      - "51736"  # Simple uroflowmetry
+      - "51741"  # Complex uroflowmetry
+      - "51784"  # Electromyography studies of anal or urethral sphincter
+      - "51797"  # Voiding pressure studies
+      - "51798"  # Measurement of post-voiding residual urine (PVR) - KEY UROGYN TEST
+      - "51840"  # Cystometrogram, initial study
+      - "51841"  # EMG studies
+      - "51845"  # Urodynamics, comprehensive (includes cystometrogram, uroflowmetry, and voiding pressure)
+      # Surgical procedures
+      - "57260"  # Vaginal repair procedures (anterior and/or posterior)
+      - "57265"  # Extensive vaginal repair
+      - "57288"  # Sling operation for stress incontinence
+      - "57284"  # Paravaginal repair (paravaginal defect repair)
+      - "57285"  # Paravaginal repair with mesh
+      - "58263"  # Hysterectomy with repair of enterocele
+      - "58267"  # Vaginal hysterectomy with repair
+      - "58152"  # Total abdominal hysterectomy
+      - "58180"  # Supracervical hysterectomy
+
+    MFM:
+      # Advanced obstetric ultrasound (MFM-specific imaging)
+      - "76801"  # Obstetric ultrasound, real-time with image documentation, fetal and maternal evaluation
+      - "76805"  # Ultrasound, pregnant uterus, real-time with image documentation
+      - "76810"  # Ultrasound, pregnant uterus, complete, single or first gestation
+      - "76811"  # Detailed fetal anatomic examination, single or first gestation
+      - "76812"  # Detailed fetal anatomic examination, each additional gestation
+      - "76813"  # Ultrasound, pregnant uterus, additional fetal evaluation
+      - "76815"  # Limited obstetric ultrasound, single or first gestation
+      - "76816"  # Follow-up or repeat obstetric ultrasound
+      - "76817"  # Transvaginal obstetric ultrasound
+      - "76818"  # Fetal biophysical profile
+      - "76819"  # Fetal biophysical profile with non-stress test
+      - "76820"  # Doppler velocimetry, fetal umbilical artery
+      - "76821"  # Doppler velocimetry, fetal middle cerebral artery
+      # Fetal testing (MFM-specific)
+      - "59025"  # Fetal non-stress test (NST)
+      - "59030"  # Fetal scalp blood sampling (intrapartum)
+      - "59050"  # Fetal monitoring during labor, includes non-stress and/or contraction stress testing
+      - "59051"  # Fetal monitoring during labor, interpretation only
+      # Advanced fetal procedures (MFM-specific interventions)
+      - "59070"  # Transabdominal amniocentesis
+      - "59072"  # Fetal umbilical cord occlusion
+      - "59074"  # Fetal fluid drainage (thoracentesis, paracentesis)
+      - "59076"  # Fetal shunt placement
+      - "59897"  # Unlisted fetal invasive procedure
+      # Genetic testing coordination
+      - "81420"  # Fetal chromosomal aneuploidy (e.g., NIPT coordination)
+
+    REI:
+      # IVF-specific procedures (REI hallmark)
+      - "58970"  # Follicle puncture for oocyte retrieval (transvaginal)
+      - "58974"  # Embryo transfer, intrauterine
+      - "58976"  # Gamete, zygote, or embryo intrafallopian transfer (GIFT, ZIFT)
+      # Laboratory procedures (IVF-specific)
+      - "89250"  # Culture of oocyte(s)/embryo(s), less than 4 days
+      - "89251"  # Culture of oocyte(s)/embryo(s), less than 4 days; with co-culture
+      - "89253"  # Assisted embryo hatching, microtechniques
+      - "89254"  # Oocyte identification from follicular fluid
+      - "89255"  # Preparation of embryo for transfer
+      - "89257"  # Sperm identification from testis tissue, fresh or cryopreserved
+      - "89258"  # Cryopreservation of embryo(s)
+      - "89259"  # Sperm identification from aspiration (other than testis)
+      - "89260"  # Sperm isolation; simple prep
+      - "89261"  # Sperm isolation; complex prep
+      - "89264"  # Sperm identification from testis tissue, fresh or cryopreserved, with preparation
+      - "89268"  # Insemination of oocytes
+      - "89272"  # Extended culture of oocyte(s)/embryo(s), 4-7 days
+      - "89280"  # Assisted oocyte fertilization, microtechnique (ICSI)
+      - "89281"  # Assisted oocyte fertilization, microtechnique; greater than 10 oocytes
+      # Diagnostic procedures (infertility workup)
+      - "58340"  # Catheterization and introduction of saline or contrast for hysterosalpingography (HSG)
+      - "58345"  # Transcervical introduction of fallopian tube catheter
+      - "76831"  # Saline infusion sonohysterography (SIS)
+      # Surgical treatment of infertility
+      - "58545"  # Laparoscopy, surgical; with adhesiolysis (pelvic adhesions)
+      - "58546"  # Laparoscopy, surgical; with adhesiolysis, extensive
+      - "58740"  # Lysis of adhesions (fimbrioplasty)
+      - "58770"  # Salpingostomy (creates new opening in fallopian tube)
+      # Endometriosis treatment (common REI comorbidity)
+      - "58662"  # Laparoscopy, surgical; with fulguration or excision of endometriosis
+
+    MIGS:
+      - "58541"  # Laparoscopic supracervical hysterectomy
+      - "58542"  # Laparoscopic total hysterectomy
+      - "58544"  # Laparoscopic radical hysterectomy
+      - "58570"  # Laparoscopy with total hysterectomy
+      - "58571"  # Laparoscopy with total hysterectomy for uterus 250g or less
+      - "58572"  # Laparoscopy with total hysterectomy for uterus >250g
+      - "58573"  # Laparoscopy with total hysterectomy and removal of tube(s)
+      - "49320"  # Laparoscopy, diagnostic
+      - "49321"  # Laparoscopy, surgical; biopsy
+      - "58548"  # Laparoscopy, surgical; with removal of ovarian cyst(s)
+      - "58550"  # Laparoscopy, surgical; with vaginal hysterectomy
+      - "58679"  # Unlisted laparoscopy procedure, oviduct, ovary
+
+    PAG:
+      # Pediatric/adolescent-specific gynecology
+      - "99381"  # Initial comprehensive preventive medicine (infant)
+      - "99382"  # Initial comprehensive preventive medicine (early childhood)
+      - "99383"  # Initial comprehensive preventive medicine (late childhood)
+      - "99384"  # Initial comprehensive preventive medicine (adolescent)
+      - "99391"  # Periodic comprehensive preventive medicine (infant)
+      - "99392"  # Periodic comprehensive preventive medicine (early childhood)
+      - "99393"  # Periodic comprehensive preventive medicine (late childhood)
+      - "99394"  # Periodic comprehensive preventive medicine (adolescent)
+      # Adolescent-specific procedures
+      - "11450"  # Excision of skin lesion (e.g., labial cyst in adolescent)
+      - "56405"  # Incision and drainage of vulva or perineal abscess
+      - "56441"  # Lysis of labial adhesions
+      - "57061"  # Destruction of vaginal lesion(s)
+      - "57100"  # Biopsy of vaginal mucosa, simple
+      - "58120"  # Dilation and curettage, diagnostic and/or therapeutic
+      # Congenital anomaly repair (pediatric)
+      - "56800"  # Plastic repair of introitus
+      - "57335"  # Vaginoplasty for congenital anomaly
+
+    GO:
+      # Radical surgical procedures (cancer-specific)
+      - "58210"  # Radical abdominal hysterectomy (Wertheim hysterectomy)
+      - "58240"  # Pelvic exenteration for gynecologic malignancy
+      - "58150"  # Total abdominal hysterectomy with or without removal of tube(s)
+      - "58180"  # Supracervical abdominal hysterectomy
+      # Lymphadenectomy (cancer staging/treatment)
+      - "38570"  # Laparoscopy, surgical; with retroperitoneal lymph node sampling
+      - "38571"  # Laparoscopy, surgical; with pelvic lymphadenectomy
+      - "38572"  # Laparoscopy, surgical; with para-aortic lymphadenectomy
+      - "38589"  # Unlisted laparoscopy procedure, lymphatic system
+      # Cancer-specific procedures
+      - "49255"  # Omentectomy, separate procedure
+      - "58950"  # Resection (initial) of ovarian, tubal or primary peritoneal malignancy
+      - "58952"  # Resection of ovarian malignancy with pelvic lymphadenectomy
+      - "58953"  # Bilateral salpingo-oophorectomy with omentectomy
+      - "58954"  # Resection of ovarian malignancy with radical dissection
+      - "58956"  # Bilateral salpingo-oophorectomy with total omentectomy
+      # Chemotherapy administration (GO-specific)
+      - "96413"  # Chemotherapy administration, intravenous push
+      - "96415"  # Chemotherapy administration, intravenous infusion
+      # Advanced imaging for cancer surveillance
+      - "74178"  # CT abdomen and pelvis with contrast (cancer surveillance)
+
+  # Validation thresholds
+  thresholds:
+    concordance_high: 0.7      # >70% = strong match
+    concordance_medium: 0.4    # 40-70% = moderate match
+    concordance_low: 0.4       # <40% = poor match
+    min_procedures: 10         # Minimum procedures to assess concordance
+    min_sample_size: 100       # Minimum physicians per subspecialty
+
+  # Medicare data source
+  medicare:
+    database: "${nber_duckdb_main}"
+    table: "medicare_part_b_physicians"
+    provider_type_filter: "provider_type ILIKE '%obstetrics%' OR provider_type ILIKE '%gynecology%'"
+    required_fields:
+      - npi
+      - hcpcs_code
+      - line_srvc_cnt
+      - average_medicare_payment_amount
+
+# ===============================================================================
+# ENT (OTOLARYNGOLOGY) VALIDATION PROFILE
+# ===============================================================================
+ent:
+  name: "Otolaryngology Subspecialty Validation"
+  description: "Validate ENT subspecialty classifications against Medicare billing patterns"
+
+  ground_truth:
+    source: "ABO"
+    full_name: "American Board of Otolaryngology"
+    file: "data/ent/abo_certification_data.csv"  # Directory does not exist - placeholder for future use
+    subspecialty_field: "subspecialty"
+    npi_field: "npi"
+
+    subspecialty_mappings:
+      GEN_ENT:
+        - "General Otolaryngology"
+        - "ENT"
+        - "Otolaryngology"
+      PEDS_ENT:
+        - "Pediatric Otolaryngology"
+        - "Pediatric ENT"
+      RHINO:
+        - "Rhinology"
+        - "Sinus Surgery"
+      LARYN:
+        - "Laryngology"
+        - "Voice"
+      OTOL:
+        - "Otology"
+        - "Neurotology"
+      H_N_ONCO:
+        - "Head and Neck Oncology"
+        - "Head and Neck Surgery"
+      FACIAL_PLAST:
+        - "Facial Plastic Surgery"
+        - "Facial Plastics"
+      SLEEP:
+        - "Sleep Medicine"
+        - "Sleep Surgery"
+
+  subspecialties:
+    - GEN_ENT        # General Otolaryngology
+    - PEDS_ENT       # Pediatric Otolaryngology
+    - RHINO          # Rhinology
+    - LARYN          # Laryngology
+    - OTOL           # Otology & Neurotology
+    - H_N_ONCO       # Head & Neck Oncology
+    - FACIAL_PLAST   # Facial Plastic Surgery
+    - SLEEP          # Sleep Medicine
+
+  taxonomy_codes:
+    primary: "207Y00000X"         # Otolaryngology (general)
+    subspecialty:
+      OTOL: "207YX0602X"          # Otology & Neurotology
+      FACIAL_PLAST: "207YX0901X"  # Facial Plastic Surgery
+      PEDS_ENT: "207YP0228X"      # Pediatric Otolaryngology
+
+  procedure_codes:
+    GEN_ENT:
+      - "99213"  # Office visit, established patient
+      - "99214"  # Office visit, established patient, moderate complexity
+      - "69210"  # Removal of impacted cerumen
+      - "92511"  # Nasopharyngoscopy with endoscope
+      - "31231"  # Nasal endoscopy, diagnostic
+      - "42820"  # Tonsillectomy and adenoidectomy, under 12
+      - "42821"  # Tonsillectomy and adenoidectomy, 12 or over
+      - "30901"  # Control of nosebleed, anterior
+      - "30903"  # Control of nosebleed, anterior, complex
+
+    PEDS_ENT:
+      - "42820"  # Tonsillectomy and adenoidectomy, under 12
+      - "42830"  # Adenoidectomy, primary, under 12
+      - "69436"  # Tympanostomy (ventilation tubes)
+      - "69433"  # Tympanostomy with anesthesia
+      - "31511"  # Laryngoscopy, indirect (pediatric)
+      - "92507"  # Treatment of speech, language, voice disorder
+      - "99381"  # Initial preventive visit, infant
+      - "99382"  # Initial preventive visit, early childhood
+
+    RHINO:
+      - "31231"  # Nasal endoscopy, diagnostic
+      - "31237"  # Nasal/sinus endoscopy with biopsy
+      - "31254"  # Nasal/sinus endoscopy, ethmoidectomy
+      - "31255"  # Nasal/sinus endoscopy, ethmoidectomy, total
+      - "31256"  # Nasal/sinus endoscopy, maxillary antrostomy
+      - "31267"  # Nasal/sinus endoscopy, maxillary antrostomy with removal of tissue
+      - "31276"  # Nasal/sinus endoscopy, frontal sinus exploration
+      - "31287"  # Nasal/sinus endoscopy, sphenoid sinus exploration
+      - "30520"  # Septoplasty or submucous resection
+
+    LARYN:
+      - "31575"  # Laryngoscopy, flexible fiberoptic
+      - "31579"  # Laryngoscopy, flexible or rigid, with stroboscopy
+      - "31545"  # Laryngoscopy, direct, with biopsy
+      - "31546"  # Laryngoscopy, direct, with removal of lesion
+      - "31570"  # Laryngoscopy, direct, with injection
+      - "31571"  # Laryngoscopy, direct, with injection for augmentation
+      - "92511"  # Nasopharyngoscopy with endoscope
+      - "92612"  # Flexible fiberoptic endoscopic evaluation of swallowing
+      - "92613"  # Flexible fiberoptic endoscopic evaluation of swallowing with sensory testing
+
+    OTOL:
+      - "69801"  # Labyrinthectomy
+      - "69802"  # Labyrinthectomy with mastoidectomy
+      - "69930"  # Cochlear implant, including mastoidectomy
+      - "69949"  # Unlisted procedure, inner ear
+      - "69535"  # Resection temporal bone tumor
+      - "69636"  # Tympanoplasty with ossicular chain reconstruction
+      - "69641"  # Tympanoplasty with ossicular chain reconstruction and synthetic prosthesis
+      - "92540"  # Basic vestibular evaluation
+      - "92542"  # Positional nystagmus test
+
+    H_N_ONCO:
+      - "31360"  # Laryngectomy, total
+      - "31365"  # Laryngectomy, total with radical neck dissection
+      - "38724"  # Cervical lymphadenectomy (modified radical neck dissection)
+      - "38720"  # Cervical lymphadenectomy (complete)
+      - "41140"  # Glossectomy, partial or complete
+      - "42440"  # Excision of submandibular gland
+      - "42415"  # Excision of parotid tumor
+      - "42420"  # Excision of parotid tumor with facial nerve dissection
+      - "21029"  # Removal of benign tumor, soft tissue of face/scalp
+
+    FACIAL_PLAST:
+      - "15820"  # Revision of lower eyelid, extensive
+      - "15823"  # Revision of lower eyelid, with canthopexy
+      - "67900"  # Repair of brow ptosis
+      - "15824"  # Rhytidectomy (facelift), forehead
+      - "15825"  # Rhytidectomy (facelift), neck with platysmal tightening
+      - "15826"  # Rhytidectomy (facelift), glabellar frown lines
+      - "30400"  # Rhinoplasty, primary
+      - "30410"  # Rhinoplasty, secondary
+      - "30420"  # Rhinoplasty, primary with septal work
+
+    SLEEP:
+      - "42145"  # Palatopharyngoplasty
+      - "42950"  # Pharyngoplasty (UPPP)
+      - "42953"  # Pharyngoplasty with UPPP and pharyngeal flap
+      - "41512"  # Tongue base reduction
+      - "95805"  # Multiple sleep latency test
+      - "95807"  # Sleep study, attended
+      - "95810"  # Polysomnography, sleep staging with respiratory effort
+      - "95811"  # Polysomnography, sleep staging with respiratory effort, oxygen saturation
+
+  thresholds:
+    concordance_high: 0.7
+    concordance_medium: 0.4
+    concordance_low: 0.4
+    min_procedures: 10
+    min_sample_size: 100
+
+  medicare:
+    database: "${nber_duckdb_main}"
+    table: "medicare_part_b_physicians"
+    provider_type_filter: "provider_type ILIKE '%otolaryngolog%' OR provider_type ILIKE '%ENT%'"
+    required_fields:
+      - npi
+      - hcpcs_code
+      - line_srvc_cnt
+      - average_medicare_payment_amount
+
+# ===============================================================================
+# ORTHOPEDIC SURGERY VALIDATION PROFILE
+# ===============================================================================
+ortho:
+  name: "Orthopedic Surgery Subspecialty Validation"
+  description: "Validate orthopedic subspecialty classifications against Medicare billing patterns"
+
+  ground_truth:
+    source: "ABOS"
+    full_name: "American Board of Orthopaedic Surgery"
+    file: "data/ortho/abos_certification_data.csv"  # If available
+    subspecialty_field: "subspecialty"
+    npi_field: "npi"
+
+    subspecialty_mappings:
+      GEN_ORTHO:
+        - "General Orthopedic Surgery"
+        - "Orthopedics"
+        - "Orthopaedics"
+      SPORTS:
+        - "Sports Medicine"
+        - "Sports"
+      SPINE:
+        - "Spine Surgery"
+        - "Spine"
+      JOINT:
+        - "Adult Reconstruction"
+        - "Joint Replacement"
+        - "Total Joint"
+      TRAUMA:
+        - "Trauma Surgery"
+        - "Orthopedic Trauma"
+      HAND:
+        - "Hand Surgery"
+        - "Hand and Upper Extremity"
+      FOOT_ANKLE:
+        - "Foot and Ankle Surgery"
+        - "Foot and Ankle"
+      PEDS_ORTHO:
+        - "Pediatric Orthopedic Surgery"
+        - "Pediatric Orthopedics"
+      ONCO:
+        - "Orthopedic Oncology"
+        - "Musculoskeletal Oncology"
+
+  subspecialties:
+    - GEN_ORTHO     # General Orthopedic Surgery
+    - SPORTS        # Sports Medicine
+    - SPINE         # Spine Surgery
+    - JOINT         # Adult Reconstruction/Joint Replacement
+    - TRAUMA        # Orthopedic Trauma
+    - HAND          # Hand Surgery
+    - FOOT_ANKLE    # Foot and Ankle Surgery
+    - PEDS_ORTHO    # Pediatric Orthopedic Surgery
+    - ONCO          # Orthopedic Oncology
+
+  taxonomy_codes:
+    primary: "208600000X"         # Orthopedic Surgery (general)
+    subspecialty:
+      SPORTS: "2086S0122X"        # Sports Medicine
+      HAND: "2086H0002X"          # Hand Surgery
+      TRAUMA: "2086X0206X"        # Trauma Surgery
+      PEDS_ORTHO: "2086S0105X"    # Surgery of the Hand
+
+  procedure_codes:
+    GEN_ORTHO:
+      - "99213"  # Office visit, established patient
+      - "99214"  # Office visit, established patient, moderate complexity
+      - "20610"  # Arthrocentesis (joint aspiration)
+      - "73721"  # MRI, any joint of lower extremity
+      - "73722"  # MRI, any joint of upper extremity
+      - "76942"  # Ultrasonic guidance for needle placement
+      - "29881"  # Arthroscopy, knee, with meniscectomy
+
+    SPORTS:
+      - "29888"  # Arthroscopy, knee, with meniscal transplantation
+      - "29887"  # Arthroscopy, knee, with chondroplasty
+      - "29880"  # Arthroscopy, knee, with meniscectomy
+      - "29881"  # Arthroscopy, knee, with meniscectomy (medial or lateral)
+      - "29882"  # Arthroscopy, knee, with meniscus repair (medial or lateral)
+      - "29883"  # Arthroscopy, knee, with meniscus repair (medial and lateral)
+      - "29888"  # Arthroscopy, knee, with meniscal transplantation
+      - "29889"  # Arthroscopy, knee, with synovectomy
+      - "29826"  # Arthroscopy, shoulder, with decompression
+
+    SPINE:
+      - "22612"  # Arthrodesis, posterior, lumbar
+      - "22630"  # Arthrodesis, posterior interbody technique, lumbar
+      - "63030"  # Laminotomy (hemilaminectomy), lumbar
+      - "63047"  # Laminectomy, facetectomy and foraminotomy, lumbar
+      - "63056"  # Transpedicular approach with decompression
+      - "22840"  # Posterior instrumentation, lumbar
+      - "22842"  # Posterior segmental instrumentation
+      - "22851"  # Application of intervertebral biomechanical device(s)
+
+    JOINT:
+      - "27447"  # Total knee arthroplasty
+      - "27130"  # Total hip arthroplasty
+      - "27134"  # Revision total hip arthroplasty
+      - "27137"  # Revision total hip arthroplasty, acetabular component
+      - "27486"  # Revision total knee arthroplasty
+      - "27487"  # Revision total knee arthroplasty, femoral and tibial
+      - "23472"  # Total shoulder arthroplasty
+      - "27125"  # Hemiarthroplasty, hip
+
+    TRAUMA:
+      - "27245"  # Open treatment of intertrochanteric hip fracture
+      - "27506"  # Open treatment of femoral shaft fracture
+      - "27792"  # Open treatment of distal femur fracture
+      - "27758"  # Open treatment of tibial shaft fracture
+      - "24515"  # Open treatment of humeral shaft fracture
+      - "23615"  # Open treatment of proximal humerus fracture
+      - "27228"  # Open treatment of acetabular fracture
+      - "27829"  # Open treatment of ankle fracture
+
+    HAND:
+      - "26055"  # Tendon sheath incision
+      - "26123"  # Fasciotomy, partial palmar
+      - "26350"  # Repair or advancement, flexor tendon
+      - "26356"  # Repair or advancement, flexor tendon with graft
+      - "26516"  # Capsulodesis, metacarpophalangeal joint
+      - "25447"  # Arthroplasty, interposition, intercarpal or carpometacarpal
+      - "64721"  # Carpal tunnel release
+      - "64722"  # Carpal tunnel release with tenosynovectomy
+
+    FOOT_ANKLE:
+      - "28296"  # Correction, hallux valgus (bunion)
+      - "28297"  # Correction, hallux valgus (bunion) with first metatarsal osteotomy
+      - "28725"  # Arthrodesis, subtalar
+      - "28740"  # Arthrodesis, ankle
+      - "28750"  # Arthrodesis, great toe
+      - "28890"  # Extracorporeal shock wave therapy
+      - "27880"  # Amputation, leg, through tibia and fibula
+      - "27888"  # Amputation, ankle, through malleoli
+
+    PEDS_ORTHO:
+      - "27420"  # Reconstruction of dislocated hip
+      - "27425"  # Open treatment of hip dislocation
+      - "27470"  # Repair, nonunion or malunion, femur
+      - "27712"  # Realignment of lower extremity
+      - "27715"  # Treatment of lower extremity deformity
+      - "27888"  # Amputation through malleoli
+      - "29345"  # Application of long leg cast
+      - "29365"  # Application of cylinder cast
+
+    ONCO:
+      - "27329"  # Radical resection of tumor, pelvis or hip
+      - "27364"  # Radical resection of tumor, femoral or knee
+      - "27615"  # Radical resection of tumor, tibia or fibula
+      - "27618"  # Excision of tumor, leg or ankle
+      - "23220"  # Radical resection of bone tumor, clavicle
+      - "23221"  # Radical resection of bone tumor, scapula
+      - "24152"  # Radical resection of tumor, humerus
+      - "25170"  # Radical resection of tumor, radius or ulna
+
+  thresholds:
+    concordance_high: 0.7
+    concordance_medium: 0.4
+    concordance_low: 0.4
+    min_procedures: 10
+    min_sample_size: 100
+
+  medicare:
+    database: "${nber_duckdb_main}"
+    table: "medicare_part_b_physicians"
+    provider_type_filter: "provider_type ILIKE '%orthop%' OR provider_type ILIKE '%orthopaed%'"
+    required_fields:
+      - npi
+      - hcpcs_code
+      - line_srvc_cnt
+      - average_medicare_payment_amount
+
+# ===============================================================================
+# VALIDATION SETTINGS (Common across all specialties)
+# ===============================================================================
+validation_settings:
+  # Output directory for validation reports
+  output_dir: "artifacts/validation_reports"
+
+  # Report format
+  report_format:
+    - html
+    - csv
+
+  # Generate detailed plots?
+  generate_plots: true
+
+  # Include raw data in reports?
+  include_raw_data: false
+
+  # Timestamp format for output files
+  timestamp_format: "%Y%m%d_%H%M%S"
+
+  # Minimum sample size for reliable validation
+  min_sample_size: 100
+
+  # Statistical test settings
+  statistical_tests:
+    method: "spearman"           # Correlation method
+    significance_level: 0.05     # p-value threshold
+    confidence_interval: 0.95    # CI width
+
+  # Performance settings
+  performance:
+    max_physicians_sample: 50000   # Maximum physicians to sample
+    parallel_processing: false     # Use multi-core?
+    timeout_minutes: 60            # Maximum runtime
+
+# ===============================================================================
+# INTERPRETATION GUIDELINES
+# ===============================================================================
+interpretation:
+  concordance_levels:
+    high:
+      threshold: 0.7
+      interpretation: "Strong alignment between claimed subspecialty and billing patterns"
+      recommendation: "Classification appears accurate"
+
+    medium:
+      threshold: 0.4
+      interpretation: "Moderate alignment - may indicate mixed practice or billing complexity"
+      recommendation: "Review individual cases for clarification"
+
+    low:
+      threshold: 0.4
+      interpretation: "Poor alignment - may indicate classification issues or practice evolution"
+      recommendation: "Consider alternative classification methods or investigate discrepancies"
+
+# ===============================================================================
+# DOCUMENTATION: HOW TO ADD A NEW SPECIALTY
+# ===============================================================================
+#
+# Example: Adding Cardiology
+#
+# cardio:
+#   name: "Cardiology Subspecialty Validation"
+#   description: "Validate cardiology subspecialty classifications against Medicare billing patterns"
+#
+#   ground_truth:
+#     source: "ABIM"
+#     full_name: "American Board of Internal Medicine (Cardiovascular Disease)"
+#     file: "data/cardio/abim_cardiology_certification.csv"
+#     subspecialty_field: "subspecialty"
+#     npi_field: "npi"
+#
+#     subspecialty_mappings:
+#       GEN_CARDIO:
+#         - "General Cardiology"
+#         - "Cardiology"
+#       EP:
+#         - "Electrophysiology"
+#         - "Cardiac Electrophysiology"
+#       INTERV:
+#         - "Interventional Cardiology"
+#       HF:
+#         - "Heart Failure"
+#         - "Advanced Heart Failure"
+#
+#   subspecialties:
+#     - GEN_CARDIO    # General Cardiology
+#     - EP            # Electrophysiology
+#     - INTERV        # Interventional Cardiology
+#     - HF            # Heart Failure
+#
+#   taxonomy_codes:
+#     primary: "207RC0000X"     # Cardiovascular Disease
+#     subspecialty:
+#       EP: "207RC0001X"        # Clinical Cardiac Electrophysiology
+#       INTERV: "207RI0200X"    # Interventional Cardiology
+#
+#   procedure_codes:
+#     GEN_CARDIO:
+#       - "93000"  # Electrocardiogram, complete
+#       - "93005"  # Electrocardiogram, tracing only
+#       - "93015"  # Cardiovascular stress test
+#       - "93306"  # Echocardiography, transthoracic
+#       - "99213"  # Office visit
+#       - "99214"  # Office visit, moderate complexity
+#
+#     EP:
+#       - "93619"  # Electrophysiology study
+#       - "93620"  # Electrophysiology study with pacing
+#       - "93653"  # Catheter ablation, atrial fibrillation
+#       - "93654"  # Catheter ablation, ventricular tachycardia
+#       - "33206"  # Insertion of pacemaker
+#       - "33249"  # Insertion of cardioverter-defibrillator
+#
+#     INTERV:
+#       - "92928"  # Percutaneous coronary intervention, single vessel
+#       - "92929"  # Percutaneous coronary intervention, additional vessel
+#       - "92933"  # Percutaneous transluminal coronary atherectomy
+#       - "93458"  # Left heart catheterization
+#       - "93459"  # Left heart catheterization with coronary angiography
+#
+#     HF:
+#       - "93000"  # Electrocardiogram
+#       - "93306"  # Echocardiography
+#       - "93797"  # Cardiac rehabilitation
+#       - "94010"  # Spirometry
+#       - "99215"  # Office visit, high complexity
+#
+#   thresholds:
+#     concordance_high: 0.7
+#     concordance_medium: 0.4
+#     concordance_low: 0.4
+#     min_procedures: 10
+#     min_sample_size: 100
+#
+#   medicare:
+#     database: "${nber_duckdb_main}"
+#     table: "medicare_part_b_physicians"
+#     provider_type_filter: "provider_type ILIKE '%cardio%'"
+#     required_fields:
+#       - npi
+#       - hcpcs_code
+#       - line_srvc_cnt
+#       - average_medicare_payment_amount
+#
+# Then set: active_specialty: "cardio"
+#
+# ===============================================================================
+
+# Usage Examples:
+#
+# Example 1: Switch to ENT validation
+# active_specialty: "ent"  # Changed from "obgyn"
+# Run: source("R/validation_phase1_subspecialty_billing.R")
+#
+# Example 2: Switch to Orthopedics validation
+# active_specialty: "ortho"  # Changed from "obgyn"
+# Run: source("R/validation_phase1_subspecialty_billing.R")
+#
+# Example 3: Add custom thresholds for new specialty
+# cardio:
+#   thresholds:
+#     concordance_high: 0.8  # Higher threshold for cardiology
+#     min_procedures: 20     # More procedures required

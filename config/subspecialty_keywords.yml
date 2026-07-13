@@ -1,0 +1,247 @@
+---
+# Subspecialty Keyword Configuration
+# Purpose: Pattern-based subspecialty detection from facility names and secondary specialties
+# Last updated: 2026-02-02
+
+# =============================================================================
+# OB/GYN SUBSPECIALTY KEYWORDS
+# =============================================================================
+obgyn:
+  # Female Pelvic Medicine and Reconstructive Surgery (FPMRS)
+  fpmrs:
+    canonical_name: "Female Pelvic Medicine and Reconstructive Surgery"
+    abbreviation: "FPMRS"
+    facility_keywords:
+      - "UROGYN"
+      - "UROGYNECOLOGY"
+      - "PELVIC FLOOR"
+      - "FEMALE PELVIC MEDICINE"
+      - "INCONTINENCE"
+      - "PELVIC RECONSTRUCTIVE"
+    secondary_specialty_keywords:
+      - "UROGYNECOLOGY"
+      - "FEMALE PELVIC MEDICINE"
+    priority: 1  # Higher priority = more specific
+
+  # Maternal-Fetal Medicine (MFM)
+  mfm:
+    canonical_name: "Maternal-Fetal Medicine"
+    abbreviation: "MFM"
+    facility_keywords:
+      - "MATERNAL FETAL"
+      - "MATERNAL-FETAL"
+      - "HIGH RISK PREGNANCY"
+      - "HIGH-RISK PREGNANCY"
+      - "PERINATOLOGY"
+      - "PERINATAL"
+    secondary_specialty_keywords:
+      - "MATERNAL"
+      - "FETAL"
+      - "PERINATOLOGY"
+    priority: 1
+
+  # Reproductive Endocrinology and Infertility (REI)
+  rei:
+    canonical_name: "Reproductive Endocrinology and Infertility"
+    abbreviation: "REI"
+    facility_keywords:
+      - "REPRODUCTIVE ENDOCRINOLOGY"
+      - "FERTILITY"
+      - "INFERTILITY"
+      - "IVF"
+      - "IN VITRO"
+      - "ASSISTED REPRODUCTION"
+    secondary_specialty_keywords:
+      - "REPRODUCTIVE ENDOCRINOLOGY"
+      - "FERTILITY"
+      - "INFERTILITY"
+    priority: 1
+
+  # Gynecologic Oncology (GO)
+  gynecologic_oncology:
+    canonical_name: "Gynecologic Oncology"
+    abbreviation: "GO"
+    facility_keywords:
+      - "GYNECOLOGIC ONCOLOGY"
+      - "GYNECOLOGICAL ONCOLOGY"
+      - "GYN ONCOLOGY"
+      - "GYN ONC"
+      - "OVARIAN CANCER"
+      - "CERVICAL CANCER"
+      - "UTERINE CANCER"
+    secondary_specialty_keywords:
+      - "GYNECOLOGIC ONCOLOGY"
+      - "GYN ONCOLOGY"
+    priority: 1
+
+  # Complex Family Planning (CFP)
+  complex_family_planning:
+    canonical_name: "Complex Family Planning"
+    abbreviation: "CFP"
+    facility_keywords:
+      - "FAMILY PLANNING"
+      - "ABORTION"
+      - "REPRODUCTIVE HEALTH"
+    secondary_specialty_keywords:
+      - "FAMILY PLANNING"
+    priority: 1
+
+# =============================================================================
+# ENT/OTOLARYNGOLOGY SUBSPECIALTY KEYWORDS
+# =============================================================================
+ent:
+  # Pediatric Otolaryngology
+  pediatric_ent:
+    canonical_name: "Pediatric Otolaryngology"
+    abbreviation: "Pediatric ENT"
+    facility_keywords:
+      - "PEDIATRIC ENT"
+      - "PEDIATRIC EAR NOSE"
+      - "PEDIATRIC OTOLARYNGOLOGY"
+      - "CHILDREN'S ENT"
+      - "KIDS ENT"
+    secondary_specialty_keywords:
+      - "PEDIATRIC"
+      - "PEDIATRICS"
+    priority: 2
+
+  # Rhinology and Sinus Surgery
+  rhinology:
+    canonical_name: "Rhinology"
+    abbreviation: "Rhinology"
+    facility_keywords:
+      - "SINUS"
+      - "RHINOLOGY"
+      - "NASAL"
+      - "ENDOSCOPIC SINUS"
+    secondary_specialty_keywords:
+      - "SINUS"
+      - "RHINOLOGY"
+    priority: 2
+
+  # Otology and Neurotology
+  otology:
+    canonical_name: "Otology/Neurotology"
+    abbreviation: "Otology"
+    facility_keywords:
+      - "OTOLOGY"
+      - "NEUROTOLOGY"
+      - "EAR SURGERY"
+      - "COCHLEAR IMPLANT"
+      - "HEARING"
+    secondary_specialty_keywords:
+      - "OTOLOGY"
+      - "NEUROTOLOGY"
+    priority: 2
+
+  # Laryngology and Voice
+  laryngology:
+    canonical_name: "Laryngology"
+    abbreviation: "Laryngology"
+    facility_keywords:
+      - "LARYNGOLOGY"
+      - "VOICE"
+      - "VOICE CENTER"
+      - "VOCAL"
+    secondary_specialty_keywords:
+      - "LARYNGOLOGY"
+      - "VOICE"
+    priority: 2
+
+  # Head and Neck Oncology
+  head_neck_oncology:
+    canonical_name: "Head and Neck Oncology"
+    abbreviation: "Head & Neck"
+    facility_keywords:
+      - "HEAD AND NECK"
+      - "HEAD & NECK"
+      - "SKULL BASE"
+      - "THYROID SURGERY"
+    secondary_specialty_keywords:
+      - "HEAD AND NECK"
+      - "ONCOLOGY"
+    priority: 2
+
+  # Facial Plastic and Reconstructive Surgery
+  facial_plastics:
+    canonical_name: "Facial Plastic Surgery"
+    abbreviation: "Facial Plastics"
+    facility_keywords:
+      - "FACIAL PLASTIC"
+      - "FACIAL COSMETIC"
+      - "RHINOPLASTY"
+      - "FACELIFT"
+    secondary_specialty_keywords:
+      - "PLASTIC"
+      - "COSMETIC"
+    priority: 2
+
+  # Allergy
+  allergy:
+    canonical_name: "Allergy"
+    abbreviation: "Allergy"
+    facility_keywords:
+      - "ALLERGY"
+      - "IMMUNOLOGY"
+    secondary_specialty_keywords:
+      - "ALLERGY"
+      - "IMMUNOLOGY"
+    priority: 2
+
+  # Sleep Medicine
+  sleep_medicine:
+    canonical_name: "Sleep Medicine"
+    abbreviation: "Sleep"
+    facility_keywords:
+      - "SLEEP"
+      - "SLEEP MEDICINE"
+      - "SLEEP CENTER"
+      - "SLEEP APNEA"
+    secondary_specialty_keywords:
+      - "SLEEP"
+    priority: 2
+
+# =============================================================================
+# GENERAL SPECIALTY CLASSIFICATION
+# =============================================================================
+# When no subspecialty is found but primary specialty is confirmed,
+# classify as "General [Specialty]"
+
+general_classification:
+  obgyn:
+    default_name: "General Obstetrics and Gynecology"
+    apply_when:
+      - "No subspecialty found after all enrichment layers"
+      - "Confirmed OB/GYN via taxonomy code 207V%"
+      - "Confirmed OB/GYN via ABMS board certification"
+
+  ent:
+    default_name: "General Otolaryngology"
+    apply_when:
+      - "No subspecialty found after all enrichment layers"
+      - "Confirmed ENT via taxonomy code 207Y%"
+      - "Confirmed ENT via ABMS board certification"
+
+  orthopedics:
+    default_name: "General Orthopedic Surgery"
+    apply_when:
+      - "No subspecialty found after all enrichment layers"
+      - "Confirmed Orthopedics via taxonomy code 207X%"
+
+# =============================================================================
+# PATTERN MATCHING RULES
+# =============================================================================
+matching_rules:
+  # Case-insensitive matching
+  case_sensitive: false
+
+  # Word boundary matching (avoid partial matches)
+  # Example: "SINUS" matches "SINUS CENTER" but not "BUSINESS"
+  word_boundary: true
+
+  # Priority handling when multiple matches found
+  # Options: "highest_priority", "first_match", "most_specific"
+  conflict_resolution: "highest_priority"
+
+  # Minimum keyword length to avoid false positives
+  min_keyword_length: 3

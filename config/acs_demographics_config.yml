@@ -1,0 +1,360 @@
+---
+# ACS Demographics Configuration - Specialty-Agnostic
+# Purpose: Configure census demographic queries for any medical specialty
+# Last updated: 2025-10-13
+
+# Currently active specialty demographic profile
+active_profile: "obgyn"  # Options: "obgyn", "ent", "ortho", "all_ages"
+
+# OB/GYN Demographic Profile
+# Target population: Women ages 18-90 (reproductive age through elderly)
+# Why: OB/GYN physicians serve women of reproductive age and beyond
+obgyn:
+  name: "OB/GYN - Women 18-90"
+  description: "Women ages 18-90 for obstetrics & gynecology access analysis"
+
+  # Population queries
+  population:
+    # Sex filter
+    sex: "female"  # Options: "female", "male", "both"
+
+    # Age range
+    age_min: 18
+    age_max: 90
+
+    # ACS variable pattern (tidycensus load_variables filter)
+    # This captures: Sex by Age!!Female!![age groups 18-89 years]
+    acs_label_pattern: >-
+      ^Sex by Age!!Female!!(18 to 19 years|20 years|21 years|
+      22 to 24 years|25 to 29 years|30 to 34 years|35 to 39 years|
+      40 to 44 years|45 to 49 years|50 to 54 years|55 to 59 years|
+      60 to 61 years|62 to 64 years|65 to 66 years|67 to 69 years|
+      70 to 74 years|75 to 79 years|80 to 84 years|85 years)
+
+    # Exclude patterns (ages to exclude)
+    exclude_pattern: "90 years and over"
+
+    # Output column name
+    output_column: "women_18_90"
+
+  # Race/ethnicity (all ages, all sexes - standard for disparity analysis)
+  race_ethnicity:
+    table: "B03002"  # Hispanic Origin by Race
+    description: "Race/ethnicity for all census tract residents"
+    variables:
+      total: "B03002_001"
+      nh_white: "B03002_003"
+      nh_black: "B03002_004"
+      nh_aian: "B03002_005"   # American Indian/Alaska Native
+      nh_asian: "B03002_006"
+      nh_nhpi: "B03002_007"   # Native Hawaiian/Pacific Islander
+      nh_other: "B03002_008"
+      nh_two: "B03002_009"    # Two or more races
+      hispanic: "B03002_012"
+
+# ENT Demographic Profile
+# Target population: All ages, both sexes (ear, nose, throat issues across lifespan)
+# Why: ENT serves pediatric through elderly, both male and female
+ent:
+  name: "ENT - All Ages Both Sexes"
+  description: "All ages, both sexes for otolaryngology access analysis"
+
+  population:
+    sex: "both"
+    age_min: 0
+    age_max: 85  # ACS top-codes at 85+
+
+    # ACS pattern for total population (all ages, both sexes)
+    # Use simpler approach: B01001 (Sex by Age) total
+    acs_table: "B01001"  # Sex by Age
+    acs_variable: "B01001_001"  # Total population
+
+    output_column: "total_population"
+
+  race_ethnicity:
+    table: "B03002"
+    description: "Race/ethnicity for all census tract residents"
+    variables:
+      total: "B03002_001"
+      nh_white: "B03002_003"
+      nh_black: "B03002_004"
+      nh_aian: "B03002_005"
+      nh_asian: "B03002_006"
+      nh_nhpi: "B03002_007"
+      nh_other: "B03002_008"
+      nh_two: "B03002_009"
+      hispanic: "B03002_012"
+
+# Orthopedics Demographic Profile
+# Target population: All ages, both sexes (musculoskeletal issues across lifespan)
+# Why: Orthopedics serves all ages (pediatric fractures through elderly joint replacement)
+ortho:
+  name: "Orthopedics - All Ages Both Sexes"
+  description: "All ages, both sexes for orthopedic surgery access analysis"
+
+  population:
+    sex: "both"
+    age_min: 0
+    age_max: 85
+
+    acs_table: "B01001"
+    acs_variable: "B01001_001"  # Total population
+
+    output_column: "total_population"
+
+  race_ethnicity:
+    table: "B03002"
+    description: "Race/ethnicity for all census tract residents"
+    variables:
+      total: "B03002_001"
+      nh_white: "B03002_003"
+      nh_black: "B03002_004"
+      nh_aian: "B03002_005"
+      nh_asian: "B03002_006"
+      nh_nhpi: "B03002_007"
+      nh_other: "B03002_008"
+      nh_two: "B03002_009"
+      hispanic: "B03002_012"
+
+# All Ages Profile (Generic)
+# Target population: Everyone (no specialty restrictions)
+# Why: For general access analysis or specialties serving all demographics
+all_ages:
+  name: "All Ages - Both Sexes"
+  description: "Total population for general access analysis"
+
+  population:
+    sex: "both"
+    age_min: 0
+    age_max: 85
+
+    acs_table: "B01001"
+    acs_variable: "B01001_001"
+
+    output_column: "total_population"
+
+  race_ethnicity:
+    table: "B03002"
+    description: "Race/ethnicity for all census tract residents"
+    variables:
+      total: "B03002_001"
+      nh_white: "B03002_003"
+      nh_black: "B03002_004"
+      nh_aian: "B03002_005"
+      nh_asian: "B03002_006"
+      nh_nhpi: "B03002_007"
+      nh_other: "B03002_008"
+      nh_two: "B03002_009"
+      hispanic: "B03002_012"
+
+# Additional Specialty Profiles (Examples)
+# Copy and customize as needed for other specialties
+
+# Pediatrics Profile (Ages 0-17)
+pediatrics:
+  name: "Pediatrics - Ages 0-17 Both Sexes"
+  description: "Children and adolescents for pediatric access analysis"
+
+  population:
+    sex: "both"
+    age_min: 0
+    age_max: 17
+
+    # Would need custom ACS label pattern for ages 0-17
+    acs_label_pattern: "^Sex by Age!!(Male|Female)!!(Under 5 years|5 to 9 years|10 to 14 years|15 to 17 years)"
+
+    output_column: "population_0_17"
+
+  race_ethnicity:
+    table: "B03002"
+    description: "Race/ethnicity for all census tract residents"
+    variables:
+      total: "B03002_001"
+      nh_white: "B03002_003"
+      nh_black: "B03002_004"
+      nh_aian: "B03002_005"
+      nh_asian: "B03002_006"
+      nh_nhpi: "B03002_007"
+      nh_other: "B03002_008"
+      nh_two: "B03002_009"
+      hispanic: "B03002_012"
+
+# Geriatrics Profile (Ages 65+)
+geriatrics:
+  name: "Geriatrics - Ages 65+ Both Sexes"
+  description: "Elderly population for geriatric access analysis"
+
+  population:
+    sex: "both"
+    age_min: 65
+    age_max: 85
+
+    acs_label_pattern: >-
+      ^Sex by Age!!(Male|Female)!!(65 to 66 years|67 to 69 years|
+      70 to 74 years|75 to 79 years|80 to 84 years|85 years)
+
+    output_column: "population_65_plus"
+
+  race_ethnicity:
+    table: "B03002"
+    description: "Race/ethnicity for all census tract residents"
+    variables:
+      total: "B03002_001"
+      nh_white: "B03002_003"
+      nh_black: "B03002_004"
+      nh_aian: "B03002_005"
+      nh_asian: "B03002_006"
+      nh_nhpi: "B03002_007"
+      nh_other: "B03002_008"
+      nh_two: "B03002_009"
+      hispanic: "B03002_012"
+
+# ACS Query Settings
+# Common settings for all tidycensus::get_acs() calls
+query_settings:
+  # Default ACS survey
+  survey: "acs5"  # 5-year estimates (most stable, tract-level available)
+
+  # Default year
+  default_year: 2022
+
+  # Geography level
+  geography: "tract"  # Census tracts for spatial analysis
+
+  # Output format
+  output: "wide"  # Wide format for easier column manipulation
+
+  # Caching
+  cache_table: true  # Cache ACS results to speed up repeat queries
+
+  # States (null = all states, or provide vector like ["CA", "NY"])
+  states: null
+
+# Variable Discovery
+# How to find ACS variables for new demographic profiles
+variable_discovery:
+  # Load ACS variable dictionary
+  use_load_variables: true
+
+  # Common ACS tables for demographics
+  common_tables:
+    sex_by_age: "B01001"              # Sex by Age (most granular)
+    race_ethnicity: "B03002"          # Hispanic Origin by Race
+    median_income: "B19013"           # Median Household Income
+    poverty: "B17001"                 # Poverty Status
+    education: "B15003"               # Educational Attainment
+    insurance: "B27001"               # Health Insurance Coverage
+    disability: "B18101"              # Sex by Age by Disability
+
+  # How to search for variables
+  search_tips:
+    - "Use tidycensus::load_variables(year, 'acs5') to get full variable list"
+    - "Filter by table prefix (e.g., B01001 for Sex by Age)"
+    - "Use stringr::str_detect() to search label text"
+    - "Check concept column to understand table contents"
+    - "Variables ending in E = estimate, M = margin of error"
+
+# Documentation: How to Add a New Specialty Profile
+# =============================================================================
+#
+# Example: Adding Urology (Men 18+)
+#
+# urology:
+#   name: "Urology - Men 18+"
+#   description: "Men ages 18+ for urology access analysis"
+#
+#   population:
+#     sex: "male"
+#     age_min: 18
+#     age_max: 85
+#
+# acs_label_pattern: "^Sex by Age!!Male!!(18 to 19 years|20 years|21 years|22 to 24 years|25 to 29 years|30 to 34
+# years|35 to 39 years|40 to 44 years|45 to 49 years|50 to 54 years|55 to 59 years|60 to 61 years|62 to 64 years|65 to
+# 66 years|67 to 69 years|70 to 74 years|75 to 79 years|80 to 84 years|85 years)"
+#
+#     output_column: "men_18_plus"
+#
+#   race_ethnicity:
+#     table: "B03002"
+#     [same as other specialties]
+#
+# Then set: active_profile: "urology"
+
+# Common Age Ranges by Specialty (Reference)
+# =============================================================================
+specialty_age_ranges:
+  obgyn: "18-90 (reproductive through elderly women)"
+  pediatrics: "0-17 (children and adolescents)"
+  geriatrics: "65+ (elderly)"
+  family_medicine: "0-85+ (all ages)"
+  internal_medicine: "18+ (adults)"
+  cardiology: "18+ (adults, slightly older skew)"
+  oncology: "0-85+ (all ages, cancer across lifespan)"
+  orthopedics: "0-85+ (all ages, fractures to joint replacement)"
+  ent: "0-85+ (all ages, ear infections to hearing loss)"
+  urology: "18+ men primarily, some women"
+  dermatology: "0-85+ (all ages)"
+  psychiatry: "0-85+ (all ages, pediatric through elderly)"
+  neurology: "0-85+ (all ages)"
+
+# Usage Examples
+# =============================================================================
+#
+# Example 1: Switch from OB/GYN to ENT demographics
+#
+# # Edit this file:
+# active_profile: "ent"  # Changed from "obgyn"
+#
+# # In R:
+# config <- yaml::read_yaml("config/acs_demographics_config.yaml")
+# profile <- config[[config$active_profile]]
+#
+# # Query ACS for ENT-appropriate demographics:
+# population <- get_acs(
+#   geography = "tract",
+#   variables = profile$population$acs_variable,
+#   year = 2022,
+#   survey = "acs5"
+# )
+#
+# Example 2: Get OB/GYN women 18-90
+#
+# active_profile: "obgyn"
+#
+# config <- yaml::read_yaml("config/acs_demographics_config.yaml")
+# profile <- config$obgyn
+#
+# # Use pattern matching to find variables
+# vars <- load_variables(2022, "acs5")
+# female_vars <- vars %>%
+#   filter(str_detect(label, profile$population$acs_label_pattern))
+#
+# Example 3: Custom age range (e.g., women 50-85 for breast cancer screening)
+#
+# Add custom profile to this file, then use it same way as above
+
+# Best Practices
+# =============================================================================
+#
+# 1. Always specify age range relevant to specialty
+#    - Don't include irrelevant ages (e.g., infants for cardiac surgery)
+#    - Do include full relevant range (e.g., all ages for ENT)
+#
+# 2. Consider sex restrictions carefully
+#    - OB/GYN: women only (specialty-specific care)
+#    - Urology: traditionally men, but many urologists treat women
+#    - Most specialties: both sexes
+#
+# 3. Use standard race/ethnicity across all specialties
+#    - Enables disparity comparisons between specialties
+#    - Table B03002 is the gold standard
+#
+# 4. Document rationale in description field
+#    - Why this age range?
+#    - Why this sex restriction?
+#    - What clinical population does this represent?
+#
+# 5. Test queries on small sample first
+#    - Query 1 state before querying all 50+
+#    - Verify variable counts match expected population
+#    - Check for missing data or unexpected results

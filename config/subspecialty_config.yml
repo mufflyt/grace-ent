@@ -1,0 +1,383 @@
+---
+# Subspecialty Configuration - Specialty-Agnostic
+# Purpose: Define subspecialty mappings for any medical specialty
+# to enable easy switching between OB/GYN, ENT, Orthopedics, etc.
+# Last updated: 2025-10-13
+
+# Currently active specialty
+active_specialty: "obgyn"  # Options: "obgyn", "ent", "ortho"
+
+# OB/GYN Subspecialties (ABOG - American Board of Obstetrics & Gynecology)
+obgyn:
+  subspecialties:
+    - code: "FPMRS"
+      full_name: "Female Pelvic Medicine and Reconstructive Surgery"
+      aliases: ["URPS", "urps", "fpmrs", "FPMRS", "Urogyn", "Urogynecology"]
+      exact_matches:
+        - "URPS"
+        - "FPMRS"
+        - "Female Pelvic Medicine and Reconstructive Surgery"
+      partial_matches:
+        - "female pelvic medicine"
+        - "reconstructive surgery"
+        - "urogyn"
+      confidence: 0.95
+
+    - code: "GO"
+      full_name: "Gynecologic Oncology"
+      aliases: ["GO", "go", "ONC", "Gynecologic Oncology"]
+      exact_matches:
+        - "GO"
+        - "Gynecologic Oncology"
+        - "Oncology"
+      partial_matches:
+        - "gynecologic oncology"
+        - "gyn onc"
+        - "oncology"
+      confidence: 0.90
+
+    - code: "MFM"
+      full_name: "Maternal-Fetal Medicine"
+      aliases: ["MFM", "mfm", "Maternal Fetal", "Perinatology"]
+      exact_matches:
+        - "MFM"
+        - "Maternal-Fetal Medicine"
+        - "Perinatology"
+      partial_matches:
+        - "maternal fetal"
+        - "maternal-fetal"
+        - "perinatolog"
+      confidence: 0.90
+
+    - code: "REI"
+      full_name: "Reproductive Endocrinology and Infertility"
+      aliases: ["REI", "rei", "Reproductive Endocrinology", "Infertility"]
+      exact_matches:
+        - "REI"
+        - "Reproductive Endocrinology and Infertility"
+      partial_matches:
+        - "reproductive endocrin"
+        - "infertility"
+        - "fertility"
+      confidence: 0.85
+
+    - code: "CFP"
+      full_name: "Complex Family Planning"
+      aliases: ["CFP", "cfp", "Family Planning", "Abortion Care"]
+      exact_matches:
+        - "CFP"
+        - "Complex Family Planning"
+        - "Family Planning"
+      partial_matches:
+        - "family planning"
+        - "contraception"
+        - "abortion"
+      confidence: 0.85
+
+    - code: "CCM"
+      full_name: "Critical Care Medicine (Obstetric)"
+      aliases: ["CCM", "ccm", "Critical Care", "Obstetric Critical Care"]
+      exact_matches:
+        - "CCM"
+        - "Critical Care Medicine"
+        - "Obstetric Critical Care"
+      partial_matches:
+        - "critical care"
+        - "intensive care"
+        - "ICU"
+      confidence: 0.85
+
+    - code: "HPM"
+      full_name: "Hospice and Palliative Medicine"
+      aliases: ["HPM", "hpm", "Palliative", "Hospice"]
+      exact_matches:
+        - "HPM"
+        - "Hospice and Palliative Medicine"
+        - "Palliative Medicine"
+      partial_matches:
+        - "palliative"
+        - "hospice"
+        - "end of life"
+      confidence: 0.85
+
+    - code: "MIGS"
+      full_name: "Minimally Invasive Gynecologic Surgery"
+      aliases: ["MIG", "mig", "MIGS", "migs", "Minimally Invasive", "Laparoscopy"]
+      exact_matches:
+        - "MIG"
+        - "MIGS"
+        - "Minimally Invasive Gynecologic Surgery"
+      partial_matches:
+        - "minimally invasive"
+        - "laparoscop"
+        - "robotic"
+        - "endoscop"
+      confidence: 0.85
+
+    - code: "PAG"
+      full_name: "Pediatric and Adolescent Gynecology"
+      aliases: ["PAG", "pag", "Pediatric Gyn", "Adolescent Gyn"]
+      exact_matches:
+        - "PAG"
+        - "Pediatric and Adolescent Gynecology"
+        - "Pediatric Gynecology"
+      partial_matches:
+        - "pediatric gyn"
+        - "adolescent gyn"
+        - "pediatric and adolescent"
+      confidence: 0.85
+
+  generalist_class: "Generalist"
+  multiple_class: "Multiple"
+
+  # Special rules for OB/GYN
+  special_rules:
+    # BUG FIX 2026-01-04: Updated to reflect current ABOG subspecialties
+    # All NINE ABOG-recognized subspecialties now represented:
+    # 1. MFM - Maternal-Fetal Medicine
+    # 2. GO - Gynecologic Oncology
+    # 3. REI - Reproductive Endocrinology and Infertility
+    # 4. FPMRS - Female Pelvic Medicine and Reconstructive Surgery
+    # 5. CFP - Complex Family Planning
+    # 6. CCM - Critical Care Medicine (Obstetric)
+    # 7. HPM - Hospice and Palliative Medicine
+    # 8. MIGS - Minimally Invasive Gynecologic Surgery
+    # 9. PAG - Pediatric and Adolescent Gynecology
+    #
+    # NOTE: For Figure 1 visualization, CCM and HPM are merged into GO
+    # per user specifications, resulting in 7 display categories:
+    # FPMRS, MFM, REI, GO (includes CCM/HPM), CFP, MIGS, PAG
+
+# ENT Subspecialties (American Board of Otolaryngology - Head and Neck Surgery)
+ent:
+  subspecialties:
+    - code: "GEN_ENT"
+      full_name: "General Otolaryngology"
+      aliases: ["ENT", "Otolaryngology", "General ENT"]
+      exact_matches:
+        - "Otolaryngology"
+        - "General Otolaryngology"
+      partial_matches:
+        - "otolaryngol"
+        - "ear nose throat"
+        - "ENT"
+      confidence: 0.95
+
+    - code: "PEDS_ENT"
+      full_name: "Pediatric Otolaryngology"
+      aliases: ["Pediatric ENT", "Peds ENT"]
+      exact_matches:
+        - "Pediatric Otolaryngology"
+      partial_matches:
+        - "pediatric ent"
+        - "peds ent"
+        - "pediatric otolaryngol"
+      confidence: 0.90
+
+    - code: "RHINO"
+      full_name: "Rhinology and Sinus Surgery"
+      aliases: ["Rhinology", "Sinus Surgery"]
+      exact_matches:
+        - "Rhinology"
+        - "Sinus Surgery"
+      partial_matches:
+        - "rhinolog"
+        - "sinus"
+        - "nasal"
+      confidence: 0.85
+
+    - code: "LARYN"
+      full_name: "Laryngology"
+      aliases: ["Laryngology", "Voice"]
+      exact_matches:
+        - "Laryngology"
+      partial_matches:
+        - "laryngol"
+        - "voice"
+        - "vocal"
+      confidence: 0.85
+
+    - code: "OTOL"
+      full_name: "Otology and Neurotology"
+      aliases: ["Otology", "Neurotology"]
+      exact_matches:
+        - "Otology"
+        - "Neurotology"
+      partial_matches:
+        - "otolog"
+        - "neurotolog"
+        - "ear surgery"
+      confidence: 0.90
+
+    - code: "H_N_ONCO"
+      full_name: "Head and Neck Oncology"
+      aliases: ["Head and Neck", "H&N Oncology"]
+      exact_matches:
+        - "Head and Neck Oncology"
+        - "Head and Neck Surgery"
+      partial_matches:
+        - "head and neck"
+        - "head neck"
+        - "h&n"
+      confidence: 0.90
+
+    - code: "FACIAL_PLAST"
+      full_name: "Facial Plastic and Reconstructive Surgery"
+      aliases: ["Facial Plastics", "Facial Reconstruction"]
+      exact_matches:
+        - "Facial Plastic Surgery"
+        - "Facial Plastic and Reconstructive Surgery"
+      partial_matches:
+        - "facial plastic"
+        - "facial reconstruction"
+      confidence: 0.85
+
+    - code: "SLEEP"
+      full_name: "Sleep Medicine"
+      aliases: ["Sleep", "Sleep Surgery"]
+      exact_matches:
+        - "Sleep Medicine"
+        - "Sleep Surgery"
+      partial_matches:
+        - "sleep"
+        - "apnea"
+      confidence: 0.80
+
+  generalist_class: "General ENT"
+  multiple_class: "Multiple Subspecialties"
+  special_rules: {}
+
+# Orthopedic Subspecialties (ABOS - American Board of Orthopedic Surgery)
+ortho:
+  subspecialties:
+    - code: "GEN_ORTHO"
+      full_name: "General Orthopedic Surgery"
+      aliases: ["Orthopedics", "General Ortho"]
+      exact_matches:
+        - "Orthopedic Surgery"
+        - "Orthopaedic Surgery"
+      partial_matches:
+        - "orthopedic"
+        - "orthopaedic"
+      confidence: 0.95
+
+    - code: "SPORTS"
+      full_name: "Sports Medicine"
+      aliases: ["Sports", "Athletic Medicine"]
+      exact_matches:
+        - "Sports Medicine"
+        - "Orthopedic Sports Medicine"
+      partial_matches:
+        - "sports"
+        - "athletic"
+      confidence: 0.90
+
+    - code: "SPINE"
+      full_name: "Spine Surgery"
+      aliases: ["Spine", "Spinal Surgery"]
+      exact_matches:
+        - "Spine Surgery"
+        - "Spinal Surgery"
+      partial_matches:
+        - "spine"
+        - "spinal"
+        - "vertebra"
+      confidence: 0.90
+
+    - code: "JOINT"
+      full_name: "Adult Reconstruction and Joint Replacement"
+      aliases: ["Joint Replacement", "Arthroplasty"]
+      exact_matches:
+        - "Adult Reconstruction"
+        - "Joint Replacement"
+        - "Arthroplasty"
+      partial_matches:
+        - "joint replacement"
+        - "arthroplasty"
+        - "reconstruction"
+      confidence: 0.85
+
+    - code: "TRAUMA"
+      full_name: "Orthopedic Trauma"
+      aliases: ["Trauma", "Fracture Care"]
+      exact_matches:
+        - "Orthopedic Trauma"
+        - "Trauma Surgery"
+      partial_matches:
+        - "trauma"
+        - "fracture"
+      confidence: 0.90
+
+    - code: "HAND"
+      full_name: "Hand Surgery"
+      aliases: ["Hand", "Upper Extremity"]
+      exact_matches:
+        - "Hand Surgery"
+        - "Hand and Upper Extremity"
+      partial_matches:
+        - "hand"
+        - "upper extremity"
+        - "wrist"
+      confidence: 0.90
+
+    - code: "FOOT_ANKLE"
+      full_name: "Foot and Ankle Surgery"
+      aliases: ["Foot and Ankle", "Lower Extremity"]
+      exact_matches:
+        - "Foot and Ankle Surgery"
+      partial_matches:
+        - "foot"
+        - "ankle"
+      confidence: 0.90
+
+    - code: "PEDS_ORTHO"
+      full_name: "Pediatric Orthopedics"
+      aliases: ["Pediatric Ortho", "Peds Ortho"]
+      exact_matches:
+        - "Pediatric Orthopedic Surgery"
+        - "Pediatric Orthopaedics"
+      partial_matches:
+        - "pediatric ortho"
+        - "peds ortho"
+      confidence: 0.90
+
+    - code: "ONCO"
+      full_name: "Orthopedic Oncology"
+      aliases: ["Musculoskeletal Oncology", "Ortho Onc"]
+      exact_matches:
+        - "Orthopedic Oncology"
+        - "Musculoskeletal Oncology"
+      partial_matches:
+        - "orthopedic oncology"
+        - "musculoskeletal oncology"
+        - "tumor"
+      confidence: 0.85
+
+  generalist_class: "General Orthopedics"
+  multiple_class: "Multiple Subspecialties"
+  special_rules: {}
+
+# Documentation: How to add a new specialty
+# ===========================================
+#
+# To add a new specialty (e.g., Cardiology, Neurology):
+#
+# 1. Add a new top-level section with the specialty code:
+#    cardio:
+#      subspecialties: [...]
+#      generalist_class: "General Cardiology"
+#      multiple_class: "Multiple"
+#      special_rules: {}
+#
+# 2. For each subspecialty, provide:
+#    - code: Short unique identifier (e.g., "EP" for Electrophysiology)
+#    - full_name: Official subspecialty name
+#    - aliases: List of common alternate names
+#    - exact_matches: Strings that should match exactly
+#    - partial_matches: Strings for partial/fuzzy matching
+#    - confidence: 0.0-1.0 score for match quality
+#
+# 3. Update active_specialty at the top of this file
+#
+# 4. No code changes needed - the subspecialty_standardizer.R
+#    reads this config and adapts automatically!
