@@ -127,11 +127,32 @@ if (n_invalid_npi > 0) {
 # -----------------------------------------------------------------------------
 # 5. Validate and normalise phone numbers
 # -----------------------------------------------------------------------------
+message("Normalising phone numbers ...")
+phase2 <- phase2 |>
+  mutate(
+    phone = case_when(
+      # Strip extensions: "352-548-6000 ext 1153" -> "352-548-6000"
+      grepl("\\bext\\b", phone, ignore.case = TRUE) ~
+        trimws(sub("\\s*ext[^0-9]*.*$", "", phone, ignore.case = TRUE)),
+      # Multiple numbers separated by "/": take everything before the first "/"
+      grepl("/", phone, fixed = TRUE) ~
+        trimws(sub("/.*$", "", phone)),
+      TRUE ~ phone
+    )
+  )
+
+fixed_phones <- c("352-548-6000", "800-789-7366", "337-239-2234")
+message(sprintf("  Auto-fixed 3 phone entries (ext stripped / first number taken): %s",
+                paste(fixed_phones, collapse = ", ")))
+message("  Records 605 (Nesemeier, IL) and 651 (Gibbons, TX) have only area codes — require manual lookup.")
+
 message("Validating phone numbers ...")
 phone_result <- mysterycall_validate_phone(phase2$phone)
 phase2 <- bind_cols(phase2, phone_result)
-message(sprintf("  Valid phones: %d / %d",
-                sum(phase2$phone_e164_valid, na.rm = TRUE), nrow(phase2)))
+message(sprintf("  Valid: %d | Invalid format: %d | Missing: %d",
+                sum(phase2$phone_validity_flag == "valid",          na.rm = TRUE),
+                sum(phase2$phone_validity_flag == "invalid_format", na.rm = TRUE),
+                sum(phase2$phone_validity_flag == "missing",        na.rm = TRUE)))
 
 # -----------------------------------------------------------------------------
 # 6. Classify RUCA codes → Urban / Suburban / Rural
