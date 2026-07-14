@@ -1,0 +1,10 @@
+# Secrets / credentials — never commit
+.Renviron
+.Rprofile
+*.env
+.env
+
+# R session cruft
+.Rhistory
+.RData
+.Rproj.user/
