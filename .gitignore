@@ -11,3 +11,7 @@
 
 # Regenerable fitted-model blob (rebuild via scripts/model_wait_days.R)
 model_output/models.rds
+
+# Interactive leaflet maps (regenerable; render to PNG locally with webshot2)
+model_output/supp/*_physician_locations.html
+model_output/supp/*_physician_locations_files/
