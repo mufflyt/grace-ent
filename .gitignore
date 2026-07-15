@@ -8,3 +8,6 @@
 .Rhistory
 .RData
 .Rproj.user/
+
+# Regenerable fitted-model blob (rebuild via scripts/model_wait_days.R)
+model_output/models.rds
