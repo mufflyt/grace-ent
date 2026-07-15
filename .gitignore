@@ -25,3 +25,6 @@ model_output/isochrones/resume.log
 # Rendered manuscript previews (regenerable; keep .docx, drop bulky html)
 manuscript_output/*.html
 manuscript_output/*_files/
+
+# Uncompressed TIFF companions (keep PNG)
+model_output/*.tiff

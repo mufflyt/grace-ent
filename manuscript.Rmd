@@ -124,7 +124,11 @@ Under Tukey-adjusted pairwise comparison no subspecialty pair reached significan
 
 ## Figures
 
-**Figure 1. Participant flow (STROBE).** *Rendered from `model_output/strobe_flow.dot` with Graphviz.*
+**Figure 1. Participant flow (STROBE).** *Generated with `mysterycall_strobe_flow()`.*
+
+```{r fig1, fig.cap="Figure 1. Participant flow from calls placed to the two analytic samples."}
+knitr::include_graphics(file.path(OUT, "strobe_flow_mysterycall.png"))
+```
 
 **Figure 2. Access (odds ratios) and timeliness (incidence rate ratios).**
 
