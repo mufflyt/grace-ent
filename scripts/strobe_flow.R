@@ -22,11 +22,15 @@ mysterycall_strobe_flow(
   n_included = 731,   # analytic sample (subspecialty determinable)
   n_logistic = 731,   # access model (appointment offered vs not)
   n_waittime = 430,   # timeliness model (business-day wait recorded)
+  label_total    = "Calls placed",
+  label_calldate = "Complete data collection",
+  label_included = "Analytic sample (subspecialty known)",
+  label_logistic = "Access model (appointment offered vs not)",
+  label_waittime = "Timeliness model (business-day wait)",
+  label_excl_calldate = "Incomplete data collection",
+  label_excl_screen   = "Subspecialty undetermined",
+  label_excl_waittime = "No appointment offered / no wait recorded",
   title       = "Participant flow (STROBE)",
   output_path = "model_output/strobe_flow_mysterycall.png"
 )
 cat("Wrote model_output/strobe_flow_mysterycall.png\n")
-
-# NOTE: the custom exclusion-label arguments (label_excl_*, excl_detail) trigger
-# a 'subscript out of bounds' error in mysterycall_strobe_flow() (a bug in that
-# code path), so the function's accurate default labels are used here.
