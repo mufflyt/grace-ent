@@ -142,12 +142,46 @@ knitr::include_graphics(file.path(OUT, "forest_access_timeliness.png"))
 knitr::include_graphics(file.path(ISO, "figS7_ent_drivetime_coverage.png"))
 ```
 
-## Supplementary material
+\newpage
 
-Supplementary tables S1–S7 (full models; wait time by subspecialty, rurality, and region; offer-rate disparities) and figures S1–S6 (Kaplan–Meier time-to-appointment, wait-time distribution, model diagnostics, and geographic choropleths) are provided; legends are in `docs/supplementary_legends.md`.
+# Supplementary Material
 
-```{r suppfigs, out.width="49%", fig.show="hold", fig.cap="Supplementary figures S1 (time-to-appointment) and S2 (wait distribution)."}
-sf1 <- file.path(SUPP, "figS1_km_time_to_appointment.png")
-sf2 <- file.path(SUPP, "figS2_wait_distribution.png")
-knitr::include_graphics(c(sf1, sf2)[file.exists(c(sf1, sf2))])
+## Supplementary Tables
+
+```{r suppT, results='asis'}
+supp_tables <- c(
+  "Table S1. Full access model (all odds ratios)."            = "S1_access_full_model.csv",
+  "Table S2. Full timeliness model (all rate ratios)."        = "S2_timeliness_full_model.csv",
+  "Table S3. Business-day wait by subspecialty."              = "S3_wait_by_subspecialty.csv",
+  "Table S4. Business-day wait by rurality."                  = "S4_wait_by_rurality.csv",
+  "Table S5. Business-day wait by AAO-HNS region."            = "S5_wait_by_region.csv",
+  "Table S6. Appointment offer-rate disparities by region."  = "S6_offer_disparities_by_region.csv",
+  "Table S7. Access vs. timeliness models, side by side."     = "S7_access_vs_timeliness.csv")
+for (cap in names(supp_tables)) {
+  df <- rd(file.path(SUPP, supp_tables[[cap]]))
+  if (is.null(df)) next
+  num_cols <- sapply(df, is.numeric)
+  df[num_cols] <- lapply(df[num_cols], function(x) round(x, 3))
+  # kable renders as a pandoc pipe table -> real Word/HTML table (loop-safe)
+  cat("\n\n", knitr::kable(df, caption = cap, format = "pipe"), sep = "\n")
+  cat("\n\n")
+}
 ```
+
+## Supplementary Figures
+
+```{r suppF, results='asis'}
+supp_figs <- c(
+  "Figure S1. Kaplan–Meier time to secured appointment, by subspecialty." = "figS1_km_time_to_appointment.png",
+  "Figure S2. Business-day wait-time distribution by subspecialty."       = "figS2_wait_distribution.png",
+  "Figure S3. Negative binomial model diagnostics (DHARMa)."              = "figS3_nb_diagnostics.png",
+  "Figure S4a. Appointment offer rate by AAO-HNS region."                 = "figS4_choropleth_offer_rate.png",
+  "Figure S4b. Median business-day wait by AAO-HNS region."               = "figS4_choropleth_median_wait.png",
+  "Figure S5. Appointment offer rate by state (mysterymaps)."             = "figS4b_offer_rate_by_state.png")
+for (cap in names(supp_figs)) {
+  p <- file.path(SUPP, supp_figs[[cap]])
+  if (file.exists(p)) cat(sprintf("\n\n**%s**\n\n![](%s)\n\n", cap, p))
+}
+```
+
+*Full legends for all supplementary items are in `docs/supplementary_legends.md`.*
