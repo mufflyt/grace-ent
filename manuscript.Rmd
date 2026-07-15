@@ -2,6 +2,9 @@
 title: "Geographic and Subspecialty Determinants of Access to Otolaryngology Care: A National Mystery-Caller Study"
 author: "[Author list]"
 date: "`r format(Sys.Date(), '%B %Y')`"
+bibliography: manuscript/references.bib
+csl: manuscript/american-medical-association.csl
+link-citations: true
 output:
   word_document:
     reference_docx: null
@@ -65,14 +68,31 @@ ft <- function(df, cap = NULL) {
 
 *[Introduction to be written: burden of otolaryngologic disease, prior access literature, rationale for a national mystery-caller design, and the specific gap this study fills.]*
 
-```{r methods, child = "docs/manuscript_draft.md", eval = FALSE}
-```
-
 ## Methods
 
-*(Full Methods text is maintained in `docs/manuscript_draft.md`; the key elements are summarized here.)*
+### Study design and sample
 
-We conducted a cross-sectional, simulated-patient ("mystery caller") study of a national sample of board-certified otolaryngologists. Trained callers requested a new-patient appointment for a subspecialty-matched chief complaint; each physician was contacted once. Analyses were restricted to calls with a completed data-collection record and a determinable subspecialty. Two outcomes were modeled separately to avoid conditioning wait time on the offer: **access** (an appointment offered, logistic mixed model over all analytic calls) and **timeliness** (business days to the next available appointment, negative binomial mixed model over the offered subset; the negative binomial was selected over Poisson given substantial overdispersion). Both models adjusted for requested subspecialty (reference: general otolaryngology), county ENT supply per 100,000, the state Medicaid-to-Medicare fee index, the CDC/ATSDR Social Vulnerability Index, county dual-eligible fraction, and rurality (reference: urban), with a random intercept for core-based statistical area and a fixed adjustment for caller. Drive-time isochrones (30/60/120/180 minutes) were computed for each practice with the Valhalla routing engine and dissolved into national coverage polygons. Analyses used R (packages `glmmTMB`, `emmeans`); α = 0.05, two-sided.
+We conducted a cross-sectional, simulated-patient ("mystery caller") study of access to otolaryngology (ENT) care in the United States. Trained callers telephoned a national sample of practicing, board-certified otolaryngologists and, following a standardized script, requested a new-patient appointment for a subspecialty-matched chief complaint. Each sampled physician was contacted once. *[Describe the sampling frame and its size, the number and timing of call attempts before a call was recorded as unreachable, the scripted chief complaints, caller training, and the study period.]* The protocol was *[reviewed/deemed exempt]* by the *[institution]* Institutional Review Board.
+
+Analyses were restricted to calls with a completed data-collection record and a determinable physician subspecialty. This study did not manipulate patient insurance; the exposures of interest were the requested subspecialty and the geographic context of the practice.
+
+### Outcomes
+
+Two outcomes were analyzed as a two-part (hurdle) process. The first, *access*, was whether the office offered a new-patient appointment with the sampled physician (binary). The second, *timeliness*, was the number of **business days** from the call to the next available appointment, counted excluding weekends and U.S. federal holidays, and defined only for calls in which an appointment was offered.
+
+### Geographic covariates
+
+Each practice was linked to contextual covariates by practice ZIP code and state. County was assigned from a 2020 Census ZCTA-to-county crosswalk (dominant county by land area). Covariates comprised: county otolaryngologist supply per 100,000 population; the state Medicaid-to-Medicare fee index (Kaiser Family Foundation, 2024, all services) [@kfffee]; the CDC/ATSDR Social Vulnerability Index (SVI, 2022, tract-level, population-weighted to the practice ZIP) [@cdcsvi]; the county fraction of Medicare beneficiaries dual-eligible for Medicaid (CMS); metropolitan hospital-market concentration (Herfindahl–Hirschman Index [HHI], KFF 2024; available for metropolitan areas only); rurality (RUCA-based urban/suburban/rural); and the American Academy of Otolaryngology–Head and Neck Surgery (AAO-HNS) Board of Governors region.
+
+### Drive-time (isochrone) analysis
+
+Geographic reach was assessed with drive-time isochrones. Each practice was geolocated to its ZIP-code centroid, and 30-, 60-, 120-, and 180-minute driving isochrones were computed with the Valhalla routing engine (automobile profile) served from a self-hosted instance [@valhalla]. Isochrones from all practices were dissolved into a single coverage polygon per travel-time band, clipped to the continental United States, and the covered fraction of land area was computed in an equal-area projection.
+
+### Statistical analysis
+
+Because business-day wait time is observed only when an appointment is offered, we modeled access and timeliness separately to avoid conditioning wait-time estimates on the offer. *Access* was modeled with a mixed-effects logistic regression over all analytic calls; *timeliness* with a mixed-effects negative binomial regression over the offered subset. The negative binomial distribution was selected over Poisson on the basis of substantial overdispersion (Pearson φ = 6.22). Both models included a random intercept for core-based statistical area (CBSA; county FIPS where CBSA was undefined) to account for within-market correlation, and adjusted for the requested subspecialty (reference: general otolaryngology), county ENT supply, Medicaid fee index, SVI, dual-eligible fraction, and rurality (reference: urban). The identity of the caller (research assistant) was included as a fixed nuisance term. Continuous covariates were standardized and, for the few missing values (<3%), median-imputed.
+
+Effects are reported as odds ratios (access) and incidence rate ratios (timeliness) with 95% Wald confidence intervals. Pairwise differences between subspecialties were estimated with Tukey-adjusted estimated marginal means [@emmeans]. Effect modification of the geographic covariates by subspecialty was tested by likelihood-ratio tests. Market-level clustering was summarized by the intraclass correlation coefficient (ICC). Because the HHI is defined only in metropolitan areas, its association with timeliness was assessed in a sensitivity model restricted to the metropolitan subset. Whether call incompleteness was related to the measured covariates was assessed with chi-square and Wilcoxon rank-sum tests. Analyses used R 4.4.2 [@rcoreteam] (packages `glmmTMB` [@glmmTMB], `emmeans` [@emmeans], and the study package `mysterycall`); two-sided α = 0.05. Reporting follows the STROBE guideline for observational studies [@strobe].
 
 ## Results
 
@@ -185,3 +205,9 @@ for (cap in names(supp_figs)) {
 ```
 
 *Full legends for all supplementary items are in `docs/supplementary_legends.md`.*
+
+\newpage
+
+# References
+
+<div id="refs"></div>

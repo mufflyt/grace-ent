@@ -39,6 +39,7 @@ cat("loaded", nrow(iso), "isochrone polygons,", nloc(iso), "locations,",
 ALBERS <- 5070
 us <- sf::st_as_sf(maps::map("state", plot = FALSE, fill = TRUE))
 us <- sf::st_transform(sf::st_make_valid(us), ALBERS)
+bb <- sf::st_bbox(us)                      # true map extent (avoids clipping)
 conus_area_km2 <- as.numeric(sum(sf::st_area(us))) / 1e6
 
 iso <- sf::st_transform(sf::st_make_valid(iso), ALBERS)
@@ -72,14 +73,19 @@ g <- ggplot() +
   geom_sf(data = us, fill = NA, color = "white", linewidth = 0.2) +
   scale_fill_manual(values = pal, name = "Drive time (min)",
                     breaks = as.character(sort(bands))) +
-  coord_sf(crs = ALBERS, xlim = c(-2.4e6, 2.5e6), ylim = c(-1.5e6, 1.6e6)) +
+  coord_sf(crs = ALBERS,
+           xlim = c(bb["xmin"], bb["xmax"]), ylim = c(bb["ymin"], bb["ymax"]),
+           expand = FALSE) +
   labs(title = paste0("Drive-time access to sampled ENT practices",
                       if (PRELIM) " (preliminary)" else ""),
        subtitle = sprintf("Area within a 30/60/120/180-minute drive of any of %d practice locations%s",
                           length(unique(iso$loc_id)),
                           if (PRELIM) " — partial run" else "")) +
-  theme_void(base_size = 12) + theme(legend.position = "right",
-       plot.title = element_text(face = "bold"))
+  theme_void(base_size = 12) +
+  theme(legend.position = "bottom", legend.key.width = unit(1.4, "cm"),
+        plot.title = element_text(face = "bold"),
+        plot.margin = margin(6, 10, 6, 10)) +
+  guides(fill = guide_legend(nrow = 1, label.position = "bottom"))
 ggsave(file.path(outdir, paste0("figS7_ent_drivetime_coverage", suffix, ".png")), g,
-       width = 10, height = 6.5, dpi = 150)
+       width = 9, height = 6.6, dpi = 150)
 cat("\nWrote figS7_ent_drivetime_coverage", suffix, ".png + coverage stats\n", sep = "")
