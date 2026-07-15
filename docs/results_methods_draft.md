@@ -1,0 +1,170 @@
+# Methods and Results — draft prose
+
+> Draft generated from the analysis pipeline in `scripts/` and `model_output/`.
+> Numbers are exact as computed. `[bracketed italic]` text marks protocol/design
+> details that are not in the dataset and must be supplied by the study team.
+> Verify every clinical/design statement before submission.
+
+---
+
+## Methods
+
+### Study design and sample
+
+We conducted a cross-sectional, simulated-patient ("mystery caller") study of
+access to otolaryngology (ENT) care in the United States. Trained callers
+telephoned a national sample of practicing, board-certified otolaryngologists
+and, following a standardized script, requested a new-patient appointment for a
+subspecialty-matched chief complaint. Each sampled physician was contacted once.
+*[Describe the sampling frame and its size, the number and timing of call
+attempts before a call was recorded as unreachable, the scripted chief
+complaints, caller training, and the study period.]* The protocol was
+*[reviewed/deemed exempt]* by the *[institution]* Institutional Review Board.
+
+Of the calls placed, analyses were restricted to calls with a completed data-
+collection record and a determinable physician subspecialty. This study did not
+manipulate patient insurance; the exposures of interest were the requested
+subspecialty and the geographic context of the practice.
+
+### Outcomes
+
+Two outcomes were analyzed as a two-part (hurdle) process. The first, *access*,
+was whether the office offered a new-patient appointment with the sampled
+physician (binary). The second, *timeliness*, was the number of **business
+days** from the call to the next available appointment, counted excluding
+weekends and U.S. federal holidays, and defined only for calls in which an
+appointment was offered.
+
+### Geographic covariates
+
+Each practice was linked to contextual covariates by practice ZIP code and
+state. County was assigned from a 2020 Census ZCTA-to-county crosswalk (dominant
+county by land area). Covariates comprised: county otolaryngologist supply per
+100,000 population; the state Medicaid-to-Medicare fee index (Kaiser Family
+Foundation, 2024, all services); the CDC/ATSDR Social Vulnerability Index (SVI,
+2022, tract-level, population-weighted to the practice ZIP); the county fraction
+of Medicare beneficiaries who are dual-eligible for Medicaid (CMS); metropolitan
+hospital-market concentration (Herfindahl–Hirschman Index [HHI], KFF 2024;
+available for metropolitan areas only); rurality (RUCA-based urban/suburban/
+rural); and the American Academy of Otolaryngology–Head and Neck Surgery
+(AAO-HNS) Board of Governors region.
+
+### Statistical analysis
+
+Because business-day wait time is observed only when an appointment is offered,
+we modeled access and timeliness separately to avoid conditioning wait-time
+estimates on the offer. *Access* was modeled with a mixed-effects logistic
+regression over all analytic calls; *timeliness* with a mixed-effects negative
+binomial regression over the offered subset. The negative binomial distribution
+was selected over Poisson on the basis of substantial overdispersion (Pearson
+φ = 6.22). Both models included a random intercept for core-based statistical
+area (CBSA; county FIPS where CBSA was undefined) to account for within-market
+correlation, and adjusted for the requested subspecialty (reference: general
+otolaryngology), county ENT supply, Medicaid fee index, SVI, dual-eligible
+fraction, and rurality (reference: urban). The identity of the caller (research
+assistant) was included as a fixed nuisance term. Continuous covariates were
+standardized (z-scored) and, for the few missing values (<3%), median-imputed.
+
+Effects are reported as odds ratios (access) and incidence rate ratios
+(timeliness) with 95% Wald confidence intervals. Pairwise differences between
+subspecialties were estimated with Tukey-adjusted estimated marginal means.
+Effect modification of the geographic covariates by subspecialty was tested by
+likelihood-ratio tests. Market-level clustering was summarized by the intraclass
+correlation coefficient (ICC). Because the HHI is defined only in metropolitan
+areas, its association with timeliness was assessed in a sensitivity model
+restricted to the metropolitan subset. Whether call incompleteness was related
+to the measured covariates (i.e., missing-not-completely-at-random) was assessed
+with chi-square and Wilcoxon rank-sum tests. Analyses used R 4.4.2 (packages
+`glmmTMB`, `emmeans`, and the study package `mysterycall`); two-sided α = 0.05.
+
+---
+
+## Results
+
+### Sample and attrition
+
+Callers placed 960 calls. Data collection was completed for 749 (78.0%); of
+these, 731 had a determinable subspecialty and constituted the analytic sample.
+An appointment with the sampled physician was offered in 433 of 731 analytic
+calls (59.2%), and a business-day wait time was recorded for 430. The most
+frequently requested categories were general otolaryngology (68.5%), facial
+plastics (10.7%), and pediatric otolaryngology (6.2%); practices were 50.2%
+urban, 42.0% suburban, and 7.8% rural (Table 1). The median next-available wait,
+when an appointment was offered, was 14 business days (IQR 5–30; maximum 774).
+
+### Access to appointments
+
+In the adjusted logistic model, the requested subspecialty was the dominant
+determinant of whether an appointment was offered. Relative to general
+otolaryngology, pediatric otolaryngology had more than twice the odds of an
+offer (OR 2.26, 95% CI 1.08–4.75; p = 0.031), while otology/neurotology trended
+lower (OR 0.49, 95% CI 0.23–1.07; p = 0.074). None of the geographic covariates
+was associated with access: county ENT supply (OR 0.96 per SD; p = 0.60),
+Medicaid fee index (OR 0.91; p = 0.25), SVI (OR 0.95; p = 0.58), dual-eligible
+fraction (OR 1.00; p = 0.97), and rurality (rural vs urban OR 0.93; p = 0.82)
+were all null. Market-level clustering in access was modest (CBSA ICC 4.3%).
+
+### Timeliness of appointments
+
+Among offices offering an appointment, wait time again varied by subspecialty
+and not by geography. Relative to general otolaryngology, waits were longer for
+laryngology (IRR 2.25, 95% CI 1.13–4.46; p = 0.020) and pediatric otolaryngology
+(IRR 1.54, 95% CI 1.04–2.28; p = 0.031). Estimated marginal median-scale waits
+ranged from 18.4 business days for general otolaryngology to 41.3 for laryngology
+and 28.3 for pediatric otolaryngology. No geographic covariate was associated
+with wait time (all IRRs 0.95–0.98; p ≥ 0.42). The negative binomial dispersion
+parameter was θ = 1.33, consistent with the heavy right tail of the wait-time
+distribution.
+
+Notably, the two subspecialties that were *easier to reach* (pediatric
+otolaryngology) or that carried the *longest waits* (laryngology, pediatric
+otolaryngology) diverge from the general-practice baseline in opposite directions
+for access versus timeliness, underscoring that "getting in the door" and "being
+seen promptly" are distinct dimensions of access.
+
+### Robustness and sensitivity
+
+Under Tukey-adjusted pairwise comparison of the eight subspecialties, no single
+subspecialty pair reached significance (smallest adjusted p = 0.064 for
+otology/neurotology vs pediatric otolaryngology, access), consistent with the
+subspecialty signal being present relative to the common reference but modest
+under strict multiplicity control. The subspecialty effect did not vary by
+rurality (interaction LRT p = 0.23) or by ENT supply (p = 0.54). In the
+metropolitan sensitivity model (n = 264 offered), greater hospital-market
+concentration was associated with a borderline increase in wait time (HHI
+IRR 1.20 per SD, 95% CI 0.99–1.46; p = 0.058) — the only geographic factor to
+approach significance, and one not estimable in the primary model because HHI is
+defined only for metropolitan areas.
+
+### Missing-data assessment
+
+Call incompleteness (data collection not completed) was unrelated to rurality
+(p = 0.96), AAO-HNS region (p = 0.60), county ENT supply (p = 0.53), or the
+Medicaid fee index (p = 0.70), supporting a missing-completely-at-random
+mechanism with respect to practice geography. Incomplete calls did originate
+from areas of modestly higher social vulnerability (median SVI 0.53 vs 0.48;
+p = 0.016), which we note as a limitation. As expected, incompleteness was
+strongly associated with an undetermined subspecialty (p < 0.001), reflecting
+that subspecialty was often indeterminable precisely when a call could not be
+completed. Because business-day wait time is structurally missing whenever no
+appointment is offered, the two-part model estimates timeliness only among
+offering offices and does not extrapolate wait times to offices that declined to
+offer an appointment.
+
+---
+
+## Limitations to address in the Discussion
+
+- **Statistical power.** The pre-specified power analysis targeted a rural-vs-urban
+  wait difference of 3–5 business days at 90% power assuming SD ≈ 14 days; the
+  realized wait-time SD was ≈43 days and the rural sample was small (57 complete,
+  32 with wait times), so the study is underpowered for the geographic and rural
+  contrasts. The pre-specified insurance contrast could not be evaluated because
+  this phase did not vary patient insurance. *[Reconcile with the registered
+  analysis plan; see the power-analysis scripts.]*
+- **Single call per physician** limits within-physician inference.
+- **Two records** had a practice ZIP that resolved across a state line (a source
+  state entry and a crosswalk edge case, 0.2% of the sample); results are
+  unchanged if these are excluded or corrected.
+- Residual social-vulnerability–related incompleteness (above) may modestly
+  under-represent the most vulnerable areas.
