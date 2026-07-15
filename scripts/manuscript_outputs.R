@@ -1,0 +1,112 @@
+#!/usr/bin/env Rscript
+# =============================================================================
+# Manuscript-ready outputs for the ENT mystery-caller access study. Built
+# self-contained (ggplot2/base) so they do not depend on package reporting
+# functions:
+#
+#   1. Table 1  -> model_output/table1_characteristics.csv  (sample description)
+#   2. STROBE flow -> model_output/strobe_flow.dot           (Graphviz; + text)
+#   3. Forest plot -> model_output/forest_access_timeliness.png
+#      (access OR + timeliness IRR for subspecialty and geographic covariates)
+#
+# Reads the fitted-model tables written by scripts/model_wait_days.R.
+# Run:  Rscript scripts/manuscript_outputs.R
+# =============================================================================
+
+suppressPackageStartupMessages({library(ggplot2)})
+options(stringsAsFactors = FALSE)
+outdir <- "model_output"; dir.create(outdir, showWarnings = FALSE)
+num <- function(x) suppressWarnings(as.numeric(x))
+d <- read.csv("data/processed/ent_phase2_enriched.csv", colClasses = "character")
+comp <- d[d$complete == "Complete" & d$ent_type != "", ]
+comp$offered <- comp$appointment_offered == "TRUE"
+comp$w <- num(comp$wait_days_business)
+
+# ---- 1. TABLE 1 -------------------------------------------------------------
+cat_row <- function(var, label) {
+  tb <- table(comp[[var]]); pct <- round(100*prop.table(tb),1)
+  data.frame(Characteristic = paste0(label, ": ", names(tb)),
+             Value = sprintf("%d (%.1f%%)", as.integer(tb), pct))
+}
+num_row <- function(var, label) {
+  x <- num(comp[[var]])
+  data.frame(Characteristic = paste0(label, " [median (IQR)]"),
+             Value = sprintf("%.2f (%.2f-%.2f)", median(x,na.rm=TRUE),
+                             quantile(x,.25,na.rm=TRUE), quantile(x,.75,na.rm=TRUE)))
+}
+t1 <- rbind(
+  data.frame(Characteristic = sprintf("N (complete calls, subspecialty known)"),
+             Value = as.character(nrow(comp))),
+  cat_row("ent_type", "Subspecialty"),
+  cat_row("ruca_category", "Rurality"),
+  cat_row("aao_hns_region", "AAO-HNS region"),
+  num_row("ent_per_100k", "ENT per 100k"),
+  num_row("medicaid_fee_index", "Medicaid fee index"),
+  num_row("svi_overall", "SVI (overall)"),
+  num_row("dual_pct", "Dual-eligible fraction"),
+  data.frame(Characteristic = "Appointment offered",
+             Value = sprintf("%d (%.1f%%)", sum(comp$offered), 100*mean(comp$offered))),
+  data.frame(Characteristic = "Business-day wait, if offered [median (IQR)]",
+             Value = sprintf("%.0f (%.0f-%.0f)", median(comp$w[comp$offered],na.rm=TRUE),
+                             quantile(comp$w[comp$offered],.25,na.rm=TRUE),
+                             quantile(comp$w[comp$offered],.75,na.rm=TRUE))))
+write.csv(t1, file.path(outdir, "table1_characteristics.csv"), row.names = FALSE)
+cat("Wrote table1_characteristics.csv (", nrow(t1), "rows)\n")
+
+# ---- 2. STROBE FLOW ---------------------------------------------------------
+n_total <- nrow(d); n_cplt <- sum(d$complete=="Complete")
+n_analytic <- nrow(comp); n_off <- sum(comp$offered); n_wait <- sum(!is.na(comp$w))
+dot <- sprintf('digraph strobe {
+  rankdir=TB; node [shape=box, style=rounded, fontname="Helvetica"];
+  a [label="Calls placed\\nn = %d"];
+  b [label="Complete calls\\nn = %d"];
+  c [label="Analytic sample\\n(subspecialty known)\\nn = %d"];
+  e [label="Appointment offered\\nn = %d (%.1f%%)"];
+  f [label="Business-day wait recorded\\nn = %d"];
+  xa [shape=box, style=dashed, label="Incomplete data collection\\nn = %d"];
+  xb [shape=box, style=dashed, label="Subspecialty undetermined\\nn = %d"];
+  xe [shape=box, style=dashed, label="No appointment offered\\nn = %d"];
+  a -> b; b -> c; c -> e; e -> f;
+  a -> xa [style=dashed]; b -> xb [style=dashed]; c -> xe [style=dashed];
+}', n_total, n_cplt, n_analytic, n_off, 100*n_off/n_analytic, n_wait,
+    n_total-n_cplt, n_cplt-n_analytic, n_analytic-n_off)
+writeLines(dot, file.path(outdir, "strobe_flow.dot"))
+cat("Wrote strobe_flow.dot (render: dot -Tpng strobe_flow.dot -o strobe_flow.png)\n")
+
+# ---- 3. FOREST PLOT ---------------------------------------------------------
+pretty <- function(t) {
+  t <- sub("^ent_type", "Subspecialty: ", t)
+  t <- sub("_z$", "", t)
+  t <- gsub("ent_per_100k", "ENT per 100k (SD)", t)
+  t <- gsub("medicaid_fee_index", "Medicaid fee index (SD)", t)
+  t <- gsub("svi_overall", "SVI (SD)", t)
+  t <- gsub("dual_pct", "Dual-eligible % (SD)", t)
+  t <- gsub("ruralRural", "Rural (vs urban)", t); t <- gsub("ruralSuburban", "Suburban (vs urban)", t)
+  t
+}
+load_eff <- function(csv, est, panel) {
+  x <- read.csv(csv)
+  x <- x[!grepl("Intercept|caller_f", x$term), ]
+  data.frame(term = pretty(x$term), est = x[[est]], lo = x$ci_lower, hi = x$ci_upper,
+             panel = panel, p = num(x$p_value))
+}
+fa <- load_eff(file.path(outdir,"part1_access_OR.csv"),  "or",  "Access (OR)")
+fw <- load_eff(file.path(outdir,"part2_wait_IRR.csv"),   "irr", "Timeliness (IRR)")
+fp <- rbind(fa, fw)
+fp$sig <- ifelse(fp$p < 0.05, "p < 0.05", "n.s.")
+fp$term <- factor(fp$term, levels = rev(unique(fp$term)))
+
+g <- ggplot(fp, aes(est, term, color = sig)) +
+  geom_vline(xintercept = 1, linetype = "dashed", color = "grey50") +
+  geom_errorbarh(aes(xmin = lo, xmax = hi), height = 0.25) +
+  geom_point(size = 2) +
+  facet_wrap(~panel, scales = "free_x") +
+  scale_x_log10() +
+  scale_color_manual(values = c("p < 0.05" = "#b2182b", "n.s." = "grey40")) +
+  labs(x = "Ratio (log scale) — OR for access, IRR for wait days",
+       y = NULL, color = NULL,
+       title = "ENT appointment access and timeliness",
+       subtitle = "Reference: General ENT, urban. Adjusted two-part model, market random intercept.") +
+  theme_bw(base_size = 11) + theme(legend.position = "top")
+ggsave(file.path(outdir, "forest_access_timeliness.png"), g, width = 10, height = 6, dpi = 150)
+cat("Wrote forest_access_timeliness.png\n")

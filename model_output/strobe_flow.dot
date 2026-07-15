@@ -1,0 +1,13 @@
+digraph strobe {
+  rankdir=TB; node [shape=box, style=rounded, fontname="Helvetica"];
+  a [label="Calls placed\nn = 960"];
+  b [label="Complete calls\nn = 749"];
+  c [label="Analytic sample\n(subspecialty known)\nn = 731"];
+  e [label="Appointment offered\nn = 433 (59.2%)"];
+  f [label="Business-day wait recorded\nn = 430"];
+  xa [shape=box, style=dashed, label="Incomplete data collection\nn = 211"];
+  xb [shape=box, style=dashed, label="Subspecialty undetermined\nn = 18"];
+  xe [shape=box, style=dashed, label="No appointment offered\nn = 298"];
+  a -> b; b -> c; c -> e; e -> f;
+  a -> xa [style=dashed]; b -> xb [style=dashed]; c -> xe [style=dashed];
+}
