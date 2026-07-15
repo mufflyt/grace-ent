@@ -15,3 +15,9 @@ model_output/models.rds
 # Interactive leaflet maps (regenerable; render to PNG locally with webshot2)
 model_output/supp/*_physician_locations.html
 model_output/supp/*_physician_locations_files/
+
+# Isochrone data blobs (regenerable via scripts/valhalla_ent_isochrones.R; large)
+model_output/isochrones/*.gpkg
+model_output/isochrones/*.rds
+model_output/isochrones/batch.log
+model_output/isochrones/resume.log
