@@ -1,0 +1,149 @@
+---
+title: "Geographic and Subspecialty Determinants of Access to Otolaryngology Care: A National Mystery-Caller Study"
+author: "[Author list]"
+date: "`r format(Sys.Date(), '%B %Y')`"
+output:
+  word_document:
+    reference_docx: null
+    fig_caption: true
+  html_document:
+    toc: true
+    toc_float: true
+    theme: readable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
+                      fig.align = "center", dpi = 150, out.width = "100%")
+suppressPackageStartupMessages({library(flextable); library(dplyr)})
+OUT  <- "model_output"; SUPP <- file.path(OUT, "supp"); ISO <- file.path(OUT, "isochrones")
+num  <- function(x) suppressWarnings(as.numeric(x))
+rd   <- function(f) tryCatch(read.csv(f, check.names = FALSE), error = function(e) NULL)
+
+# --- reproducible sample numbers from the enriched call log ------------------
+d <- read.csv(file.path("data/processed/ent_phase2_enriched.csv"), colClasses = "character")
+comp <- d[d$complete == "Complete" & d$ent_type != "", ]
+comp$offered <- comp$appointment_offered == "TRUE"
+comp$w <- num(comp$wait_days_business)
+N_total <- nrow(d); N_complete <- sum(d$complete == "Complete"); N_analytic <- nrow(comp)
+N_off <- sum(comp$offered); pct_off <- 100 * mean(comp$offered)
+N_wait <- sum(!is.na(comp$w)); med_wait <- median(comp$w[comp$offered], na.rm = TRUE)
+q_wait <- quantile(comp$w[comp$offered], c(.25, .75), na.rm = TRUE)
+
+# --- effect extractor: pull OR/IRR (95% CI, p) for a term from a model CSV ---
+eff <- function(csv, term, col) {
+  x <- rd(csv); if (is.null(x)) return("[NA]")
+  r <- x[x$term == term, ]; if (!nrow(r)) return("[NA]")
+  p <- num(r$p_value)
+  sprintf("%.2f (95%% CI %.2f–%.2f; p%s)", num(r[[col]]), num(r$ci_lower), num(r$ci_upper),
+          if (p < 0.001) " < 0.001" else sprintf(" = %.3f", p))
+}
+acc <- function(term) eff(file.path(OUT, "part1_access_OR.csv"), term, "or")
+irr <- function(term) eff(file.path(OUT, "part2_wait_IRR.csv"), term, "irr")
+
+# --- isochrone coverage ------------------------------------------------------
+covs <- rd(file.path(ISO, "drivetime_coverage_stats.csv"))
+cov_at <- function(b) if (is.null(covs)) NA else covs$pct_conus_land[covs$band_min == b]
+
+ft <- function(df, cap = NULL) {
+  f <- flextable(df) |> autofit() |> theme_booktabs() |> fontsize(size = 9, part = "all")
+  if (!is.null(cap)) f <- set_caption(f, cap); f
+}
+```
+
+## Abstract
+
+**Objective.** To quantify subspecialty- and geography-related disparities in access to and timeliness of otolaryngology (ENT) care in the United States using a national simulated-patient design.
+
+**Methods.** In a cross-sectional mystery-caller study, trained callers requested new-patient appointments from a national sample of board-certified otolaryngologists using subspecialty-matched scripts. We modeled two outcomes with a two-part (hurdle) approach: appointment *offer* (mixed-effects logistic regression) and *business-day wait* among offers (mixed-effects negative binomial regression), each adjusting for requested subspecialty, county ENT supply, the state Medicaid fee index, social vulnerability, dual-eligibility, and rurality, with a core-based statistical area random intercept. Geographic reach was assessed with drive-time isochrones (Valhalla routing) around each practice.
+
+**Results.** Of `r N_total` calls, `r N_analytic` complete calls with a known subspecialty were analyzed; an appointment was offered in `r N_off` (`r sprintf('%.1f', pct_off)`%), with a median wait of `r med_wait` business days (IQR `r q_wait[1]`–`r q_wait[2]`). Requested subspecialty was the dominant determinant: pediatric otolaryngology had higher odds of an offer (OR `r acc('ent_typePediatrics')`), and waits were longer for laryngology (IRR `r irr('ent_typeLaryngology')`) and pediatric otolaryngology (IRR `r irr('ent_typePediatrics')`). No geographic covariate was associated with either outcome. Drive-time analysis showed `r sprintf('%.0f', cov_at(180))`% of continental U.S. land lies within a 180-minute drive of a sampled practice, leaving roughly one-fifth of the country beyond a 3-hour drive.
+
+**Conclusions.** Access to otolaryngology care is shaped more by the requested subspecialty and by large under-served geographic areas than by local supply, insurance generosity, or social vulnerability.
+
+## Introduction
+
+*[Introduction to be written: burden of otolaryngologic disease, prior access literature, rationale for a national mystery-caller design, and the specific gap this study fills.]*
+
+```{r methods, child = "docs/manuscript_draft.md", eval = FALSE}
+```
+
+## Methods
+
+*(Full Methods text is maintained in `docs/manuscript_draft.md`; the key elements are summarized here.)*
+
+We conducted a cross-sectional, simulated-patient ("mystery caller") study of a national sample of board-certified otolaryngologists. Trained callers requested a new-patient appointment for a subspecialty-matched chief complaint; each physician was contacted once. Analyses were restricted to calls with a completed data-collection record and a determinable subspecialty. Two outcomes were modeled separately to avoid conditioning wait time on the offer: **access** (an appointment offered, logistic mixed model over all analytic calls) and **timeliness** (business days to the next available appointment, negative binomial mixed model over the offered subset; the negative binomial was selected over Poisson given substantial overdispersion). Both models adjusted for requested subspecialty (reference: general otolaryngology), county ENT supply per 100,000, the state Medicaid-to-Medicare fee index, the CDC/ATSDR Social Vulnerability Index, county dual-eligible fraction, and rurality (reference: urban), with a random intercept for core-based statistical area and a fixed adjustment for caller. Drive-time isochrones (30/60/120/180 minutes) were computed for each practice with the Valhalla routing engine and dissolved into national coverage polygons. Analyses used R (packages `glmmTMB`, `emmeans`); α = 0.05, two-sided.
+
+## Results
+
+### Sample and attrition
+
+Callers placed `r N_total` calls; `r N_complete` (`r sprintf('%.1f', 100*N_complete/N_total)`%) were completed, of which `r N_analytic` had a determinable subspecialty and formed the analytic sample. An appointment was offered in `r N_off` of `r N_analytic` (`r sprintf('%.1f', pct_off)`%); the median next-available wait was `r med_wait` business days (IQR `r q_wait[1]`–`r q_wait[2]`). Sample characteristics are shown in **Table 1**, and the participant flow in **Figure 1**.
+
+```{r table1}
+t1 <- rd(file.path(OUT, "table1_characteristics.csv"))
+if (!is.null(t1)) ft(t1, "Table 1. Characteristics of the analytic sample.")
+```
+
+### Access to appointments
+
+The requested subspecialty was the dominant determinant of whether an appointment was offered. Relative to general otolaryngology, pediatric otolaryngology had over twice the odds of an offer (OR `r acc('ent_typePediatrics')`), while otology/neurotology trended lower (OR `r acc('ent_typeOtology/neurotology')`). No geographic covariate was associated with access: county ENT supply (OR `r acc('ent_per_100k_z')` per SD), the Medicaid fee index (OR `r acc('medicaid_fee_index_z')`), social vulnerability (OR `r acc('svi_overall_z')`), and dual-eligibility (OR `r acc('dual_pct_z')`) were all null (**Figure 2**).
+
+### Timeliness of appointments
+
+Among offering offices, waits again varied by subspecialty and not geography. Relative to general otolaryngology, waits were longer for laryngology (IRR `r irr('ent_typeLaryngology')`) and pediatric otolaryngology (IRR `r irr('ent_typePediatrics')`). No geographic covariate was associated with wait time (**Figure 2**; **Table 2**).
+
+```{r table2}
+a <- rd(file.path(OUT, "part1_access_OR.csv")); b <- rd(file.path(OUT, "part2_wait_IRR.csv"))
+mk <- function(x, est) if (is.null(x)) NULL else data.frame(
+  Term = x$term,
+  Estimate = sprintf("%.2f (%.2f–%.2f)", num(x[[est]]), num(x$ci_lower), num(x$ci_upper)),
+  p = ifelse(num(x$p_value) < 0.001, "<0.001", sprintf("%.3f", num(x$p_value))),
+  check.names = FALSE)
+ta <- mk(a, "or"); tb <- mk(b, "irr")
+if (!is.null(ta)) { names(ta)[2] <- "OR (95% CI)"; ft(ta[!grepl("caller|Intercept", ta$Term), ],
+   "Table 2a. Access model (odds ratios).") }
+```
+
+```{r table2b}
+if (!is.null(tb)) { names(tb)[2] <- "IRR (95% CI)"; ft(tb[!grepl("caller|Intercept", tb$Term), ],
+   "Table 2b. Timeliness model (incidence rate ratios).") }
+```
+
+### Geographic reach (drive-time access)
+
+Drive-time isochrones around the `r length(unique(comp$zip[comp$offered | !comp$offered]))`-plus sampled practices show that access is limited less by local supply than by large under-served areas: `r sprintf('%.1f', cov_at(30))`%, `r sprintf('%.1f', cov_at(60))`%, `r sprintf('%.1f', cov_at(120))`%, and `r sprintf('%.1f', cov_at(180))`% of continental U.S. land area lies within a 30-, 60-, 120-, and 180-minute drive of a sampled practice, respectively (**Figure 3**). Roughly one-fifth of the country is more than a 3-hour drive from any sampled otolaryngologist, concentrated in the Mountain West, Great Plains, and desert Southwest.
+
+### Robustness and missing data
+
+Under Tukey-adjusted pairwise comparison no subspecialty pair reached significance, and the subspecialty effect did not vary by rurality or supply (interaction likelihood-ratio tests, both non-significant). In a metropolitan sensitivity model, greater hospital-market concentration was associated with a borderline increase in wait time (HHI IRR 1.20 per SD; p = 0.058). Call incompleteness was unrelated to practice geography, supporting a missing-at-random mechanism with respect to location (Supplement).
+
+## Discussion
+
+*[Discussion to be written.]* Three findings anchor the interpretation. First, **who you ask for matters more than where you are**: the requested subspecialty drove both the odds of an appointment and the wait, whereas local ENT supply, Medicaid generosity, social vulnerability, and dual-eligibility were uniformly null. Second, **pediatric and laryngology care are timeliness bottlenecks** even where access exists. Third, the apparent absence of a geographic *covariate* effect coexists with a stark geographic *coverage* gap — roughly a fifth of the U.S. land area is beyond a 3-hour drive of any sampled practice — indicating that the access problem is one of absolute absence in large regions rather than gradients in supply where practices exist. Limitations include modest power for the rural and geographic contrasts, a single call per physician, and ZIP-centroid geolocation for the drive-time analysis.
+
+## Figures
+
+**Figure 1. Participant flow (STROBE).** *Rendered from `model_output/strobe_flow.dot` with Graphviz.*
+
+**Figure 2. Access (odds ratios) and timeliness (incidence rate ratios).**
+
+```{r fig2, fig.cap="Figure 2. Adjusted access and timeliness effects."}
+knitr::include_graphics(file.path(OUT, "forest_access_timeliness.png"))
+```
+
+**Figure 3. National drive-time access to sampled ENT practices.**
+
+```{r fig3, fig.cap="Figure 3. Land area within a 30/60/120/180-minute drive of any sampled practice."}
+knitr::include_graphics(file.path(ISO, "figS7_ent_drivetime_coverage.png"))
+```
+
+## Supplementary material
+
+Supplementary tables S1–S7 (full models; wait time by subspecialty, rurality, and region; offer-rate disparities) and figures S1–S6 (Kaplan–Meier time-to-appointment, wait-time distribution, model diagnostics, and geographic choropleths) are provided; legends are in `docs/supplementary_legends.md`.
+
+```{r suppfigs, out.width="49%", fig.show="hold", fig.cap="Supplementary figures S1 (time-to-appointment) and S2 (wait distribution)."}
+sf1 <- file.path(SUPP, "figS1_km_time_to_appointment.png")
+sf2 <- file.path(SUPP, "figS2_wait_distribution.png")
+knitr::include_graphics(c(sf1, sf2)[file.exists(c(sf1, sf2))])
+```

@@ -21,3 +21,7 @@ model_output/isochrones/*.gpkg
 model_output/isochrones/*.rds
 model_output/isochrones/batch.log
 model_output/isochrones/resume.log
+
+# Rendered manuscript previews (regenerable; keep .docx, drop bulky html)
+manuscript_output/*.html
+manuscript_output/*_files/
