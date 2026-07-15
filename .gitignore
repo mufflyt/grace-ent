@@ -28,3 +28,6 @@ manuscript_output/*_files/
 
 # Uncompressed TIFF companions (keep PNG)
 model_output/*.tiff
+
+# Published artifact source (regenerable; large base64)
+manuscript/artifact.html

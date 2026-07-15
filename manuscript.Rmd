@@ -132,7 +132,7 @@ if (!is.null(tb)) { names(tb)[2] <- "IRR (95% CI)"; ft(tb[!grepl("caller|Interce
 
 ### Geographic reach (drive-time access)
 
-Drive-time isochrones around the `r length(unique(comp$zip[comp$offered | !comp$offered]))`-plus sampled practices show that access is limited less by local supply than by large under-served areas: `r sprintf('%.1f', cov_at(30))`%, `r sprintf('%.1f', cov_at(60))`%, `r sprintf('%.1f', cov_at(120))`%, and `r sprintf('%.1f', cov_at(180))`% of continental U.S. land area lies within a 30-, 60-, 120-, and 180-minute drive of a sampled practice, respectively (**Figure 3**). Roughly one-fifth of the country is more than a 3-hour drive from any sampled otolaryngologist, concentrated in the Mountain West, Great Plains, and desert Southwest.
+Drive-time isochrones around the `r nrow(read.csv("data/processed/ent_unique_locations.csv"))` distinct sampled practice locations show that access is limited less by local supply than by large under-served areas: `r sprintf('%.1f', cov_at(30))`%, `r sprintf('%.1f', cov_at(60))`%, `r sprintf('%.1f', cov_at(120))`%, and `r sprintf('%.1f', cov_at(180))`% of continental U.S. land area lies within a 30-, 60-, 120-, and 180-minute drive of a sampled practice, respectively (**Figure 3**). Roughly one-fifth of the country is more than a 3-hour drive from any sampled otolaryngologist, concentrated in the Mountain West, Great Plains, and desert Southwest.
 
 ### Robustness and missing data
 
