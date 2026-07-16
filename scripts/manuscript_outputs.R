@@ -75,14 +75,21 @@ cat("Wrote strobe_flow.dot (render: dot -Tpng strobe_flow.dot -o strobe_flow.png
 
 # ---- 3. FOREST PLOT ---------------------------------------------------------
 pretty <- function(t) {
-  t <- sub("^ent_type", "Subspecialty: ", t)
-  t <- sub("_z$", "", t)
-  t <- gsub("ent_per_100k", "ENT per 100k (SD)", t)
-  t <- gsub("medicaid_fee_index", "Medicaid fee index (SD)", t)
-  t <- gsub("svi_overall", "SVI (SD)", t)
-  t <- gsub("dual_pct", "Dual-eligible % (SD)", t)
-  t <- gsub("ruralRural", "Rural (vs urban)", t); t <- gsub("ruralSuburban", "Suburban (vs urban)", t)
-  t
+  map <- c(
+    "ent_typeFacial Plastics"      = "Facial plastic surgery",
+    "ent_typeHead and Neck Cancer" = "Head and neck oncology",
+    "ent_typeLaryngology"          = "Laryngology",
+    "ent_typeOtology/neurotology"  = "Otology/neurotology",
+    "ent_typePediatrics"           = "Pediatric otolaryngology",
+    "ent_typeRhinology"            = "Rhinology",
+    "ent_typeSleep"                = "Sleep medicine",
+    "ent_per_100k_z"               = "Otolaryngologist density (per SD)",
+    "medicaid_fee_index_z"         = "Medicaid fee index (per SD)",
+    "svi_overall_z"                = "Social Vulnerability Index (per SD)",
+    "dual_pct_z"                   = "Dual-eligible share (per SD)",
+    "ruralRural"                   = "Rural (vs urban)",
+    "ruralSuburban"                = "Suburban (vs urban)")
+  out <- unname(map[t]); ifelse(is.na(out), t, out)
 }
 load_eff <- function(csv, est, panel) {
   x <- read.csv(csv)
@@ -105,8 +112,8 @@ g <- ggplot(fp, aes(est, term, color = sig)) +
   scale_color_manual(values = c("p < 0.05" = "#b2182b", "n.s." = "grey40")) +
   labs(x = "Ratio (log scale) — OR for access, IRR for wait days",
        y = NULL, color = NULL,
-       title = "ENT appointment access and timeliness",
-       subtitle = "Reference: General ENT, urban. Adjusted two-part model, market random intercept.") +
+       title = "Otolaryngology appointment access and timeliness",
+       subtitle = "Reference: general otolaryngology, urban. Adjusted two-part model, market random intercept.") +
   theme_bw(base_size = 11) + theme(legend.position = "top")
 ggsave(file.path(outdir, "forest_access_timeliness.png"), g, width = 10, height = 6, dpi = 150)
 cat("Wrote forest_access_timeliness.png\n")
