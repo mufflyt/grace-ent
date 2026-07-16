@@ -66,7 +66,7 @@ ft <- function(df, cap = NULL) {
 
 ## Introduction
 
-Otolaryngologic conditions—from chronic rhinosinusitis and otitis media to airway disorders and head-and-neck malignancy—are among the most common reasons patients seek specialty care, and for many of these conditions timely evaluation influences diagnosis and outcome [@bisgaier2011]. Whether a new patient can actually reach an otolaryngologist, however, is not guaranteed by the presence of physicians in a region; it depends on whether an office will offer an appointment and, if so, how long the patient must wait.
+Otolaryngologic conditions—from chronic rhinosinusitis and otitis media to airway disorders and head-and-neck malignancy—are among the most common reasons patients seek specialty care, and for many of these conditions timely evaluation influences diagnosis and outcome, with delays in the diagnosis-to-treatment interval associated with worse survival in head-and-neck cancer [@graboyes2019]. Whether a new patient can actually reach an otolaryngologist, however, is not guaranteed by the presence of physicians in a region; it depends on whether an office will offer an appointment and, if so, how long the patient must wait.
 
 Access to specialty care thus has two distinct dimensions that are often conflated: *availability*—whether a new-patient appointment is offered at all—and *timeliness*—how quickly the patient is seen. These dimensions can move independently: an office that readily books new patients may nonetheless carry a long queue, and measuring only one can mislead. Administrative and survey data capture both imperfectly, reflecting patients who have already navigated the system and remaining subject to recall and reporting bias.
 
