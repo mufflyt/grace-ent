@@ -21,7 +21,7 @@ mysterycall_strobe_flow(
   n_calldate = 749,   # complete data collection
   n_included = 731,   # analytic sample (subspecialty determinable)
   n_logistic = 731,   # access model (appointment offered vs not)
-  n_waittime = 430,   # timeliness model (business-day wait recorded)
+  n_waittime = 429,   # timeliness model (business-day wait recorded)
   label_total    = "Calls placed",
   label_calldate = "Complete data collection",
   label_included = "Analytic sample (subspecialty known)",

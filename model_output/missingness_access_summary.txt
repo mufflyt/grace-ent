@@ -4,7 +4,7 @@
   Complete (data collection succeeded)..  749 (78.0%)
   Complete + subspecialty known ........  731
   Offered an appointment ...............  433 (59.2% of analytic)
-  Wait time recorded ...................  430
+  Wait time recorded ...................  429
 
   Incomplete-call reasons (taking_new_patients among incomplete):
 
@@ -52,8 +52,8 @@ Rural Urban
 
 
 ################ 4. TIMELINESS MISSINGNESS ################
-  wait_days is observed for 430 of 731 complete calls -- structurally MNAR: it exists only when an appointment
-  was offered (offered==1 for 433 ; wait recorded for 430 ).
+  wait_days is observed for 429 of 731 complete calls -- structurally MNAR: it exists only when an appointment
+  was offered (offered==1 for 433 ; wait recorded for 429 ).
   The two-part hurdle model (scripts/model_wait_days.R) handles this by
   modeling the offer stage separately, so wait-time estimates are NOT
   extrapolated to offices that never offered an appointment.
