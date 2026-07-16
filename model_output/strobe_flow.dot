@@ -4,7 +4,7 @@ digraph strobe {
   b [label="Complete calls\nn = 749"];
   c [label="Analytic sample\n(subspecialty known)\nn = 731"];
   e [label="Appointment offered\nn = 433 (59.2%)"];
-  f [label="Business-day wait recorded\nn = 430"];
+  f [label="Business-day wait recorded\nn = 429"];
   xa [shape=box, style=dashed, label="Incomplete data collection\nn = 211"];
   xb [shape=box, style=dashed, label="Subspecialty undetermined\nn = 18"];
   xe [shape=box, style=dashed, label="No appointment offered\nn = 298"];
