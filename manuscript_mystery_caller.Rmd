@@ -18,7 +18,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
                       fig.align = "center", dpi = 150, out.width = "100%")
-suppressPackageStartupMessages({library(flextable); library(dplyr)})
+suppressPackageStartupMessages({library(flextable); library(dplyr); library(gtsummary)})
 OUT  <- "model_output"; SUPP <- file.path(OUT, "supp"); ISO <- file.path(OUT, "isochrones")
 num  <- function(x) suppressWarnings(as.numeric(x))
 rd   <- function(f) tryCatch(read.csv(f, check.names = FALSE), error = function(e) NULL)
@@ -103,8 +103,33 @@ Effects are reported as odds ratios (access) and incidence rate ratios (timeline
 Callers placed `r N_total` calls; `r N_complete` (`r sprintf('%.1f', 100*N_complete/N_total)`%) were completed, of which `r N_analytic` had a determinable subspecialty and formed the analytic sample. An appointment was offered in `r N_off` of `r N_analytic` (`r sprintf('%.1f', pct_off)`%); the median next-available wait was `r med_wait` business days (IQR `r q_wait[1]`–`r q_wait[2]`). Sample characteristics are shown in **Table 1**, and the participant flow in **Figure 1**.
 
 ```{r table1}
-t1 <- rd(file.path(OUT, "table1_characteristics.csv"))
-if (!is.null(t1)) ft(t1, "Table 1. Characteristics of the analytic sample.")
+lv <- c("General", setdiff(names(sort(table(comp$ent_type), decreasing = TRUE)), "General"))
+tb1 <- tibble::tibble(
+  Subspecialty = factor(comp$ent_type, levels = lv),
+  offered = factor(ifelse(comp$offered, "Offered", "Not offered"), levels = c("Offered", "Not offered")),
+  wait = ifelse(comp$offered, comp$w, NA_real_),
+  Rurality = factor(comp$ruca_category, levels = c("Urban", "Suburban", "Rural")),
+  ent_per_100k = num(comp$ent_per_100k),
+  medicaid_fee_index = num(comp$medicaid_fee_index),
+  svi_overall = num(comp$svi_overall),
+  dual_pct = num(comp$dual_pct))
+gtsummary::tbl_summary(
+    tb1, by = Subspecialty,
+    statistic = list(all_continuous() ~ "{median} ({p25}, {p75})",
+                     all_categorical() ~ "{n} ({p}%)"),
+    digits = list(ent_per_100k ~ 1, medicaid_fee_index ~ 2, svi_overall ~ 2, dual_pct ~ 2),
+    label = list(offered ~ "Appointment offered", wait ~ "Business-day wait, if offered",
+                 Rurality ~ "Rurality", ent_per_100k ~ "ENT per 100,000",
+                 medicaid_fee_index ~ "Medicaid fee index", svi_overall ~ "Social Vulnerability Index",
+                 dual_pct ~ "Dual-eligible fraction"),
+    missing = "no") |>
+  gtsummary::add_overall(last = FALSE) |>
+  gtsummary::modify_header(label ~ "**Characteristic**") |>
+  gtsummary::modify_spanning_header(gtsummary::all_stat_cols() ~ "**Requested subspecialty**") |>
+  gtsummary::modify_caption("**Table 1. Sample characteristics by requested subspecialty.**") |>
+  gtsummary::as_flex_table() |>
+  flextable::fontsize(size = 7, part = "all") |>
+  flextable::set_table_properties(layout = "autofit", width = 1)
 ```
 
 ### Access to appointments
