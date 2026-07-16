@@ -155,19 +155,19 @@ message(sprintf("  Valid: %d | Invalid format: %d | Missing: %d",
                 sum(phase2$phone_validity_flag == "missing",        na.rm = TRUE)))
 
 # -----------------------------------------------------------------------------
-# 6. Classify RUCA codes → Urban / Suburban / Rural
-#    RUCA 1-3 = Urban, 4-6 = Suburban, 7-10 = Rural  (USDA 2020 standard)
+# 6. Classify RUCA codes → Urban / Rural (binary)
+#    RUCA 1-3 = Urban, 4-10 = Rural. Suburban (RUCA 4-6) is folded into Rural
+#    per the study's pre-specified urban/rural contrast.
 # -----------------------------------------------------------------------------
-message("Classifying RUCA codes ...")
+message("Classifying RUCA codes (binary urban 1-3 / rural 4-10) ...")
 phase2 <- phase2 |>
   mutate(
-    ruca_category = mysterycall_classify_ruca(
-      ruca_code,
-      urban_max    = 3,
-      suburban_max = 6,
-      labels       = c("Urban", "Suburban", "Rural"),
-      as_factor    = TRUE
-    )
+    ruca_category = factor(
+      dplyr::case_when(
+        is.na(suppressWarnings(as.numeric(ruca_code)))        ~ NA_character_,
+        suppressWarnings(as.numeric(ruca_code)) <= 3          ~ "Urban",
+        TRUE                                                  ~ "Rural"),
+      levels = c("Urban", "Rural"))
   )
 
 message("  RUCA category distribution:")

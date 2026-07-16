@@ -22,7 +22,7 @@ tb <- tibble::tibble(
   offered = factor(ifelse(d$appointment_offered == "TRUE", "Offered", "Not offered"),
                    levels = c("Offered", "Not offered")),
   wait = ifelse(d$appointment_offered == "TRUE", num(d$wait_days_business), NA_real_),
-  Rurality = factor(d$ruca_category, levels = c("Urban", "Suburban", "Rural")),
+  Rurality = factor(d$ruca_category, levels = c("Urban", "Rural")),
   ent_per_100k = num(d$ent_per_100k),
   medicaid_fee_index = num(d$medicaid_fee_index),
   svi_overall = num(d$svi_overall),

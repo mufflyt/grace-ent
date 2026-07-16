@@ -16,7 +16,7 @@
 (If completeness depends on geography/subspecialty, the data-collection
  missingness is MAR, not MCAR, and could bias naive estimates.)
 
-  completeness vs rural            chisq p = 0.962
+  completeness vs rural            chisq p = 0.876
   completeness vs aao_hns_region   chisq p = 0.603
   completeness vs ent_type         chisq p = 0.000
   completeness vs ent_per_100k     wilcox p = 0.534  (median cplt=4.635, incplt=4.510)
@@ -35,8 +35,8 @@ Among complete calls with known subspecialty (n=731).
                0.692                0.737                0.756 
 
   Offer rate by rurality:
-   Rural Suburban    Urban 
-   0.561    0.590    0.599 
+Rural Urban 
+0.585 0.599 
 
   Offer rate by AAO-HNS region:
     Mountain/Southwest        Middle Atlantic            New England Mid-Atlantic/Southeast 

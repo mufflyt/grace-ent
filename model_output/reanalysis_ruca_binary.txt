@@ -1,0 +1,24 @@
+################ RUCA cutoff: urban = 1-3, rural = 4-10 ################
+
+Rurality distribution (binary):
+  Complete/analytic:
+
+Urban Rural 
+  367   364 
+  Wait-time sample (primary rural-vs-urban contrast):
+
+Urban Rural 
+  218   212 
+
+################ POWER RECONCILIATION vs the plan (email) ################
+Analyzable wait-time n = 430 (rural 212 / urban 218 = 49.3% rural)
+Realized wait SD = 43 days
+Detectable rural-urban gap @ 90% power (SD=43): ~19 days  [plan target: 6 days]
+Power to detect the plan's 8-day gap = 27%;  6-day gap = 17%  [plan: >99%, 90%]
+
+################ MODEL with binary rurality ################
+ACCESS (rural vs urban):      OR = 1.02 (95% CI 0.71-1.47), p = 0.917 
+TIMELINESS (rural vs urban):  IRR = 1.09 (95% CI 0.83-1.42), p = 0.549 
+
+Median business-day wait: urban = 13  rural = 15  (difference = 2 days)
+Mean business-day wait:   urban = 24.7  rural = 22.6 

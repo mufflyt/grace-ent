@@ -2,18 +2,18 @@
 
 --- ACCESS: odds ratios between subspecialties (Tukey-adjusted) ---
  contrast                                odds.ratio        SE  df null z.ratio p.value
- (Otology/neurotology) / Pediatrics        0.209591 0.1112821 Inf    1  -2.943  0.0644
- (Otology/neurotology) / Rhinology         0.225174 0.1505793 Inf    1  -2.229  0.3339
- General / Pediatrics                      0.433317 0.1664193 Inf    1  -2.177  0.3654
- Facial Plastics / Pediatrics              0.388735 0.1721105 Inf    1  -2.134  0.3927
- Head and Neck Cancer / Pediatrics         0.357509 0.1967618 Inf    1  -1.869  0.5725
- General / (Otology/neurotology)           2.067441 0.8318652 Inf    1   1.805  0.6166
- (Otology/neurotology) / Sleep             0.287152 0.1990927 Inf    1  -1.800  0.6204
- Laryngology / (Otology/neurotology)       3.652677 2.7142071 Inf    1   1.743  0.6586
- Facial Plastics / Rhinology               0.417637 0.2507430 Inf    1  -1.454  0.8316
- Head and Neck Cancer / Rhinology          0.384089 0.2619725 Inf    1  -1.403  0.8563
- General / Rhinology                       0.465534 0.2590143 Inf    1  -1.374  0.8692
- Facial Plastics / (Otology/neurotology)   1.854730 0.8421035 Inf    1   1.361  0.8751
+ (Otology/neurotology) / Pediatrics        0.207849 0.1102617 Inf    1  -2.961  0.0611
+ (Otology/neurotology) / Rhinology         0.223678 0.1495653 Inf    1  -2.240  0.3279
+ General / Pediatrics                      0.431994 0.1659033 Inf    1  -2.186  0.3604
+ Facial Plastics / Pediatrics              0.388963 0.1722359 Inf    1  -2.132  0.3938
+ Head and Neck Cancer / Pediatrics         0.358068 0.1971269 Inf    1  -1.866  0.5748
+ General / (Otology/neurotology)           2.078401 0.8357574 Inf    1   1.819  0.6068
+ (Otology/neurotology) / Sleep             0.286135 0.1983484 Inf    1  -1.805  0.6166
+ Laryngology / (Otology/neurotology)       3.665336 2.7236522 Inf    1   1.748  0.6554
+ Facial Plastics / Rhinology               0.418584 0.2513978 Inf    1  -1.450  0.8337
+ Head and Neck Cancer / Rhinology          0.385337 0.2629207 Inf    1  -1.398  0.8587
+ Facial Plastics / (Otology/neurotology)   1.871370 0.8484661 Inf    1   1.382  0.8657
+ General / Rhinology                       0.464892 0.2588127 Inf    1  -1.376  0.8685
 
 Results are averaged over the levels of: rural, caller_f 
 P value adjustment: tukey method for comparing a family of 8 estimates 
@@ -21,18 +21,18 @@ Tests are performed on the log odds ratio scale
 
 --- TIMELINESS: wait-day rate ratios between subspecialties (Tukey) ---
  contrast                                ratio        SE  df null z.ratio p.value
- General / Laryngology               0.4446364 0.1553575 Inf    1  -2.320  0.2826
- General / Pediatrics                0.6488523 0.1300970 Inf    1  -2.157  0.3780
- Facial Plastics / Laryngology       0.4604532 0.1715618 Inf    1  -2.081  0.4270
- Facial Plastics / Pediatrics        0.6719336 0.1609891 Inf    1  -1.659  0.7136
- General / Rhinology                 0.6468945 0.1815048 Inf    1  -1.552  0.7786
- Laryngology / Sleep                 1.9296154 0.9144924 Inf    1   1.387  0.8635
- Head and Neck Cancer / Laryngology  0.5612877 0.2363451 Inf    1  -1.372  0.8703
- Laryngology / (Otology/neurotology) 1.8629958 0.8542223 Inf    1   1.357  0.8766
- Facial Plastics / Rhinology         0.6699062 0.2076798 Inf    1  -1.292  0.9021
- Laryngology / Pediatrics            1.4592876 0.5560883 Inf    1   0.992  0.9757
- Laryngology / Rhinology             1.4548845 0.6127853 Inf    1   0.890  0.9870
- General / Head and Neck Cancer      0.7921720 0.2291841 Inf    1  -0.805  0.9929
+ General / Laryngology               0.4442803 0.1551420 Inf    1  -2.323  0.2807
+ General / Pediatrics                0.6506768 0.1302483 Inf    1  -2.147  0.3846
+ Facial Plastics / Laryngology       0.4596918 0.1711686 Inf    1  -2.087  0.4231
+ Facial Plastics / Pediatrics        0.6732479 0.1611983 Inf    1  -1.652  0.7181
+ General / Rhinology                 0.6471844 0.1815430 Inf    1  -1.551  0.7794
+ Laryngology / Sleep                 1.9323796 0.9158336 Inf    1   1.390  0.8622
+ Head and Neck Cancer / Laryngology  0.5600503 0.2356648 Inf    1  -1.378  0.8677
+ Laryngology / (Otology/neurotology) 1.8691714 0.8564269 Inf    1   1.365  0.8731
+ Facial Plastics / Rhinology         0.6696343 0.2075490 Inf    1  -1.294  0.9015
+ Laryngology / Pediatrics            1.4645638 0.5574314 Inf    1   1.002  0.9742
+ Laryngology / Rhinology             1.4567029 0.6132216 Inf    1   0.894  0.9867
+ General / Head and Neck Cancer      0.7932865 0.2294177 Inf    1  -0.801  0.9931
 
 Results are averaged over the levels of: rural, caller_f 
 P value adjustment: tukey method for comparing a family of 8 estimates 
@@ -40,14 +40,14 @@ Tests are performed on the log scale
 
 --- estimated marginal wait days per subspecialty ---
  ent_type             response        SE  df asymp.LCL asymp.UCL
- General              18.38069  2.163693 Inf  14.59359  23.15055
- Facial Plastics      19.03453  3.830199 Inf  12.83099  28.23736
- Head and Neck Cancer 23.20290  6.680384 Inf  13.19688  40.79558
- Laryngology          41.33869 14.755221 Inf  20.53682  83.21091
- Otology/neurotology  22.18937  7.356621 Inf  11.58615  42.49625
- Pediatrics           28.32800  6.114603 Inf  18.55598  43.24619
- Rhinology            28.41373  8.311954 Inf  16.01488  50.41187
- Sleep                21.42328  7.363626 Inf  10.92221  42.02054
+ General              17.89687  1.925674 Inf  14.49403  22.09861
+ Facial Plastics      18.51769  3.509730 Inf  12.77189  26.84840
+ Head and Neck Cancer 22.56041  6.313628 Inf  13.03571  39.04446
+ Laryngology          40.28284 14.144898 Inf  20.24088  80.16976
+ Otology/neurotology  21.55117  6.957097 Inf  11.44691  40.57455
+ Pediatrics           27.50501  5.538348 Inf  18.53598  40.81388
+ Rhinology            27.65343  7.871547 Inf  15.82904  48.31072
+ Sleep                20.84623  7.090018 Inf  10.70349  40.60037
 
 Results are averaged over the levels of: rural, caller_f 
 Confidence level used: 0.95 
@@ -57,23 +57,23 @@ Intervals are back-transformed from the log scale
 ################ 2. INTERACTION SCREEN (LRT vs main-effects) ################
 Does subspecialty modify the geographic covariates? (wait model)
 
-  ent_type x rural           LRT chisq=14.13  df=33  p=0.226
-  ent_type x ent_per_100k_z  LRT chisq=5.99  df=29  p=0.541
+  ent_type x rural           LRT chisq=12.21  df=28  p=0.094
+  ent_type x ent_per_100k_z  LRT chisq=6.00  df=28  p=0.540
 
 
 ################ 3. ICC / MARKET RANDOM-EFFECT SHARE ################
-  ACCESS   : CBSA var=0.146  ->  latent ICC=0.043
-  TIMELINESS: CBSA var=0.391 (log scale); theta=1.334
+  ACCESS   : CBSA var=0.148  ->  latent ICC=0.043
+  TIMELINESS: CBSA var=0.393 (log scale); theta=1.336
 
 
 ################ 4. HHI SENSITIVITY (metro subset) ################
   metro subset with HHI: n=264 of 430 offered
-  hhi_z (market concentration) IRR=1.204  95% CI 0.994-1.460  p=0.058
+  hhi_z (market concentration) IRR=1.207  95% CI 0.996-1.462  p=0.055
   subspecialty effects in metro subset (IRR, p):
-    Facial Plastics                IRR=1.32 p=0.194
-    Head and Neck Cancer           IRR=1.32 p=0.377
-    Laryngology                    IRR=2.49 p=0.020
-    Otology/neurotology            IRR=1.56 p=0.295
-    Pediatrics                     IRR=1.58 p=0.042
+    Facial Plastics                IRR=1.32 p=0.197
+    Head and Neck Cancer           IRR=1.32 p=0.378
+    Laryngology                    IRR=2.48 p=0.020
+    Otology/neurotology            IRR=1.56 p=0.294
+    Pediatrics                     IRR=1.57 p=0.043
     Rhinology                      IRR=2.07 p=0.033
-    Sleep                          IRR=1.74 p=0.232
+    Sleep                          IRR=1.72 p=0.241

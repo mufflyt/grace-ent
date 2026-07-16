@@ -2,66 +2,64 @@
 mysterycall_logistic_model | OR>1 = higher odds of an appointment offer
 
                            term estimate     se z_value  p_value p_value_fmt    or ci_lower ci_upper
-1                   (Intercept) -0.20464 0.1892 -1.0819 0.279318       0.279 0.815    0.562     1.18
-2       ent_typeFacial Plastics -0.10397 0.2658 -0.3911 0.695730       0.696 0.901    0.535     1.52
-3  ent_typeHead and Neck Cancer -0.18642 0.4257 -0.4379 0.661442       0.661 0.830    0.360     1.91
-4           ent_typeLaryngology  0.55471 0.6382  0.8692 0.384739       0.385 1.741    0.499     6.08
-5   ent_typeOtology/neurotology -0.70414 0.3947 -1.7838 0.074458       0.074 0.495    0.228     1.07
-6            ent_typePediatrics  0.81534 0.3785  2.1540 0.031243       0.031 2.260    1.076     4.75
-7             ent_typeRhinology  0.74510 0.5486  1.3581 0.174428       0.174 2.107    0.719     6.17
-8                 ent_typeSleep  0.50609 0.5657  0.8946 0.370984       0.371 1.659    0.547     5.03
-9                ent_per_100k_z -0.04395 0.0845 -0.5199 0.603133       0.603 0.957    0.811     1.13
-10         medicaid_fee_index_z -0.09481 0.0825 -1.1498 0.250245       0.250 0.910    0.774     1.07
-11                svi_overall_z -0.04885 0.0889 -0.5497 0.582556       0.583 0.952    0.800     1.13
-12                   dual_pct_z -0.00289 0.0924 -0.0313 0.975038       0.975 0.997    0.832     1.20
-13                   ruralRural -0.07227 0.3223 -0.2242 0.822582       0.823 0.930    0.495     1.75
-14                ruralSuburban  0.03390 0.1885  0.1798 0.857307       0.857 1.034    0.715     1.50
-15                 caller_fDeol  0.85096 0.2547  3.3411 0.000834     < 0.001 2.342    1.422     3.86
-16                 caller_fFalk  0.69295 0.2895  2.3936 0.016684       0.017 2.000    1.134     3.53
-17                caller_fGregg  0.63982 0.2543  2.5159 0.011874       0.012 1.896    1.152     3.12
-18                  caller_fKim  0.68485 0.2545  2.6912 0.007120       0.007 1.983    1.205     3.27
-19                caller_fOther -0.69445 0.6345 -1.0946 0.273708       0.274 0.499    0.144     1.73
-20                caller_fWalsh  0.80946 0.2502  3.2354 0.001215       0.001 2.247    1.376     3.67
+1                   (Intercept) -0.20478 0.1892 -1.0823 0.279129       0.279 0.815    0.562     1.18
+2       ent_typeFacial Plastics -0.10035 0.2656 -0.3779 0.705537       0.706 0.905    0.537     1.52
+3  ent_typeHead and Neck Cancer -0.18183 0.4256 -0.4272 0.669199       0.669 0.834    0.362     1.92
+4           ent_typeLaryngology  0.55279 0.6381  0.8662 0.386360       0.386 1.738    0.498     6.07
+5   ent_typeOtology/neurotology -0.70904 0.3945 -1.7972 0.072304       0.072 0.492    0.227     1.07
+6            ent_typePediatrics  0.81806 0.3785  2.1616 0.030649       0.031 2.266    1.079     4.76
+7             ent_typeRhinology  0.74627 0.5489  1.3596 0.173963       0.174 2.109    0.719     6.18
+8                 ent_typeSleep  0.50417 0.5654  0.8917 0.372558       0.373 1.656    0.547     5.01
+9                ent_per_100k_z -0.04945 0.0832 -0.5940 0.552486       0.552 0.952    0.808     1.12
+10         medicaid_fee_index_z -0.09414 0.0825 -1.1416 0.253605       0.254 0.910    0.774     1.07
+11                svi_overall_z -0.04879 0.0889 -0.5488 0.583148       0.583 0.952    0.800     1.13
+12                   dual_pct_z -0.00491 0.0923 -0.0532 0.957610       0.958 0.995    0.830     1.19
+13                   ruralRural  0.01784 0.1822  0.0979 0.922010       0.922 1.018    0.712     1.46
+14                 caller_fDeol  0.84937 0.2547  3.3354 0.000852     < 0.001 2.338    1.419     3.85
+15                 caller_fFalk  0.69199 0.2895  2.3906 0.016819       0.017 1.998    1.133     3.52
+16                caller_fGregg  0.63783 0.2543  2.5081 0.012139       0.012 1.892    1.150     3.12
+17                  caller_fKim  0.68487 0.2545  2.6909 0.007126       0.007 1.984    1.204     3.27
+18                caller_fOther -0.69398 0.6346 -1.0935 0.274155       0.274 0.500    0.144     1.73
+19                caller_fWalsh  0.80650 0.2500  3.2259 0.001256       0.001 2.240    1.372     3.66
 
-AIC=991.2 BIC=1087.6  n=731 clusters=338
+AIC=989.3 BIC=1081.2  n=731 clusters=338
 
 
 ================ PART 2: TIMELINESS (incidence rate ratios) ================
-mysterycall_nb_model | IRR>1 = LONGER wait | theta= 1.334 
+mysterycall_nb_model | IRR>1 = LONGER wait | theta= 1.336 
 
-                           term  estimate     se  z_value  p_value p_value_fmt    irr ci_lower ci_upper
-1                   (Intercept)  3.004181 0.1537 19.55075 4.07e-85      <0.001 20.170   14.925   27.258
-2       ent_typeFacial Plastics  0.034954 0.1878  0.18616 8.52e-01       0.852  1.036    0.717    1.496
-3  ent_typeHead and Neck Cancer  0.232977 0.2893  0.80528 4.21e-01       0.421  1.262    0.716    2.226
-4           ent_typeLaryngology  0.810498 0.3494  2.31966 2.04e-02       0.020  2.249    1.134    4.461
-5   ent_typeOtology/neurotology  0.188313 0.3205  0.58750 5.57e-01       0.557  1.207    0.644    2.263
-6            ent_typePediatrics  0.432550 0.2005  2.15732 3.10e-02       0.031  1.541    1.040    2.283
-7             ent_typeRhinology  0.435572 0.2806  1.55241 1.21e-01       0.121  1.546    0.892    2.679
-8                 ent_typeSleep  0.153178 0.3332  0.45973 6.46e-01       0.646  1.166    0.607    2.239
-9                ent_per_100k_z -0.054701 0.0809 -0.67599 4.99e-01       0.499  0.947    0.808    1.109
-10         medicaid_fee_index_z -0.042000 0.0693 -0.60590 5.45e-01       0.545  0.959    0.837    1.098
-11                svi_overall_z -0.049493 0.0618 -0.80107 4.23e-01       0.423  0.952    0.843    1.074
-12                   dual_pct_z -0.017113 0.0680 -0.25168 8.01e-01       0.801  0.983    0.860    1.123
-13                   ruralRural  0.131381 0.2366  0.55518 5.79e-01       0.579  1.140    0.717    1.813
-14                ruralSuburban  0.073232 0.1422  0.51513 6.06e-01       0.606  1.076    0.814    1.422
-15                 caller_fDeol -0.198906 0.1675 -1.18738 2.35e-01       0.235  0.820    0.590    1.138
-16                 caller_fFalk -0.488783 0.2002 -2.44183 1.46e-02       0.015  0.613    0.414    0.908
-17                caller_fGregg -0.004879 0.1735 -0.02813 9.78e-01       0.978  0.995    0.708    1.398
-18                  caller_fKim  0.000293 0.1777  0.00165 9.99e-01       0.999  1.000    0.706    1.417
-19                caller_fOther -0.308952 0.5368 -0.57551 5.65e-01       0.565  0.734    0.256    2.103
-20                caller_fWalsh -0.150012 0.1707 -0.87901 3.79e-01       0.379  0.861    0.616    1.203
+                           term  estimate     se   z_value  p_value p_value_fmt    irr ci_lower ci_upper
+1                   (Intercept)  3.00e+00 0.1537 19.544817 4.57e-85      <0.001 20.170   14.923   27.261
+2       ent_typeFacial Plastics  3.41e-02 0.1877  0.181635 8.56e-01       0.856  1.035    0.716    1.495
+3  ent_typeHead and Neck Cancer  2.32e-01 0.2892  0.800732 4.23e-01       0.423  1.261    0.715    2.222
+4           ent_typeLaryngology  8.11e-01 0.3492  2.323320 2.02e-02       0.020  2.251    1.135    4.463
+5   ent_typeOtology/neurotology  1.86e-01 0.3204  0.579886 5.62e-01       0.562  1.204    0.643    2.256
+6            ent_typePediatrics  4.30e-01 0.2002  2.146848 3.18e-02       0.032  1.537    1.038    2.275
+7             ent_typeRhinology  4.35e-01 0.2805  1.551178 1.21e-01       0.121  1.545    0.892    2.678
+8                 ent_typeSleep  1.53e-01 0.3334  0.457585 6.47e-01       0.647  1.165    0.606    2.239
+9                ent_per_100k_z -5.14e-02 0.0800 -0.642778 5.20e-01       0.520  0.950    0.812    1.111
+10         medicaid_fee_index_z -4.23e-02 0.0694 -0.608987 5.43e-01       0.543  0.959    0.837    1.098
+11                svi_overall_z -5.02e-02 0.0617 -0.812584 4.16e-01       0.416  0.951    0.843    1.073
+12                   dual_pct_z -1.53e-02 0.0676 -0.226860 8.21e-01       0.821  0.985    0.862    1.124
+13                   ruralRural  8.25e-02 0.1375  0.599761 5.49e-01       0.549  1.086    0.829    1.422
+14                 caller_fDeol -1.98e-01 0.1675 -1.183380 2.37e-01       0.237  0.820    0.591    1.139
+15                 caller_fFalk -4.91e-01 0.2000 -2.454919 1.41e-02       0.014  0.612    0.414    0.906
+16                caller_fGregg -1.22e-03 0.1729 -0.007030 9.94e-01       0.994  0.999    0.712    1.402
+17                  caller_fKim -4.94e-05 0.1777 -0.000278 1.00e+00       1.000  1.000    0.706    1.417
+18                caller_fOther -3.08e-01 0.5366 -0.573670 5.66e-01       0.566  0.735    0.257    2.104
+19                caller_fWalsh -1.51e-01 0.1706 -0.883467 3.77e-01       0.377  0.860    0.616    1.202
 
-Overdispersion: Underdispersion detected (phi=0.724). Model may overfit. 
+Overdispersion: Low residual dispersion detected (phi=0.721). This is normal for Negative Binomial models where overdispersion has been successfully absorbed. 
 
 Subspecialty wait in absolute days:
- - Facial Plastics-insured callers waited a mean of 0.8 more days compared with General (95% CI 6.5 to 11.4 days; IRR 1.04; p = 0.852).
- - Head and Neck Cancer-insured callers waited a mean of 6.0 more days compared with General (95% CI 6.5 to 28.3 days; IRR 1.26; p = 0.421).
- - Laryngology-insured callers waited a mean of 28.8 more days compared with General (95% CI 3.1 to 79.8 days; IRR 2.25; p = 0.020).
- - Otology/neurotology-insured callers waited a mean of 4.8 more days compared with General (95% CI 8.2 to 29.1 days; IRR 1.21; p = 0.557).
- - Pediatrics-insured callers waited a mean of 12.5 more days compared with General (95% CI 0.9 to 29.6 days; IRR 1.54; p = 0.031).
- - Rhinology-insured callers waited a mean of 12.6 more days compared with General (95% CI 2.5 to 38.7 days; IRR 1.55; p = 0.121).
- - Sleep-insured callers waited a mean of 3.8 more days compared with General (95% CI 9.1 to 28.6 days; IRR 1.17; p = 0.646).
+ - Facial Plastics-insured callers waited a mean of 0.8 more days compared with General (95% CI -6.5 to +11.4 days; IRR 1.03; p = 0.856) (difference not statistically significant).
+ - Head and Neck Cancer-insured callers waited a mean of 6.0 more days compared with General (95% CI -6.6 to +28.2 days; IRR 1.26; p = 0.423) (difference not statistically significant).
+ - Laryngology-insured callers waited a mean of 28.8 more days compared with General (95% CI +3.1 to +79.8 days; IRR 2.25; p = 0.020).
+ - Otology/neurotology-insured callers waited a mean of 4.7 more days compared with General (95% CI -8.2 to +29.0 days; IRR 1.20; p = 0.562) (difference not statistically significant).
+ - Pediatrics-insured callers waited a mean of 12.4 more days compared with General (95% CI +0.9 to +29.4 days; IRR 1.54; p = 0.032).
+ - Rhinology-insured callers waited a mean of 12.6 more days compared with General (95% CI -2.5 to +38.7 days; IRR 1.55; p = 0.121) (difference not statistically significant).
+ - Sleep-insured callers waited a mean of 3.8 more days compared with General (95% CI -9.1 to +28.6 days; IRR 1.16; p = 0.647) (difference not statistically significant).
 
 
 Access results paragraph:
- Facial Plastics callers were 10% less likely to be offered an appointment offer (OR 0.90, 95% CI 0.54-1.52, p=0.696). Head and Neck Cancer callers were 17% less likely to be offered an appointment offer (OR 0.83, 95% CI 0.36-1.91, p=0.661). Laryngology callers were 74% more likely to be offered an appointment offer (OR 1.74, 95% CI 0.50-6.08, p=0.385). Otology/neurotology callers were 51% less likely to be offered an appointment offer (OR 0.49, 95% CI 0.23-1.07, p=0.074). Pediatrics callers were 126% more likely to be offered an appointment offer (OR 2.26, 95% CI 1.08-4.75, p=0.031). Rhinology callers were 111% more likely to be offered an appointment offer (OR 2.11, 95% CI 0.72-6.17, p=0.174). Sleep callers were 66% more likely to be offered an appointment offer (OR 1.66, 95% CI 0.55-5.03, p=0.371). 
+ Facial Plastics callers were 10% less likely to be offered an appointment offer (OR 0.90, 95% CI 0.54-1.52, p=0.706). Head and Neck Cancer callers were 17% less likely to be offered an appointment offer (OR 0.83, 95% CI 0.36-1.92, p=0.669). Laryngology callers were 74% more likely to be offered an appointment offer (OR 1.74, 95% CI 0.50-6.07, p=0.386). Otology/neurotology callers were 51% less likely to be offered an appointment offer (OR 0.49, 95% CI 0.23-1.07, p=0.072). Pediatrics callers were 127% more likely to be offered an appointment offer (OR 2.27, 95% CI 1.08-4.76, p=0.031). Rhinology callers were 111% more likely to be offered an appointment offer (OR 2.11, 95% CI 0.72-6.18, p=0.174). Sleep callers were 66% more likely to be offered an appointment offer (OR 1.66, 95% CI 0.55-5.01, p=0.373). 
