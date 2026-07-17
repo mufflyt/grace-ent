@@ -40,39 +40,17 @@ km$time  <- ifelse(km$offered == 1 & !is.na(km$wait_days), pmin(km$wait_days, HO
 km$event <- ifelse(km$offered == 1 & !is.na(km$wait_days) & km$wait_days <= HORIZON, 1L, 0L)
 pal <- c("General" = "#1b9e77", "Pediatric" = "#d95f02",
          "Laryngology" = "#7570b3", "Other subspecialties" = "#386cb0")
-# mysterycall draws the curve (with log-rank p); we suppress its risk table and
-# build a clean, colour-matched one so the panel reads like a journal KM figure.
+# mysterycall draws the full figure (curve + log-rank p + colour-matched
+# number-at-risk table). group_col name -> legend title.
 km_res <- tryCatch(mysterycall_kaplan_meier(
   km, time_col = "time", event_col = "event", group_col = "Subspecialty",
-  max_days = HORIZON, plot = TRUE, risk_table = FALSE,
+  max_days = HORIZON, plot = TRUE, risk_table = TRUE,
   palette = unname(pal[levels(km$Subspecialty)]),
+  legend_title = "Subspecialty",
   plot_title = "Time to secured appointment, by subspecialty"),
   error = function(e) {cat("S1 KM err:", conditionMessage(e), "\n"); NULL})
 if (!is.null(km_res)) {
-  curve <- (if (!is.null(km_res$plot)) km_res$plot else km_res) +
-    ggplot2::theme(legend.position = "bottom",
-                   plot.title = ggplot2::element_text(face = "bold"))
-  # ---- clean number-at-risk table ----
-  ticks <- seq(0, HORIZON, by = 15)
-  lev   <- levels(km$Subspecialty)
-  risk  <- do.call(rbind, lapply(lev, function(g) {
-    tt <- km$time[km$Subspecialty == g]
-    data.frame(g = g, t = ticks, n = vapply(ticks, function(x) sum(tt >= x), integer(1)))
-  }))
-  risk$g <- factor(risk$g, levels = rev(lev))                 # General on top
-  rtab <- ggplot2::ggplot(risk, ggplot2::aes(t, g, label = n, colour = g)) +
-    ggplot2::geom_text(size = 3.2) +
-    ggplot2::scale_colour_manual(values = pal, guide = "none") +
-    ggplot2::scale_x_continuous(limits = c(0, HORIZON), breaks = ticks,
-                                expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
-    ggplot2::labs(title = "Number at risk", x = NULL, y = NULL) +
-    ggplot2::theme_minimal(base_size = 10) +
-    ggplot2::theme(
-      panel.grid   = ggplot2::element_blank(),
-      axis.text.x  = ggplot2::element_blank(),
-      axis.text.y  = ggplot2::element_text(colour = pal[rev(lev)], face = "bold"),
-      plot.title   = ggplot2::element_text(size = 10, face = "bold"))
-  p1 <- patchwork::wrap_plots(curve, rtab, ncol = 1, heights = c(3.4, 1))
+  p1 <- if (!is.null(km_res$plot)) km_res$plot else km_res
   ggsave(file.path(supp, "figS1_km_time_to_appointment.png"), p1,
          width = 9, height = 6.8, dpi = 150)
   cat("wrote figS1_km_time_to_appointment.png\n")
