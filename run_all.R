@@ -57,6 +57,7 @@ analysis_stage <- function() {
   for (s in c(
     "scripts/model_wait_days.R",        # two-part model -> part1/part2 CSVs
     "scripts/model_robustness.R",       # ICC, HHI sensitivity, pairwise
+    "scripts/sensitivity_analyses.R",   # 3-level RUCA + complete-case (Table S8)
     "scripts/missingness_access.R",     # attrition vs covariates
     "scripts/manuscript_outputs.R",     # Table 1, STROBE dot, forest plot
     "scripts/table1_by_subspecialty.R", # stratified Table 1

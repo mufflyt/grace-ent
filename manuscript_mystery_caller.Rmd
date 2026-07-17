@@ -70,7 +70,7 @@ ft <- function(df, cap = NULL) {
 
 **Corresponding author:** *[Name, degree; institution; address; email; telephone]*.
 
-*Word count: abstract ≈ 200; main text *[to finalize]*. Tables: 2 main, 8 supplementary. Figures: 2 main, 6 supplementary.*
+*Word count: abstract ≈ 200; main text *[to finalize]*. Tables: 2 main, 9 supplementary. Figures: 2 main, 6 supplementary.*
 
 ## Introduction
 
@@ -102,7 +102,7 @@ Each practice was linked to contextual covariates by practice ZIP code and state
 
 Because business-day wait time is observed only when an appointment is offered, we modeled access and timeliness separately to avoid conditioning wait-time estimates on the offer. *Access* was modeled with a mixed-effects logistic regression over all analytic calls; *timeliness* with a mixed-effects negative binomial regression over the offered subset. The negative binomial distribution was selected over Poisson on the basis of substantial overdispersion (Pearson φ = 6.22). Both models included a random intercept for core-based statistical area (CBSA; county FIPS where CBSA was undefined) to account for within-market correlation, and adjusted for the requested subspecialty (reference: general otolaryngology), county ENT supply, Medicaid fee index, SVI, dual-eligible fraction, and rurality (reference: urban). The identity of the caller (research assistant) was included as a fixed nuisance term. Continuous covariates were standardized and, for the few missing values (<3%), median-imputed.
 
-Effects are reported as odds ratios (access) and incidence rate ratios (timeliness) with 95% Wald confidence intervals. Pairwise differences between subspecialties were estimated with Tukey-adjusted estimated marginal means [@emmeans]. Effect modification of the geographic covariates by subspecialty was tested by likelihood-ratio tests. Market-level clustering was summarized by the intraclass correlation coefficient (ICC). Because the HHI is defined only in metropolitan areas, its association with timeliness was assessed in a sensitivity model restricted to the metropolitan subset. Whether call incompleteness was related to the measured covariates was assessed with chi-square and Wilcoxon rank-sum tests. Analyses used R 4.4.2 [@rcoreteam] (packages `glmmTMB` [@glmmTMB], `emmeans` [@emmeans], and the study package `mysterycall`); two-sided α = 0.05. Reporting follows the STROBE guideline for observational studies [@strobe].
+Effects are reported as odds ratios (access) and incidence rate ratios (timeliness) with 95% Wald confidence intervals. Pairwise differences between subspecialties were estimated with Tukey-adjusted estimated marginal means [@emmeans]. Effect modification of the geographic covariates by subspecialty was tested by likelihood-ratio tests. Market-level clustering was summarized by the intraclass correlation coefficient (ICC). Because the HHI is defined only in metropolitan areas, its association with timeliness was assessed in a sensitivity model restricted to the metropolitan subset. Two additional sensitivity analyses were performed: a three-level rurality specification (urban, RUCA 1–3; suburban, 4–6; rural, 7–10) in place of the binary contrast, and a complete-case refit that excluded records with any missing covariate rather than median-imputing them. Whether call incompleteness was related to the measured covariates was assessed with chi-square and Wilcoxon rank-sum tests. Analyses used R 4.4.2 [@rcoreteam] (packages `glmmTMB` [@glmmTMB], `emmeans` [@emmeans], and the study package `mysterycall`); two-sided α = 0.05. Reporting follows the STROBE guideline for observational studies [@strobe].
 
 ### Sample size and power
 
@@ -197,7 +197,7 @@ if (!is.null(tb)) { names(tb)[2] <- "IRR (95% CI)"; ft(tb,
 
 ### Robustness and missing data
 
-Market-level clustering was modest: the core-based statistical area random intercept accounted for a latent intraclass correlation of 0.043 in the access model (CBSA variance 0.26 on the log scale in the timeliness model), indicating that most variation in access and timeliness lay within rather than between markets. Under Tukey-adjusted pairwise comparison no subspecialty pair reached significance, and the subspecialty effect did not vary by rurality or supply (interaction likelihood-ratio tests, both non-significant). In a metropolitan sensitivity model, greater hospital-market concentration was associated with a borderline increase in wait time (HHI IRR 1.20 per SD; p = 0.058). Call incompleteness was unrelated to practice geography, supporting a missing-at-random mechanism with respect to location (Supplement).
+Market-level clustering was modest: the core-based statistical area random intercept accounted for a latent intraclass correlation of 0.043 in the access model (CBSA variance 0.26 on the log scale in the timeliness model), indicating that most variation in access and timeliness lay within rather than between markets. Under Tukey-adjusted pairwise comparison no subspecialty pair reached significance, and the subspecialty effect did not vary by rurality or supply (interaction likelihood-ratio tests, both non-significant). In a metropolitan sensitivity model, greater hospital-market concentration was associated with a borderline increase in wait time (HHI IRR 1.20 per SD; p = 0.058). Call incompleteness was unrelated to practice geography, supporting a missing-at-random mechanism with respect to location (Supplement). The main findings were stable across two sensitivity analyses (**Table S8**). Under a three-level rurality specification (urban, RUCA 1–3; suburban, 4–6; rural, 7–10), no urban-to-rural gradient emerged—neither suburban (wait IRR 1.15) nor the sparse rural stratum (IRR 1.29) differed significantly from urban—while the subspecialty effects were unchanged. A complete-case analysis without imputation (n = 412 recorded waits) likewise reproduced the longer waits for laryngology (IRR 2.51) and pediatric otolaryngology (IRR 1.52) and the null rural–urban contrast (IRR 1.14).
 
 ## Discussion
 
@@ -259,7 +259,8 @@ supp_tables <- c(
   "Table S4. Business-day wait by rurality."                  = "S4_wait_by_rurality.csv",
   "Table S5. Business-day wait by AAO-HNS region."            = "S5_wait_by_region.csv",
   "Table S6. Appointment offer-rate disparities by region."  = "S6_offer_disparities_by_region.csv",
-  "Table S7. Access vs. timeliness models, side by side."     = "S7_access_vs_timeliness.csv")
+  "Table S7. Access vs. timeliness models, side by side."     = "S7_access_vs_timeliness.csv",
+  "Table S8. Sensitivity analyses: three-level RUCA and complete-case (key coefficients vs primary model)." = "S8_sensitivity_analyses.csv")
 for (cap in names(supp_tables)) {
   df <- rd(file.path(SUPP, supp_tables[[cap]]))
   if (is.null(df)) next
@@ -310,7 +311,7 @@ Callers followed a standardized telephone script and recorded responses in a str
 6. **Call attempts.** *[Each office was called up to [N] times on separate business days; an office not reached after [N] attempts was recorded as unreachable / incomplete.]*
 7. **Disclosure.** *[If directly asked whether the call was for research, callers disclosed the study and offered the investigator's/IRB contact information.]*
 
-**Table S8. Subspecialty-matched chief complaints.**
+**Table S9. Subspecialty-matched chief complaints.**
 
 | Subspecialty | Scripted chief complaint |
 |---|---|
