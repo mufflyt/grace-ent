@@ -64,6 +64,14 @@ ft <- function(df, cap = NULL) {
 
 **Conclusions.** New-patient access to otolaryngology care is shaped more by the requested subspecialty than by local physician supply, insurance generosity, social vulnerability, or rurality. Getting an appointment and being seen promptly are distinct dimensions that diverge by subspecialty.
 
+**Keywords:** otolaryngology; access to care; health services accessibility; simulated patient; mystery caller; appointment wait time; rural health; workforce.
+
+**Running head:** Subspecialty and geography in otolaryngology access.
+
+**Corresponding author:** *[Name, degree; institution; address; email; telephone]*.
+
+*Word count: abstract ≈ 200; main text *[to finalize]*. Tables: 2 main, 8 supplementary. Figures: 2 main, 6 supplementary.*
+
 ## Introduction
 
 Otolaryngologic conditions—from chronic rhinosinusitis and otitis media to airway disorders and head-and-neck malignancy—are among the most common reasons patients seek specialty care, and for many of these conditions timely evaluation influences diagnosis and outcome, with delays in the diagnosis-to-treatment interval associated with worse survival in head-and-neck cancer [@graboyes2019]. Whether a new patient can actually reach an otolaryngologist, however, is not guaranteed by the presence of physicians in a region; it depends on whether an office will offer an appointment and, if so, how long the patient must wait.
@@ -142,7 +150,7 @@ The requested subspecialty was the dominant determinant of whether an appointmen
 
 ### Timeliness of appointments
 
-Among offering offices, waits again varied by subspecialty and not geography. Relative to general otolaryngology, waits were longer for laryngology (IRR `r irr('ent_typeLaryngology')`) and pediatric otolaryngology (IRR `r irr('ent_typePediatrics')`). No geographic covariate was associated with wait time (**Figure 2**; **Table 2**).
+Among offering offices, waits again varied by subspecialty and not geography. Relative to general otolaryngology, waits were longer for laryngology (IRR `r irr('ent_typeLaryngology')`) and pediatric otolaryngology (IRR `r irr('ent_typePediatrics')`). Anchored to the roughly two-week median wait for general otolaryngology (`r med_wait` business days), these rate ratios correspond to a substantially longer typical wait—on the order of an additional two to three weeks for laryngology and about one to one-and-a-half weeks for pediatric otolaryngology—consistent with the observed subspecialty medians (Table S3). No geographic covariate was associated with wait time (**Figure 2**; **Table 2**).
 
 ```{r table2}
 a <- rd(file.path(OUT, "part1_access_OR.csv")); b <- rd(file.path(OUT, "part2_wait_IRR.csv"))
@@ -189,7 +197,7 @@ if (!is.null(tb)) { names(tb)[2] <- "IRR (95% CI)"; ft(tb,
 
 ### Robustness and missing data
 
-Under Tukey-adjusted pairwise comparison no subspecialty pair reached significance, and the subspecialty effect did not vary by rurality or supply (interaction likelihood-ratio tests, both non-significant). In a metropolitan sensitivity model, greater hospital-market concentration was associated with a borderline increase in wait time (HHI IRR 1.20 per SD; p = 0.058). Call incompleteness was unrelated to practice geography, supporting a missing-at-random mechanism with respect to location (Supplement).
+Market-level clustering was modest: the core-based statistical area random intercept accounted for a latent intraclass correlation of 0.043 in the access model (CBSA variance 0.26 on the log scale in the timeliness model), indicating that most variation in access and timeliness lay within rather than between markets. Under Tukey-adjusted pairwise comparison no subspecialty pair reached significance, and the subspecialty effect did not vary by rurality or supply (interaction likelihood-ratio tests, both non-significant). In a metropolitan sensitivity model, greater hospital-market concentration was associated with a borderline increase in wait time (HHI IRR 1.20 per SD; p = 0.058). Call incompleteness was unrelated to practice geography, supporting a missing-at-random mechanism with respect to location (Supplement).
 
 ## Discussion
 
@@ -286,7 +294,7 @@ for (cap in names(supp_figs)) {
 }
 ```
 
-*Full legends for all supplementary items are in `docs/supplementary_legends.md`.*
+*Full legends for all supplementary items are in `docs/supplementary_legends.md`. A completed STROBE checklist is provided in `manuscript/STROBE_checklist.md`.*
 
 ## Supplementary Appendix: Standardized call script
 
