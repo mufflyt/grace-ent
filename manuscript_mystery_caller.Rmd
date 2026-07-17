@@ -78,7 +78,7 @@ We conducted a national mystery-caller study of board-certified otolaryngologist
 
 ### Study design and sample
 
-We conducted a cross-sectional, simulated-patient ("mystery caller") study of access to otolaryngology (ENT) care in the United States. Trained callers telephoned a national sample of practicing, board-certified otolaryngologists and, following a standardized script, requested a new-patient appointment for a subspecialty-matched chief complaint. Each sampled physician was contacted once. The sampling frame was the American Board of Otolaryngology–Head and Neck Surgery roster of board-certified otolaryngologists practicing in the United States (N = 11,333), linked to National Provider Identifier records for practice location and rurality. Because rural otolaryngologists were scarce in this frame (791 of 11,333; 7.0%), we drew a rurality-stratified sample of 480 urban and 480 rural physicians (960 total) to obtain balanced representation; the rural stratum accordingly included a majority of all rural board-certified otolaryngologists in the frame. Calls were placed between May 29 and July 6, 2026, to physicians in 48 states, each under a commercial Blue Cross Blue Shield insurance scenario held constant across calls, with the chief complaint matched to the sampled physician's subspecialty (general otolaryngology, facial plastic surgery, head and neck oncology, laryngology, otology/neurotology, pediatric otolaryngology, rhinology, or sleep medicine). *[To confirm from the protocol: the number and timing of call attempts before a physician was recorded as unreachable, the exact wording of the subspecialty-specific chief-complaint scripts, and caller-training procedures.]* The University of Colorado Multiple Institutional Review Board (COMIRB 23-1303) deemed this study not human subjects research and did not require informed consent.
+We conducted a cross-sectional, simulated-patient ("mystery caller") study of access to otolaryngology (ENT) care in the United States [@rankin2022]. Trained callers telephoned a national sample of practicing, board-certified otolaryngologists and, following a standardized script, requested a new-patient appointment for a subspecialty-matched chief complaint. Each sampled physician was contacted once. The sampling frame was the American Board of Otolaryngology–Head and Neck Surgery roster of board-certified otolaryngologists practicing in the United States (N = 11,333), linked to National Provider Identifier records for practice location and rurality. Because rural otolaryngologists were scarce in this frame (791 of 11,333; 7.0%), we drew a rurality-stratified sample of 480 urban and 480 rural physicians (960 total) to obtain balanced representation; the rural stratum accordingly included a majority of all rural board-certified otolaryngologists in the frame. Calls were placed between May 29 and July 6, 2026, to physicians in 48 states, each under a commercial Blue Cross Blue Shield insurance scenario held constant across calls, with the chief complaint matched to the sampled physician's subspecialty (general otolaryngology, facial plastic surgery, head and neck oncology, laryngology, otology/neurotology, pediatric otolaryngology, rhinology, or sleep medicine). *[To confirm from the protocol: the number and timing of call attempts before a physician was recorded as unreachable, the exact wording of the subspecialty-specific chief-complaint scripts, and caller-training procedures.]* The University of Colorado Multiple Institutional Review Board (COMIRB 23-1303) deemed this study not human subjects research and did not require informed consent.
 
 Analyses were restricted to calls with a completed data-collection record and a determinable physician subspecialty. This study did not manipulate patient insurance; the exposures of interest were the requested subspecialty and the geographic context of the practice.
 
@@ -195,7 +195,7 @@ Under Tukey-adjusted pairwise comparison no subspecialty pair reached significan
 
 In this national simulated-patient study of otolaryngology access, the requested subspecialty was the dominant determinant of both whether a new-patient appointment was offered and how long the patient waited, whereas none of the measured contextual factors—county physician supply, Medicaid fee generosity, social vulnerability, dual-eligibility, or rurality—was associated with either outcome.
 
-Three observations follow. First, **who the patient asks for matters more than the local environment in which they ask.** After adjustment, subspecialty effects were substantial—pediatric otolaryngology carried more than twice the odds of an appointment offer—while the contextual covariates clustered tightly around the null. This suggests that, among the practices reachable in this sample, the decision to accept a new patient is governed more by practice-level factors tied to the clinical request than by the socioeconomic or supply characteristics of the surrounding area.
+Three observations follow. First, **who the patient asks for matters more than the local environment in which they ask.** After adjustment, subspecialty effects were substantial—pediatric otolaryngology carried more than twice the odds of an appointment offer—while the contextual covariates clustered tightly around the null. This suggests that, among the practices reachable in this sample, the decision to accept a new patient is governed more by practice-level factors tied to the clinical request than by the socioeconomic or supply characteristics of the surrounding area. This parallels an emerging pattern in other access studies, in which disparities track the *type of practice* a patient reaches rather than whether that practice is urban or rural: rural populations may face barriers less because they are rural than because they are more likely to reach practices with different acceptance behavior. Framed this way, the relevant unit for intervention is the practice and the clinical request, not the community.
 
 Second, **availability and timeliness are distinct dimensions that can diverge.** Pediatric otolaryngology was among the *easiest* subspecialties to reach yet carried one of the *longest* waits once an appointment was secured, and laryngology showed the longest waits of all. A patient-centered account of access must report both dimensions: a subspecialty that "opens the door" quickly may still leave the patient waiting weeks, and an intervention aimed at one dimension will not necessarily improve the other.
 
@@ -203,9 +203,25 @@ Third, **the null contextual findings are informative rather than merely negativ
 
 These findings carry practical implications. Subspecialty-specific bottlenecks—prolonged waits for laryngology and pediatric otolaryngology—are concrete targets for referral triage, capacity planning, and telehealth, independent of where the patient lives. That contextual factors did not predict access is reassuring against one form of disparity but does not exclude others not measured here, including patient insurance type, which this phase did not vary.
 
-**Limitations.** The realized sample achieved the pre-specified, near-optimal urban/rural balance (approximately 50/50 under the RUCA 1–3 vs 4–10 dichotomy) and exceeded the planned call budget. One appointment with an implausible date—a wait exceeding two years attributable to a data-entry error in the appointment year—was excluded from the timeliness analysis. Even so, the study was modestly underpowered for its primary rural-versus-urban timeliness contrast: the pre-specified target was a minimum detectable gap of about six business days, whereas the realized sample (429 recorded waits, reflecting an appointment-offer rate near three-fifths) supports detection of roughly a ten-day gap at 90% power and provides about 70% power for the originally anticipated eight-day gap. Reaching the six-day target would require on the order of 130 additional calls (approximately 1,090 total) at 80% power, or 490 additional calls (approximately 1,450 total) at 90% power. The observed rural–urban difference was small (about two business days) and non-significant. Each physician was contacted once, precluding within-physician inference; contextual covariates were linked at the ZIP-code or county level and thus approximate a practice's true environment; patient insurance was held constant (not varied) in this phase; and appointment availability reflects a single point in time.
+**Strengths and limitations.** A central strength is the simulated-patient design itself: because offices were unaware of being observed, responses were insulated from the social-desirability and observation (Hawthorne) bias that affects surveys of practices aware they are being studied, yielding a more faithful measure of the experience a real new patient would encounter [@rankin2022]. The realized sample achieved the pre-specified, near-optimal urban/rural balance (approximately 50/50 under the RUCA 1–3 vs 4–10 dichotomy) and exceeded the planned call budget. One appointment with an implausible date—a wait exceeding two years attributable to a data-entry error in the appointment year—was excluded from the timeliness analysis. Even so, the study was modestly underpowered for its primary rural-versus-urban timeliness contrast: the pre-specified target was a minimum detectable gap of about six business days, whereas the realized sample (429 recorded waits, reflecting an appointment-offer rate near three-fifths) supports detection of roughly a ten-day gap at 90% power and provides about 70% power for the originally anticipated eight-day gap. Reaching the six-day target would require on the order of 130 additional calls (approximately 1,090 total) at 80% power, or 490 additional calls (approximately 1,450 total) at 90% power. The observed rural–urban difference was small (about two business days) and non-significant. Each physician was contacted once, precluding within-physician inference; each call captured the response of a single office representative, whose account may not reflect the practice's full scheduling behavior; contextual covariates were linked at the ZIP-code or county level and thus approximate a practice's true environment; patient insurance was held constant (not varied) in this phase; and appointment availability reflects a single point in time.
 
 **Conclusion.** In a national mystery-caller study, new-patient otolaryngology access was driven by the requested subspecialty rather than by local supply, insurance generosity, or social vulnerability, and the availability and timeliness of care diverged by subspecialty. Efforts to improve access should account for subspecialty-specific bottlenecks and should measure both whether patients can get in and how long they wait.
+
+## Author contributions
+
+*[CRediT taxonomy — complete for the final author list.]* **[Author 1]:** Conceptualization, Methodology, Formal analysis, Writing – original draft. **[Author 2]:** Investigation, Data curation, Writing – review & editing. **[Author 3]:** Investigation, Project administration. **[Senior author]:** Conceptualization, Supervision, Writing – review & editing. All authors reviewed and approved the final manuscript and accept responsibility for its submission.
+
+## Funding
+
+*[State the funding source and grant number, or the following if none:]* This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.
+
+## Conflicts of interest
+
+*[Declare any competing interests for each author, or the following if none:]* The authors declare no competing interests.
+
+## Data availability
+
+De-identified data supporting the findings of this study, together with a data dictionary, are available from the corresponding author on reasonable request and under a data-sharing agreement, beginning 6 months and ending 36 months after publication. Analysis code is available at *[repository URL]*.
 
 ## Figures
 
@@ -271,6 +287,33 @@ for (cap in names(supp_figs)) {
 ```
 
 *Full legends for all supplementary items are in `docs/supplementary_legends.md`.*
+
+## Supplementary Appendix: Standardized call script
+
+Callers followed a standardized telephone script and recorded responses in a structured data-capture form. Each physician's office was called under a commercial Blue Cross Blue Shield new-patient scenario, with a chief complaint matched to the physician's subspecialty. *[Replace the bracketed chief-complaint text below with the verbatim vignette wording used in the field, and confirm the call-attempt rule.]*
+
+**Call flow (all subspecialties).**
+
+1. **Introduction.** "Hello, I'm calling to schedule a new-patient appointment for [myself / a family member] with Dr. [last name]."
+2. **Insurance.** If asked, state commercial Blue Cross Blue Shield coverage.
+3. **Chief complaint.** Provide the subspecialty-matched complaint (below) if asked the reason for the visit.
+4. **Appointment offer.** Record whether a new-patient appointment with the sampled physician was offered (yes/no).
+5. **Next-available date.** If offered, record the next-available appointment date (used to compute the business-day wait).
+6. **Call attempts.** *[Each office was called up to [N] times on separate business days; an office not reached after [N] attempts was recorded as unreachable / incomplete.]*
+7. **Disclosure.** *[If directly asked whether the call was for research, callers disclosed the study and offered the investigator's/IRB contact information.]*
+
+**Table S8. Subspecialty-matched chief complaints.**
+
+| Subspecialty | Scripted chief complaint |
+|---|---|
+| General otolaryngology | *[e.g., chronic nasal congestion / recurrent sinus infections]* |
+| Facial plastic surgery | *[chief complaint]* |
+| Head and neck oncology | *[chief complaint]* |
+| Laryngology | *[e.g., persistent hoarseness]* |
+| Otology/neurotology | *[e.g., hearing loss / recurrent ear infections]* |
+| Pediatric otolaryngology | *[e.g., recurrent otitis media / tonsil concerns]* |
+| Rhinology | *[e.g., chronic rhinosinusitis]* |
+| Sleep medicine | *[e.g., loud snoring / suspected obstructive sleep apnea]* |
 
 \newpage
 
