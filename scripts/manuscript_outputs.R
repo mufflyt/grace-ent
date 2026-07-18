@@ -114,6 +114,6 @@ g <- ggplot(fp, aes(est, term, color = sig)) +
        y = NULL, color = NULL,
        title = "Otolaryngology appointment access and timeliness",
        subtitle = "Reference: general otolaryngology, urban. Adjusted two-part model, market random intercept.") +
-  theme_bw(base_size = 11) + theme(legend.position = "top")
+  theme_bw(base_size = 11) + theme(legend.position = "none")
 ggsave(file.path(outdir, "forest_access_timeliness.png"), g, width = 10, height = 6, dpi = 150)
 cat("Wrote forest_access_timeliness.png\n")
