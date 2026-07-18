@@ -12,11 +12,16 @@ test_that("model tables, main figures, and supplementary artifacts exist", {
     # supplementary tables
     "model_output/supp/S8_sensitivity_analyses.csv",
     "model_output/supp/S10_access_cascade.csv",
+    # reviewer-response tables (global test, dual outcome, callers, clustering)
+    "model_output/supp/S11_clustering_sensitivity.csv",
+    "model_output/supp/S12_caller_effects.csv",
+    "model_output/supp/S13_dual_access_outcomes.csv",
+    "model_output/supp/S14_global_subspecialty_test.csv",
     # supplementary figures
     "model_output/supp/figS1_km_time_to_appointment.png",
     "model_output/supp/figS2_wait_distribution.png",
     "model_output/supp/figS3_nb_diagnostics.png",
-    "model_output/supp/figS7_access_cascade.png"
+    "model_output/supp/figS6_access_cascade.png"
   )
   for (f in files) {
     expect_true(file.exists(P(f)), info = f)

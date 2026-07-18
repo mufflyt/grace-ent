@@ -19,6 +19,37 @@ supp <- "model_output/supp"; dir.create(supp, showWarnings = FALSE, recursive = 
 num <- function(x) suppressWarnings(as.numeric(x))
 wr  <- function(x, f) { write.csv(as.data.frame(x), file.path(supp, f), row.names = FALSE); cat("  wrote", f, "\n") }
 
+# human-readable term labels + a reader-facing model table (no raw z/se columns)
+prettyterm <- function(t) {
+  map <- c(
+    "(Intercept)"                  = "Intercept",
+    "ent_typeFacial Plastics"      = "Facial plastic surgery",
+    "ent_typeHead and Neck Cancer" = "Head and neck oncology",
+    "ent_typeLaryngology"          = "Laryngology",
+    "ent_typeOtology/neurotology"  = "Otology/neurotology",
+    "ent_typePediatrics"           = "Pediatric otolaryngology",
+    "ent_typeRhinology"            = "Rhinology",
+    "ent_typeSleep"                = "Sleep medicine",
+    "ent_per_100k_z"               = "Otolaryngologist density (per SD)",
+    "medicaid_fee_index_z"         = "Medicaid fee index (per SD)",
+    "svi_overall_z"                = "Social Vulnerability Index (per SD)",
+    "dual_pct_z"                   = "Dual-eligible share (per SD)",
+    "ruralRural"                   = "Rural (vs urban)",
+    "ruralSuburban"                = "Suburban (vs urban)")
+  out <- unname(map[t])
+  out[is.na(out) & grepl("^caller_f", t)] <- paste0("Caller: ", sub("^caller_f", "", t[is.na(out) & grepl("^caller_f", t)]))
+  ifelse(is.na(out), t, out)
+}
+clean_model_tab <- function(tab, ratio_col, ratio_name) {
+  p <- num(tab$p_value)
+  data.frame(
+    Term            = prettyterm(tab$term),
+    setNames(list(sprintf("%.2f", num(tab[[ratio_col]]))), ratio_name),
+    `95% CI`        = sprintf("%.2f-%.2f", num(tab$ci_lower), num(tab$ci_upper)),
+    `p-value`       = ifelse(p < 0.001, "<0.001", sprintf("%.3f", p)),
+    check.names = FALSE, stringsAsFactors = FALSE)
+}
+
 d <- read.csv("data/processed/ent_phase2_enriched.csv", colClasses = "character")
 d <- d[d$complete == "Complete" & d$ent_type != "" & !is.na(d$ent_type), ]
 d$offered   <- ifelse(d$appointment_offered == "TRUE", 1L, 0L)
@@ -39,9 +70,9 @@ wait <- mysterycall_nb_model(d2, "wait_days", preds, "cluster")
 
 cat("Building supplementary tables ->", supp, "\n")
 
-# S1 / S2 -- full model tables (model_table is count-model only; access uses or_table)
-try(wr(acc$or_table, "S1_access_full_model.csv"))
-try(wr(mysterycall_model_table(wait), "S2_timeliness_full_model.csv"))
+# S1 / S2 -- full model tables, reader-facing columns (Term, OR/IRR, 95% CI, p)
+try(wr(clean_model_tab(acc$or_table,  "or",  "Odds ratio"),        "S1_access_full_model.csv"))
+try(wr(clean_model_tab(wait$irr_table, "irr", "Incidence rate ratio"), "S2_timeliness_full_model.csv"))
 
 # S3-S5 -- wait time by group
 for (g in list(c("ent_type","S3_wait_by_subspecialty.csv"),

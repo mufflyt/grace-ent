@@ -86,6 +86,8 @@ lab <- c(ent_typeLaryngology = "Laryngology", ent_typePediatrics = "Pediatric ot
          rural3Suburban = "Suburban, RUCA 4-6 (vs urban)")
 res$term <- ifelse(res$term %in% names(lab), lab[res$term], res$term)
 
+names(res) <- c("Specification", "Model part", "Term", "Estimate (OR/IRR)",
+                "95% CI", "p-value", "N (access)", "N (timeliness)")
 write.csv(res, file.path(SUPP, "S8_sensitivity_analyses.csv"), row.names = FALSE)
 cat("\n==== SENSITIVITY ANALYSES ====\n")
 print(res, row.names = FALSE)

@@ -1,4 +1,4 @@
-"spec","part","term","estimate","ci","p","n_access","n_timeliness"
+"Specification","Model part","Term","Estimate (OR/IRR)","95% CI","p-value","N (access)","N (timeliness)"
 "Primary (binary RUCA, imputed)","Access (OR)","Laryngology",1.8,"0.51-6.32",0.357,731,426
 "Primary (binary RUCA, imputed)","Access (OR)","Pediatric otolaryngology",2.29,"1.09-4.80",0.028,731,426
 "Primary (binary RUCA, imputed)","Access (OR)","Rural (vs urban)",1.04,"0.73-1.49",0.83,731,426

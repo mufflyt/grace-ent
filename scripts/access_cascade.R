@@ -11,7 +11,7 @@
 # the sampled physician or a redirect. This script summarizes them.
 #
 # Output: model_output/supp/S10_access_cascade.csv          (table)
-#         model_output/supp/figS7_access_cascade.png         (funnel figure)
+#         model_output/supp/figS6_access_cascade.png         (access-measures figure)
 # =============================================================================
 
 suppressPackageStartupMessages(library(ggplot2))
@@ -81,8 +81,8 @@ g <- ggplot(fig, aes(p, measure, fill = p)) +
                      labels = function(x) paste0(x, "%"),
                      expand = expansion(mult = c(0, 0.14))) +
   labs(x = NULL, y = NULL,
-       title = "New-patient access cascade",
-       subtitle = sprintf("Share of the %d analytic calls reaching each step", N)) +
+       title = "New-patient access measures across the call pathway",
+       subtitle = sprintf("Share of the %d analytic calls; overlapping measures, not a strictly nested funnel", N)) +
   theme_minimal(base_size = 12) +
   theme(
     panel.grid.major.y = element_blank(),
@@ -93,5 +93,5 @@ g <- ggplot(fig, aes(p, measure, fill = p)) +
     plot.subtitle = element_text(colour = "grey40", size = 10,
                                  margin = margin(t = 2, b = 8)),
     plot.margin   = margin(8, 12, 8, 8))
-ggsave(file.path(SUPP, "figS7_access_cascade.png"), g, width = 8.6, height = 3.9, dpi = 200)
-cat("Wrote figS7_access_cascade.png\n")
+ggsave(file.path(SUPP, "figS6_access_cascade.png"), g, width = 8.6, height = 3.9, dpi = 200)
+cat("Wrote figS6_access_cascade.png\n")

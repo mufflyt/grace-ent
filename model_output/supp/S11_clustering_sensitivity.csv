@@ -1,0 +1,4 @@
+"Model","N","Pediatrics access OR (95% CI)","Subspecialty joint p"
+"Primary (CBSA random intercept only)",731,"2.35 (1.11-5.00)",0.093
+"CBSA + practice-telephone random intercept",731,"2.36 (1.10-5.04)",NA
+"One call per telephone number",686,"2.38 (1.10-5.16)",0.116

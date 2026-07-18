@@ -64,10 +64,10 @@ test_that("p-values are strictly positive and confidence intervals have positive
 
 test_that("complete-case sensitivity samples are strict subsets of the primary", {
   s8 <- rd_num("model_output/supp/S8_sensitivity_analyses.csv")
-  na_primary <- unique(s8$n_access[grepl("Primary", s8$spec)])
-  na_cc      <- unique(s8$n_access[grepl("Complete-case", s8$spec)])
-  nt_primary <- unique(s8$n_timeliness[grepl("Primary", s8$spec)])
-  nt_cc      <- unique(s8$n_timeliness[grepl("Complete-case", s8$spec)])
+  na_primary <- unique(s8[["N (access)"]][grepl("Primary", s8[["Specification"]])])
+  na_cc      <- unique(s8[["N (access)"]][grepl("Complete-case", s8[["Specification"]])])
+  nt_primary <- unique(s8[["N (timeliness)"]][grepl("Primary", s8[["Specification"]])])
+  nt_cc      <- unique(s8[["N (timeliness)"]][grepl("Complete-case", s8[["Specification"]])])
   expect_lt(na_cc, na_primary)        # dropping missing-covariate rows shrinks n
   expect_lt(nt_cc, nt_primary)
   expect_equal(na_primary, 731)
