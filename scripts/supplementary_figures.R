@@ -71,13 +71,38 @@ if (!is.null(km_res)) {
 }
 
 # ---- S2: wait-time distribution faceted by subspecialty ---------------------
+# Rebuilt with independent y-axes: a shared scale flattens every panel except
+# general otolaryngology (which dominates the counts).
 d2 <- d[which(d$offered == 1 & !is.na(d$wait_days)), ]
-fh <- tryCatch(mysterycall_facet_histogram(
-  d2, x_col = "wait_days", facet_col = "ent_type", binwidth = 7,
-  x_label = "Business days to appointment", title = "Wait-time distribution by subspecialty",
-  output_dir = supp, filename = "figS2_wait_distribution.png"),
-  error = function(e) {cat("S2 hist err:", conditionMessage(e), "\n"); NULL})
-if (!is.null(fh)) cat("wrote figS2_wait_distribution.png\n")
+sub_lab <- c(General = "General otolaryngology", "Facial Plastics" = "Facial plastic surgery",
+  "Head and Neck Cancer" = "Head and neck oncology", Pediatrics = "Pediatric otolaryngology",
+  Sleep = "Sleep medicine", Laryngology = "Laryngology",
+  "Otology/neurotology" = "Otology/neurotology", Rhinology = "Rhinology")
+d2$sub <- ifelse(d2$ent_type %in% names(sub_lab), sub_lab[d2$ent_type], d2$ent_type)
+ord <- names(sort(tapply(d2$wait_days, d2$sub, median, na.rm = TRUE)))
+d2$sub <- factor(d2$sub, levels = ord)
+meds <- aggregate(wait_days ~ sub, d2, median)
+p2 <- ggplot(d2, aes(wait_days)) +
+  geom_histogram(binwidth = 7, boundary = 0, fill = "#4C72B0",
+                 colour = "white", linewidth = 0.2) +
+  geom_vline(data = meds, aes(xintercept = wait_days), colour = "#b2182b",
+             linetype = "dashed", linewidth = 0.5) +
+  geom_text(data = meds, aes(x = Inf, y = Inf, label = sprintf("median %d d", round(wait_days))),
+            hjust = 1.08, vjust = 1.5, size = 2.7, colour = "#b2182b") +
+  facet_wrap(~ sub, ncol = 3, scales = "free_y") +
+  scale_x_continuous(breaks = seq(0, 150, 30)) +
+  labs(x = "Business days to appointment", y = "Number of appointments",
+       title = "Wait-time distribution by subspecialty",
+       subtitle = "Independent y-axes; dashed line marks each subspecialty's median wait") +
+  theme_minimal(base_size = 11) +
+  theme(
+    strip.text       = element_text(face = "bold", size = 9.5),
+    panel.grid.minor = element_blank(),
+    plot.title       = element_text(face = "bold", size = 14),
+    plot.subtitle    = element_text(colour = "grey40", size = 9.5, margin = margin(b = 6)),
+    panel.spacing    = grid::unit(0.9, "lines"))
+ggsave(file.path(supp, "figS2_wait_distribution.png"), p2, width = 9, height = 6, dpi = 200)
+cat("wrote figS2_wait_distribution.png\n")
 
 # ---- S3: NB model diagnostics -----------------------------------------------
 preds <- c("ent_type","rural","caller_f")

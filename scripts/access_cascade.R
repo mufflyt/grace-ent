@@ -69,14 +69,29 @@ cat("Wrote S10_access_cascade.csv\n"); print(tab, row.names = FALSE)
 fig <- cascade
 fig$measure <- factor(fig$measure, levels = rev(fig$measure))
 fig$p <- 100 * fig$n / fig$denom
-g <- ggplot(fig, aes(p, measure)) +
-  geom_col(fill = "#386cb0", width = 0.68) +
-  geom_text(aes(label = sprintf("%d (%.0f%%)", n, p)), hjust = -0.08, size = 3.4) +
-  scale_x_continuous(limits = c(0, 100), expand = expansion(mult = c(0, 0.12))) +
-  labs(x = paste0("% of analytic sample (n = ", N, ")"), y = NULL,
-       title = "New-patient access cascade") +
+g <- ggplot(fig, aes(p, measure, fill = p)) +
+  # faint full-width track behind each bar for a funnel feel
+  geom_col(aes(x = 100), fill = "grey93", width = 0.66) +
+  geom_col(width = 0.66) +
+  geom_text(aes(label = sprintf("%d  (%.0f%%)", n, p)), hjust = -0.12,
+            size = 3.5, fontface = "bold", colour = "grey20") +
+  scale_fill_viridis_c(option = "D", direction = -1, begin = 0.15, end = 0.85,
+                       guide = "none") +
+  scale_x_continuous(limits = c(0, 100), breaks = seq(0, 100, 25),
+                     labels = function(x) paste0(x, "%"),
+                     expand = expansion(mult = c(0, 0.14))) +
+  labs(x = NULL, y = NULL,
+       title = "New-patient access cascade",
+       subtitle = sprintf("Share of the %d analytic calls reaching each step", N)) +
   theme_minimal(base_size = 12) +
-  theme(panel.grid.major.y = element_blank(),
-        plot.title = element_text(face = "bold"))
-ggsave(file.path(SUPP, "figS7_access_cascade.png"), g, width = 8.5, height = 3.6, dpi = 150)
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.x = element_line(colour = "grey92"),
+    axis.text.y  = element_text(colour = "grey15"),
+    plot.title    = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(colour = "grey40", size = 10,
+                                 margin = margin(t = 2, b = 8)),
+    plot.margin   = margin(8, 12, 8, 8))
+ggsave(file.path(SUPP, "figS7_access_cascade.png"), g, width = 8.6, height = 3.9, dpi = 200)
 cat("Wrote figS7_access_cascade.png\n")
