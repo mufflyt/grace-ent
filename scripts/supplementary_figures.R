@@ -109,6 +109,10 @@ us <- merge(us, agg, by.x = "region_aao", by.y = "region", all.x = TRUE)
 us <- us[order(us$order), ]
 # one label per AAO-HNS BoG region, placed at the region's centroid
 cent <- aggregate(cbind(long, lat) ~ region_aao, data = us[!is.na(us$region_aao), ], FUN = mean)
+# nudge the small New England label up/right into open space off the coast
+ne <- cent$region_aao == "New England"
+cent$long[ne] <- cent$long[ne] + 6
+cent$lat[ne]  <- cent$lat[ne]  + 2
 mk <- function(fill, lab, pal) ggplot(us, aes(long, lat, group = group, fill = .data[[fill]])) +
   geom_polygon(color = "white", linewidth = 0.15) +
   geom_text(data = cent, aes(long, lat, label = region_aao), inherit.aes = FALSE,
