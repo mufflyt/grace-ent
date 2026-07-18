@@ -9,7 +9,7 @@ test_that("call log has 960 unique records", {
 test_that("analytic sample and offer counts match the manuscript", {
   comp <- analytic()
   expect_equal(nrow(comp), 731L)
-  expect_equal(sum(comp$appointment_offered == "TRUE"), 433L)
+  expect_equal(sum(comp$appointment_offered == "TRUE"), 436L)
 })
 
 test_that("record 470 wrong-year appointment wait is corrected to missing", {

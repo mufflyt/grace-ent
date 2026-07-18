@@ -4,8 +4,8 @@
 #
 # Three nested selection stages, each a potential source of bias:
 #   960 calls -> 749 complete (call-completion / data-collection missingness)
-#            -> 433 offered an appointment (ACCESS)
-#            -> 430 with a business-day wait (TIMELINESS; MNAR by design)
+#            -> 436 offered an appointment (ACCESS)
+#            -> 426 with a business-day wait (TIMELINESS; MNAR by design)
 #
 # We (1) quantify the attrition, (2) test whether call INCOMPLETENESS is related
 # to observed covariates (a MAR/MCAR-style check on the data-collection stage),

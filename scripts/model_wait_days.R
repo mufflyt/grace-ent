@@ -7,7 +7,7 @@
 #   Part 2  TIMELINESS  mysterycall_nb_model        E[business-day wait | offered]
 #
 # Why two parts: wait_days_business is observed ONLY when an appointment was
-# offered (430 of 960 rows). Modeling each stage separately keeps "can I get
+# offered (426 of 960 rows). Modeling each stage separately keeps "can I get
 # in?" distinct from "how long is the wait?".
 #
 # Analytic sample: complete calls only (complete == "Complete"), excluding 18

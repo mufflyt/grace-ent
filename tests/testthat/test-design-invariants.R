@@ -53,13 +53,11 @@ test_that("reasons for non-acceptance partition the non-accepting practices", {
   expect_equal(sum(r$n), unique(r$Denominator))
 })
 
-test_that("offer flag and appointment outcome agree (bounded known discordance)", {
-  # ADVERSARIAL DATA-QUALITY GUARDRAIL.
-  # A handful of records disagree between appointment_offered and
-  # appointment_outcome (surfaced 2026-07: 6 outcomes recorded as "With sampled
-  # physician" but offered=FALSE; 3 offered=TRUE but "No appointment offered").
-  # These should be reconciled toward zero in REDCap. This test passes at the
-  # current level and FAILS if the discordance grows.
+test_that("offer flag and appointment outcome are fully reconciled", {
+  # ADVERSARIAL DATA-QUALITY INVARIANT.
+  # Nine analytic records once disagreed (6 outcomes "With sampled physician" but
+  # offered=FALSE; 3 offered=TRUE but "No appointment offered"); reconciled by
+  # scripts/reconcile_offer_outcome.R. These contradictions must now be zero.
   comp <- analytic()
   made_with_sampled_but_not_offered <-
     sum(comp$appointment_outcome == "With sampled physician" &
@@ -67,6 +65,6 @@ test_that("offer flag and appointment outcome agree (bounded known discordance)"
   offered_but_no_appointment <-
     sum(comp$appointment_offered == "TRUE" &
         comp$appointment_outcome == "No appointment offered")
-  expect_lte(made_with_sampled_but_not_offered, 6L)
-  expect_lte(offered_but_no_appointment, 3L)
+  expect_equal(made_with_sampled_but_not_offered, 0L)
+  expect_equal(offered_but_no_appointment, 0L)
 })

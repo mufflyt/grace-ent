@@ -8,7 +8,7 @@
 #   -> 749 complete data collection      (-211 incomplete)
 #   -> 731 analytic, subspecialty known  (-18 subspecialty undetermined)
 #   -> 731 access model (offer yes/no)
-#   -> 430 timeliness model (business-day wait)   (-301 no appointment / no wait)
+#   -> 426 timeliness model (business-day wait)   (-305 no appointment / no wait)
 #
 # Output: model_output/strobe_flow_mysterycall.png (+ .tiff)
 # =============================================================================
@@ -21,7 +21,7 @@ mysterycall_strobe_flow(
   n_calldate = 749,   # complete data collection
   n_included = 731,   # analytic sample (subspecialty determinable)
   n_logistic = 731,   # access model (appointment offered vs not)
-  n_waittime = 429,   # timeliness model (business-day wait recorded)
+  n_waittime = 426,   # timeliness model (business-day wait recorded)
   label_total    = "Calls placed",
   label_calldate = "Complete data collection",
   label_included = "Analytic sample (subspecialty known)",

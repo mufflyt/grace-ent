@@ -1,21 +1,21 @@
 "spec","part","term","estimate","ci","p","n_access","n_timeliness"
-"Primary (binary RUCA, imputed)","Access (OR)","Laryngology",1.74,"0.50-6.07",0.386,731,429
-"Primary (binary RUCA, imputed)","Access (OR)","Pediatric otolaryngology",2.27,"1.08-4.76",0.031,731,429
-"Primary (binary RUCA, imputed)","Access (OR)","Rural (vs urban)",1.02,"0.71-1.46",0.922,731,429
-"Primary (binary RUCA, imputed)","Timeliness (IRR)","Laryngology",2.25,"1.14-4.47",0.02,731,429
-"Primary (binary RUCA, imputed)","Timeliness (IRR)","Pediatric otolaryngology",1.63,"1.11-2.40",0.013,731,429
-"Primary (binary RUCA, imputed)","Timeliness (IRR)","Rural (vs urban)",1.17,"0.90-1.51",0.242,731,429
-"S-A: 3-level RUCA","Access (OR)","Laryngology",1.74,"0.50-6.08",0.385,731,429
-"S-A: 3-level RUCA","Access (OR)","Pediatric otolaryngology",2.26,"1.08-4.75",0.031,731,429
-"S-A: 3-level RUCA","Access (OR)","Suburban, RUCA 4-6 (vs urban)",1.03,"0.71-1.50",0.857,731,429
-"S-A: 3-level RUCA","Access (OR)","Rural, RUCA 7-10 (vs urban)",0.93,"0.49-1.75",0.823,731,429
-"S-A: 3-level RUCA","Timeliness (IRR)","Laryngology",2.25,"1.13-4.46",0.021,731,429
-"S-A: 3-level RUCA","Timeliness (IRR)","Pediatric otolaryngology",1.64,"1.11-2.41",0.012,731,429
-"S-A: 3-level RUCA","Timeliness (IRR)","Suburban, RUCA 4-6 (vs urban)",1.15,"0.88-1.49",0.317,731,429
-"S-A: 3-level RUCA","Timeliness (IRR)","Rural, RUCA 7-10 (vs urban)",1.29,"0.83-2.02",0.261,731,429
-"S-B: Complete-case","Access (OR)","Laryngology",1.53,"0.42-5.52",0.517,701,412
-"S-B: Complete-case","Access (OR)","Pediatric otolaryngology",2.32,"1.06-5.06",0.034,701,412
-"S-B: Complete-case","Access (OR)","Rural (vs urban)",1,"0.69-1.45",1,701,412
-"S-B: Complete-case","Timeliness (IRR)","Laryngology",2.51,"1.22-5.18",0.012,701,412
-"S-B: Complete-case","Timeliness (IRR)","Pediatric otolaryngology",1.52,"1.02-2.28",0.04,701,412
-"S-B: Complete-case","Timeliness (IRR)","Rural (vs urban)",1.14,"0.87-1.48",0.34,701,412
+"Primary (binary RUCA, imputed)","Access (OR)","Laryngology",1.8,"0.51-6.32",0.357,731,426
+"Primary (binary RUCA, imputed)","Access (OR)","Pediatric otolaryngology",2.29,"1.09-4.80",0.028,731,426
+"Primary (binary RUCA, imputed)","Access (OR)","Rural (vs urban)",1.04,"0.73-1.49",0.83,731,426
+"Primary (binary RUCA, imputed)","Timeliness (IRR)","Laryngology",2.24,"1.13-4.41",0.02,731,426
+"Primary (binary RUCA, imputed)","Timeliness (IRR)","Pediatric otolaryngology",1.62,"1.11-2.38",0.013,731,426
+"Primary (binary RUCA, imputed)","Timeliness (IRR)","Rural (vs urban)",1.19,"0.92-1.53",0.191,731,426
+"S-A: 3-level RUCA","Access (OR)","Laryngology",1.81,"0.52-6.34",0.355,731,426
+"S-A: 3-level RUCA","Access (OR)","Pediatric otolaryngology",2.28,"1.09-4.79",0.029,731,426
+"S-A: 3-level RUCA","Access (OR)","Suburban, RUCA 4-6 (vs urban)",1.06,"0.73-1.54",0.754,731,426
+"S-A: 3-level RUCA","Access (OR)","Rural, RUCA 7-10 (vs urban)",0.93,"0.49-1.75",0.822,731,426
+"S-A: 3-level RUCA","Timeliness (IRR)","Laryngology",2.23,"1.13-4.40",0.021,731,426
+"S-A: 3-level RUCA","Timeliness (IRR)","Pediatric otolaryngology",1.64,"1.12-2.40",0.012,731,426
+"S-A: 3-level RUCA","Timeliness (IRR)","Suburban, RUCA 4-6 (vs urban)",1.16,"0.89-1.51",0.276,731,426
+"S-A: 3-level RUCA","Timeliness (IRR)","Rural, RUCA 7-10 (vs urban)",1.36,"0.87-2.12",0.18,731,426
+"S-B: Complete-case","Access (OR)","Laryngology",1.59,"0.44-5.75",0.482,701,409
+"S-B: Complete-case","Access (OR)","Pediatric otolaryngology",2.35,"1.08-5.10",0.031,701,409
+"S-B: Complete-case","Access (OR)","Rural (vs urban)",1.03,"0.71-1.49",0.872,701,409
+"S-B: Complete-case","Timeliness (IRR)","Laryngology",2.49,"1.22-5.10",0.012,701,409
+"S-B: Complete-case","Timeliness (IRR)","Pediatric otolaryngology",1.52,"1.02-2.27",0.04,701,409
+"S-B: Complete-case","Timeliness (IRR)","Rural (vs urban)",1.16,"0.89-1.51",0.275,701,409

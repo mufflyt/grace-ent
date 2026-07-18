@@ -48,8 +48,9 @@ data_stage <- function() {
     "scripts/build_zip_svi.R",
     "scripts/01_clean_phase2_call_log.R",
     "scripts/enrich_call_log.R",
-    "scripts/fix_data_errors.R",       # record-470 wrong-year correction
-    "scripts/apply_binary_ruca.R"      # RUCA 1-3 = urban, 4-10 = rural
+    "scripts/fix_data_errors.R",         # record-470 wrong-year correction
+    "scripts/reconcile_offer_outcome.R", # align appointment_offered with outcome
+    "scripts/apply_binary_ruca.R"        # RUCA 1-3 = urban, 4-10 = rural
   )) run(s)
 }
 
