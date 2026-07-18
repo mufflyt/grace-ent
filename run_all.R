@@ -73,6 +73,11 @@ analysis_stage <- function() {
 
 # ---- stage: render ----------------------------------------------------------
 render_stage <- function() {
+  # first HTML pass, then compute word counts, then final render of both formats
+  rmarkdown::render("manuscript_mystery_caller.Rmd",
+                    output_format = "html_document", output_dir = "manuscript_output",
+                    quiet = TRUE)
+  run("scripts/wordcount.R")
   for (fmt in c("html_document", "word_document"))
     rmarkdown::render("manuscript_mystery_caller.Rmd",
                       output_format = fmt, output_dir = "manuscript_output",

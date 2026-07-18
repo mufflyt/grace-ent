@@ -15,8 +15,12 @@ test_that("model tables, main figures, and supplementary artifacts exist", {
     # reviewer-response tables (global test, dual outcome, callers, clustering)
     "model_output/supp/S11_clustering_sensitivity.csv",
     "model_output/supp/S12_caller_effects.csv",
+    "model_output/supp/S12b_leave_one_caller_out.csv",
+    "model_output/supp/S12c_caller_balance.csv",
     "model_output/supp/S13_dual_access_outcomes.csv",
     "model_output/supp/S14_global_subspecialty_test.csv",
+    "model_output/supp/S14b_factor_joint_tests.csv",
+    "model_output/supp/S15_design_weighted.csv",
     # supplementary figures
     "model_output/supp/figS1_km_time_to_appointment.png",
     "model_output/supp/figS2_wait_distribution.png",

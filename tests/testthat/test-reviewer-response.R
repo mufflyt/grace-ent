@@ -1,13 +1,28 @@
 # Reviewer-response analyses (Tables S11-S14): guard the claims added in revision.
 
-test_that("global subspecialty test is reported for both model parts and is a valid p", {
+test_that("global subspecialty test uses the correct df and is a valid p", {
   g <- rd_num("model_output/supp/S14_global_subspecialty_test.csv")
   expect_true(any(grepl("Access", g[["Model part"]])))
   expect_true(any(grepl("Timeliness", g[["Model part"]])))
   expect_true(all(g[["p-value"]] >= 0 & g[["p-value"]] <= 1))
-  expect_true(all(g[["df"]] >= 1))
+  # 8 subspecialty levels -> the joint LRT has exactly 7 df (guards the df bug)
+  expect_true(all(g[["df"]] == 7))
   # the honest headline: neither part is jointly significant at 0.05
   expect_true(all(g[["p-value"]] > 0.05))
+})
+
+test_that("caller factor is jointly significant and stronger than subspecialty", {
+  f <- rd_num("model_output/supp/S14b_factor_joint_tests.csv")
+  cal <- f[grepl("Caller", f$Factor), ]; sub <- f[grepl("subspecialty", f$Factor), ]
+  expect_lt(cal[["p-value"]], 0.05)          # caller jointly significant
+  expect_gt(sub[["p-value"]], 0.05)          # subspecialty not
+  expect_gt(cal[["Chi-square"]], sub[["Chi-square"]])
+})
+
+test_that("design-weighting barely moves the offer rate (strata are similar)", {
+  w <- rd_num("model_output/supp/S15_design_weighted.csv")
+  gp <- function(col) as.numeric(sub("%.*", "", w[[col]][grepl("offer", w$Estimate)]))
+  expect_lt(abs(gp("Unweighted (analytic sample)") - gp("Design-weighted to frame (rural 7%)")), 3)
 })
 
 test_that("dual access outcomes cover the seven non-reference subspecialties with positive ORs", {
