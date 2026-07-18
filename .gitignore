@@ -39,3 +39,6 @@ manuscript/artifact*.html
 
 # Reference PDFs reviewed locally (not part of the repo)
 /pdf_review/
+
+# macOS
+.DS_Store
