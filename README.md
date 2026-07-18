@@ -1,6 +1,10 @@
 # grace-ent
 
+[![tests](https://github.com/mufflyt/grace-ent/actions/workflows/tests.yml/badge.svg)](https://github.com/mufflyt/grace-ent/actions/workflows/tests.yml)
+
 A mystery caller study examining access to care for ENT (Ear, Nose, and Throat) specialists.
+
+Run the test suite locally with `Rscript tests/run_tests.R` (or `Rscript run_all.R test`).
 
 ## Overview
 

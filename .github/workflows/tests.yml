@@ -1,0 +1,37 @@
+name: tests
+
+# Runs the grace-ent test suite. The tests validate the committed analytic
+# dataset and analysis outputs (they do not refit models), so CI only needs R
+# and testthat — no Census/API keys, no Valhalla, no mysterycall package.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - name: Install testthat
+        run: Rscript -e 'if (!requireNamespace("testthat", quietly = TRUE)) install.packages("testthat")'
+
+      - name: Run test suite
+        run: Rscript tests/run_tests.R
