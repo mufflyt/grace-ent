@@ -16,6 +16,7 @@
 #   analysis Fits the two-part model and regenerates every table/figure in
 #            model_output/ from the committed enriched CSV.
 #   render   Knits manuscript_mystery_caller.Rmd to HTML + DOCX.
+#   test     Runs the test suite (tests/run_tests.R).
 #
 # NOT run here (external services / long compute; run manually if needed):
 #   Valhalla isochrones .... scripts/valhalla_ent_isochrones.R (EC2 tunnel)
@@ -96,6 +97,7 @@ switch(stage,
   data     = data_stage(),
   analysis = analysis_stage(),
   render   = render_stage(),
+  test     = { source("tests/run_tests.R", local = new.env()) },
   all      = { data_stage(); analysis_stage(); render_stage() },
   default  = { analysis_stage(); render_stage() },
   stop(sprintf("unknown stage '%s' (use data|analysis|render|all)", stage))
