@@ -41,7 +41,8 @@ TIMELINESS (wait) : ent_type joint LRT chisq=12.64 df=7 p=0.081
   Other   1.31 (0.41-4.21)   0.648
   Walsh   2.32 (1.42-3.80)   0.001
 
-Caller joint LRT: chisq=18.62 df=6 p=0.0049 (vs subspecialty chisq=12.21 df=7 p=0.094)
+Caller joint LRT  access: chisq=18.62 df=6 p=0.0049 | timeliness: chisq=6.44 df=6 p=0.376
+Subspec joint LRT access: chisq=12.21 df=7 p=0.094 | timeliness: chisq=12.64 df=7 p=0.081
 
 Leave-one-caller-out: Pediatrics access OR + global ent_type p
  Caller excluded   N Pediatrics access OR Pediatrics p Subspecialty joint p
@@ -52,16 +53,24 @@ Leave-one-caller-out: Pediatrics access OR + global ent_type p
              Kim 623                 2.28        0.038                0.070
            Other 718                 2.17        0.041                0.101
            Walsh 611                 2.58        0.022                0.048
+ Caller General Facial Plastics Head and Neck Cancer Laryngology Otology/neurotology Pediatrics Rhinology
+ Roesch     129              18                    6           5                   8         11         6
+   Deol      79              12                    6           4                   3          7         2
+   Falk      51               6                    3           0                   6          5         3
+  Gregg      73               8                    4           1                   4         11         5
+    Kim      76              15                    3           2                   5          4         2
+  Other       9               2                    1           0                   0          1         0
+  Walsh      84              17                    4           1                   6          6         1
+ Sleep   N % rural
+     5 188      43
+     3 116      50
+     1  75      47
+     5 111      53
+     1 108      53
+     0  13      69
+     1 120      54
 
-Caller balance: caller x rurality chisq p=0.281; caller x subspecialty chisq p=0.921
- Caller   N % rural % pediatric Distinct subspecialties Distinct regions
- Roesch 188      43           6                       8                8
-   Deol 116      50           6                       8                8
-   Falk  75      47           7                       7                8
-  Gregg 111      53          10                       8                8
-    Kim 108      53           4                       8                8
-  Other  13      69           8                       4                8
-  Walsh 120      54           5                       8                8
+Caller balance (Monte Carlo chisq): caller x rurality p=0.282; caller x subspecialty p=0.920
 
 
 ################ 4. PRACTICE / PHONE CLUSTERING (both parts) ################
@@ -87,6 +96,7 @@ Stratum offer rates: rural 59.1%, urban 60.2%; stratum median wait: rural 15, ur
 
 ################ 6. INCOMPLETE-CALL BOUNDS ON THE OFFER RATE ################
 
-Analytic offers=436/731=59.6%. Adding 211 incomplete calls (universe=942):
-  worst case (no incomplete would have offered): 46.3%
-  best case  (all incomplete would have offered): 68.7%
+Universe = all 960 sampled. Analytic=731, completed-unknown-subspecialty=18 (offers among them=0), incomplete=211.
+Overall offers observed=436; offer rate over all 960 = 45.4%
+  worst case (no incomplete would have offered): 45.4%
+  best case  (all incomplete would have offered): 67.4%

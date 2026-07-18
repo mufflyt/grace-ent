@@ -19,6 +19,7 @@ test_that("model tables, main figures, and supplementary artifacts exist", {
     "model_output/supp/S12c_caller_balance.csv",
     "model_output/supp/S13_dual_access_outcomes.csv",
     "model_output/supp/S14_global_subspecialty_test.csv",
+    "model_output/supp/S12c_balance_tests.csv",
     "model_output/supp/S14b_factor_joint_tests.csv",
     "model_output/supp/S15_design_weighted.csv",
     # supplementary figures

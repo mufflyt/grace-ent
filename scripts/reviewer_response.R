@@ -129,13 +129,19 @@ cal_tab <- data.frame("Caller"=sub("caller_f","",cal$term),
 print(cal_tab, row.names = FALSE)
 write.csv(cal_tab, file.path(SUPP, "S12_caller_effects.csv"), row.names = FALSE)
 
-a_cal <- lrt(anova(fit_acc(d1, "offered", rhs_ = rhsc), m_any))
-cat(sprintf("\nCaller joint LRT: chisq=%.2f df=%d p=%.4f (vs subspecialty chisq=%.2f df=%d p=%.3f)\n",
-    a_cal$chisq, a_cal$df, a_cal$p, a_any$chisq, a_any$df, a_any$p))
-write.csv(data.frame("Factor"=c("Caller (research assistant)","Requested subspecialty"),
-                     "Chi-square"=round(c(a_cal$chisq,a_any$chisq),2), "df"=c(a_cal$df,a_any$df),
-                     "p-value"=round(c(a_cal$p,a_any$p),3), check.names=FALSE),
-          file.path(SUPP, "S14b_factor_joint_tests.csv"), row.names=FALSE)
+a_cal    <- lrt(anova(fit_acc(d1, "offered", rhs_ = rhsc), m_any))   # caller, access
+a_cal_wt <- lrt(anova(fit_wt(d2, rhs_ = rhsc), m_wt))               # caller, timeliness
+cat(sprintf("\nCaller joint LRT  access: chisq=%.2f df=%d p=%.4f | timeliness: chisq=%.2f df=%d p=%.3f\n",
+    a_cal$chisq, a_cal$df, a_cal$p, a_cal_wt$chisq, a_cal_wt$df, a_cal_wt$p))
+cat(sprintf("Subspec joint LRT access: chisq=%.2f df=%d p=%.3f | timeliness: chisq=%.2f df=%d p=%.3f\n",
+    a_any$chisq, a_any$df, a_any$p, a_wt$chisq, a_wt$df, a_wt$p))
+write.csv(data.frame(
+  "Factor"     = rep(c("Caller (research assistant)","Requested subspecialty"), 2),
+  "Model part" = rep(c("Access (any offer)","Timeliness (wait)"), each = 2),
+  "Chi-square" = round(c(a_cal$chisq, a_any$chisq, a_cal_wt$chisq, a_wt$chisq), 2),
+  "df"         = c(a_cal$df, a_any$df, a_cal_wt$df, a_wt$df),
+  "p-value"    = round(c(a_cal$p, a_any$p, a_cal_wt$p, a_wt$p), 3), check.names = FALSE),
+  file.path(SUPP, "S14b_factor_joint_tests.csv"), row.names = FALSE)
 
 cat("\nLeave-one-caller-out: Pediatrics access OR + global ent_type p\n")
 loco <- do.call(rbind, lapply(levels(d1$caller_f), function(clv) {
@@ -149,20 +155,27 @@ loco <- do.call(rbind, lapply(levels(d1$caller_f), function(clv) {
 print(loco, row.names = FALSE)
 write.csv(loco, file.path(SUPP, "S12b_leave_one_caller_out.csv"), row.names = FALSE)
 
-# caller balance across the exposures (are callers confounded with subspecialty/rurality/region?)
-bal <- do.call(rbind, lapply(levels(d1$caller_f), function(clv) {
-  s <- d1[d1$caller_f == clv, ]
-  data.frame("Caller"=clv, "N"=nrow(s), "% rural"=round(100*mean(s$rural=="Rural"),0),
-             "% pediatric"=round(100*mean(s$ent_type=="Pediatrics"),0),
-             "Distinct subspecialties"=length(unique(s$ent_type)),
-             "Distinct regions"=length(unique(s$aao_hns_region)), check.names=FALSE)
-}))
-chi_rur <- suppressWarnings(chisq.test(table(d1$caller_f, d1$rural)))
-chi_sub <- suppressWarnings(chisq.test(table(d1$caller_f, d1$ent_type)))
-cat(sprintf("\nCaller balance: caller x rurality chisq p=%.3f; caller x subspecialty chisq p=%.3f\n",
+# caller balance: FULL caller x subspecialty distribution (counts), plus N and % rural
+set.seed(20260718)                                   # for the Monte Carlo tests below
+cx <- as.data.frame.matrix(table(d1$caller_f, d1$ent_type))
+subcols <- colnames(cx)
+cx <- data.frame("Caller" = rownames(cx), cx, check.names = FALSE)
+cx[["N"]]       <- rowSums(cx[, subcols])
+cx[["% rural"]] <- round(100 * as.numeric(tapply(d1$rural == "Rural", d1$caller_f, mean)[cx$Caller]), 0)
+print(cx, row.names = FALSE)
+write.csv(cx, file.path(SUPP, "S12c_caller_balance.csv"), row.names = FALSE)
+
+# balance tests: Monte Carlo (sparse cells, incl. the n=13 "Other" caller)
+chi_rur <- suppressWarnings(chisq.test(table(d1$caller_f, d1$rural),   simulate.p.value = TRUE, B = 1e4))
+chi_sub <- suppressWarnings(chisq.test(table(d1$caller_f, d1$ent_type), simulate.p.value = TRUE, B = 1e4))
+cat(sprintf("\nCaller balance (Monte Carlo chisq): caller x rurality p=%.3f; caller x subspecialty p=%.3f\n",
     chi_rur$p.value, chi_sub$p.value))
-print(bal, row.names = FALSE)
-write.csv(bal, file.path(SUPP, "S12c_caller_balance.csv"), row.names = FALSE)
+write.csv(data.frame(
+  "Comparison" = c("Caller × rurality", "Caller × subspecialty"),
+  "Chi-square" = round(c(chi_rur$statistic, chi_sub$statistic), 2),
+  "Test"       = c("Monte Carlo (B=10,000)", "Monte Carlo (B=10,000)"),
+  "p-value"    = round(c(chi_rur$p.value, chi_sub$p.value), 3), check.names = FALSE),
+  file.path(SUPP, "S12c_balance_tests.csv"), row.names = FALSE)
 
 # =============================================================================
 cat("\n\n################ 4. PRACTICE / PHONE CLUSTERING (both parts) ################\n\n")
@@ -214,10 +227,12 @@ write.csv(data.frame(
 cat("\n\n################ 6. INCOMPLETE-CALL BOUNDS ON THE OFFER RATE ################\n\n")
 dd <- read.csv("data/processed/ent_phase2_enriched.csv", colClasses = "character")
 n_incomplete <- sum(dd$complete != "Complete")
-n_analytic <- nrow(d); n_off <- sum(d$offered, na.rm=TRUE)
-uni <- n_analytic + n_incomplete
-cat(sprintf("Analytic offers=%d/%d=%.1f%%. Adding %d incomplete calls (universe=%d):\n",
-    n_off, n_analytic, 100*n_off/n_analytic, n_incomplete, uni))
+n_unknown <- sum(dd$complete == "Complete" & (dd$ent_type == "" | is.na(dd$ent_type)))
+n_unknown_off <- sum(dd$complete == "Complete" & (dd$ent_type == "" | is.na(dd$ent_type)) & dd$appointment_offered == "TRUE")
+uni <- nrow(dd); n_off <- sum(d$offered, na.rm=TRUE)
+cat(sprintf("Universe = all %d sampled. Analytic=%d, completed-unknown-subspecialty=%d (offers among them=%d), incomplete=%d.\n",
+    uni, nrow(d), n_unknown, n_unknown_off, n_incomplete))
+cat(sprintf("Overall offers observed=%d; offer rate over all %d = %.1f%%\n", n_off, uni, 100*n_off/uni))
 cat(sprintf("  worst case (no incomplete would have offered): %.1f%%\n", 100*n_off/uni))
 cat(sprintf("  best case  (all incomplete would have offered): %.1f%%\n", 100*(n_off+n_incomplete)/uni))
 

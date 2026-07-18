@@ -11,12 +11,22 @@ test_that("global subspecialty test uses the correct df and is a valid p", {
   expect_true(all(g[["p-value"]] > 0.05))
 })
 
-test_that("caller factor is jointly significant and stronger than subspecialty", {
+test_that("caller factor is jointly significant for offers but not for wait time", {
   f <- rd_num("model_output/supp/S14b_factor_joint_tests.csv")
-  cal <- f[grepl("Caller", f$Factor), ]; sub <- f[grepl("subspecialty", f$Factor), ]
-  expect_lt(cal[["p-value"]], 0.05)          # caller jointly significant
-  expect_gt(sub[["p-value"]], 0.05)          # subspecialty not
-  expect_gt(cal[["Chi-square"]], sub[["Chi-square"]])
+  cal_a <- f[grepl("Caller", f$Factor) & grepl("Access", f[["Model part"]]), ]
+  sub_a <- f[grepl("subspecialty", f$Factor) & grepl("Access", f[["Model part"]]), ]
+  cal_w <- f[grepl("Caller", f$Factor) & grepl("Timeliness", f[["Model part"]]), ]
+  expect_lt(cal_a[["p-value"]], 0.05)        # caller jointly significant for offers
+  expect_gt(sub_a[["p-value"]], 0.05)        # subspecialty not
+  expect_gt(cal_a[["Chi-square"]], sub_a[["Chi-square"]])
+  expect_gt(cal_w[["p-value"]], 0.05)        # caller NOT associated with wait time (guards the abstract claim)
+})
+
+test_that("Table S10 provider categories sum to the offer count (436, not 437)", {
+  s10 <- rd_num("model_output/supp/S10_access_cascade.csv")
+  who <- s10[s10$Group == "Whom the appointment was with (% of offers)", ]
+  expect_equal(sum(who$n), unique(who$Denominator))   # 370+54+9+3 == 436
+  expect_false(any(who$n == 58))                      # the stale count is gone
 })
 
 test_that("design-weighting barely moves the offer rate (strata are similar)", {

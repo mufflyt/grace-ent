@@ -31,13 +31,21 @@ d$wait_days <- num(d$wait_days_business)
 
 # mysterymaps_geographic_map is a RATE mapper: pass ROW-LEVEL data with a 0/1
 # outcome and it computes the per-state proportion and percent-formats the legend.
+# Sample-size protection: a per-state rate from 1-2 calls is uninterpretable
+# (e.g., one success reads 100%), so states with fewer than MIN_STATE_N calls are
+# suppressed from the choropleth (shown as no-data); all states, with their
+# denominators, appear in the companion table state_offer_wait.csv.
+MIN_STATE_N <- 5
 dd <- d[nzchar(d$state), ]
 dd$offered_bin <- as.integer(dd$offered == 1)
-cat("states with data:", length(unique(dd$state)), "\n")
+st_n <- table(dd$state); low <- names(st_n)[st_n < MIN_STATE_N]
+cat(sprintf("states with data: %d; suppressing %d with n<%d (%s)\n",
+            length(st_n), length(low), MIN_STATE_N, paste(low, collapse = ", ")))
+dd_map <- dd[!(dd$state %in% low), ]
 
 m <- tryCatch(mysterymaps_geographic_map(
-  data = dd, state_col = "state", outcome_col = "offered_bin",
-  fill_label = "Offer rate", title = "ENT appointment offer rate by state",
+  data = dd_map, state_col = "state", outcome_col = "offered_bin",
+  fill_label = "Offer rate", title = "ENT appointment offer rate by state (states with <5 calls suppressed)",
   direction = 1, include_alaska_hawaii = TRUE), error = function(e) { cat(" err:", conditionMessage(e), "\n"); NULL })
 if (!is.null(m)) {
   ggplot2::ggsave(file.path(supp, "figS4b_offer_rate_by_state.png"), m, width = 9, height = 6, dpi = 150)

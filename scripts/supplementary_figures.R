@@ -23,52 +23,49 @@ d <- d[d$complete == "Complete" & d$ent_type != "" & !is.na(d$ent_type), ]
 d$offered   <- ifelse(d$appointment_offered == "TRUE", 1L, 0L)
 d$wait_days <- num(d$wait_days_business)
 
-# ---- S1: Kaplan-Meier time-to-appointment -----------------------------------
-# Event = appointment secured; offices that never offered are censored at the
-# 90-day horizon; offered waits are clamped to 90 for readability.
+# ---- S1: empirical cumulative probability of an appointment -----------------
+# NOT a Kaplan-Meier / time-to-event analysis: this is a single simulated call,
+# not longitudinal follow-up. We plot the empirical cumulative proportion of ALL
+# calls in each subspecialty that had secured an appointment by business-day t,
+# with no-offer calls retained as never obtaining one -- so each curve plateaus
+# at the subspecialty's offer rate. No censoring assumption, no log-rank test.
 HORIZON <- 90
 km <- d
-# collapse to four groups with clean, spelled-out labels; name the column
-# "Subspecialty" so it becomes the legend title (mysterycall uses group_col as-is)
 grp <- ifelse(km$ent_type %in% c("General","Pediatrics","Laryngology"),
               as.character(km$ent_type), "Other")
 lab <- c(General = "General", Pediatrics = "Pediatric", Laryngology = "Laryngology",
          Other = "Other subspecialties")
 km$Subspecialty <- factor(lab[grp],
   levels = c("General", "Pediatric", "Laryngology", "Other subspecialties"))
-km$time  <- ifelse(km$offered == 1 & !is.na(km$wait_days), pmin(km$wait_days, HORIZON), HORIZON)
-km$event <- ifelse(km$offered == 1 & !is.na(km$wait_days) & km$wait_days <= HORIZON, 1L, 0L)
+km$wait_e <- ifelse(km$offered == 1 & !is.na(km$wait_days), pmin(km$wait_days, HORIZON), NA_real_)
 pal <- c("General" = "#1b9e77", "Pediatric" = "#d95f02",
          "Laryngology" = "#7570b3", "Other subspecialties" = "#386cb0")
-# mysterycall draws the full figure (curve + log-rank p + colour-matched
-# number-at-risk table). group_col name -> legend title.
-km_res <- tryCatch(mysterycall_kaplan_meier(
-  km, time_col = "time", event_col = "event", group_col = "Subspecialty",
-  max_days = HORIZON, plot = TRUE, risk_table = TRUE,
-  palette = unname(pal[levels(km$Subspecialty)]),
-  legend_title = "Subspecialty",
-  plot_title = "Time to secured appointment, by subspecialty"),
-  error = function(e) {cat("S1 KM err:", conditionMessage(e), "\n"); NULL})
-if (!is.null(km_res)) {
-  p1 <- if (!is.null(km_res$plot)) km_res$plot else km_res
-  # plainer y-axis label than the package default ("Probability of Appointment
-  # Not Yet Received"): this is a survival curve where the event is securing an
-  # appointment, so S(t) = the fraction who still have no appointment by day t.
-  ylab_km <- "Proportion still without an appointment"
-  # the package sets the label via scale_y_continuous(name=), which overrides
-  # labs(y=), so replace the whole y scale (keeping the % formatting).
-  new_y <- ggplot2::scale_y_continuous(
-    limits = c(0, 1), labels = scales::percent_format(accuracy = 1),
-    name = ylab_km, expand = ggplot2::expansion(mult = c(0, 0.04)))
-  if (inherits(p1, "patchwork")) {
-    suppressMessages(p1[[1]] <- p1[[1]] + new_y)
-  } else {
-    suppressMessages(p1 <- p1 + new_y)
-  }
-  ggsave(file.path(supp, "figS1_km_time_to_appointment.png"), p1,
-         width = 9, height = 6.8, dpi = 150)
-  cat("wrote figS1_km_time_to_appointment.png\n")
-}
+days <- 0:HORIZON
+cum <- do.call(rbind, lapply(levels(km$Subspecialty), function(g) {
+  sg <- km[km$Subspecialty == g, ]; n <- nrow(sg)
+  data.frame(Subspecialty = g, day = days,
+             p = vapply(days, function(t) sum(!is.na(sg$wait_e) & sg$wait_e <= t) / n, numeric(1)))
+}))
+cum$Subspecialty <- factor(cum$Subspecialty, levels = levels(km$Subspecialty))
+p1 <- ggplot(cum, aes(day, p, colour = Subspecialty)) +
+  geom_step(linewidth = 0.9) +
+  scale_colour_manual(values = pal) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1),
+                     limits = c(0, NA), expand = expansion(mult = c(0, 0.04))) +
+  scale_x_continuous(breaks = seq(0, HORIZON, 15)) +
+  labs(x = "Business days since call",
+       y = "Cumulative proportion of calls with an appointment",
+       colour = "Subspecialty",
+       title = "Cumulative probability of securing an appointment, by subspecialty",
+       subtitle = "Empirical cumulative proportion of all calls; no-offer calls never obtain an appointment, so each curve plateaus at the subspecialty's offer rate") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 14),
+        plot.subtitle = element_text(colour = "grey40", size = 9, margin = margin(b = 6)),
+        legend.position = c(0.99, 0.02), legend.justification = c(1, 0),
+        legend.background = element_rect(fill = scales::alpha("white", 0.8), colour = NA),
+        panel.grid.minor = element_blank())
+ggsave(file.path(supp, "figS1_km_time_to_appointment.png"), p1, width = 9, height = 6, dpi = 150)
+cat("wrote figS1_km_time_to_appointment.png (empirical cumulative)\n")
 
 # ---- S2: wait-time distribution faceted by subspecialty ---------------------
 # Rebuilt with independent y-axes: a shared scale flattens every panel except

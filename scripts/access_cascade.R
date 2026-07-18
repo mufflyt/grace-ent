@@ -50,13 +50,21 @@ reason_df <- data.frame(
   n = as.integer(reasons), denom = non_acc, stringsAsFactors = FALSE)
 
 # ---- among appointment offers: whom the appointment was with ----------------
-who <- table(factor(d$appointment_outcome))
-who <- who[c("With sampled physician", "With different physician", "With APP only")]
-who[is.na(who)] <- 0
+# restrict to the ACTUAL offers (appointment_offered == TRUE) so the categories
+# sum to `offered`; the four "different physician mentioned but no appointment
+# made" calls are NOT offers and are excluded here (they sit in the no-offer arm).
+od <- d[d$appointment_offered == "TRUE", ]
+who_n <- c(
+  sum(od$appointment_outcome == "With sampled physician"),
+  sum(od$appointment_outcome == "With different physician"),
+  sum(od$appointment_outcome == "With APP only"),
+  sum(!(od$appointment_outcome %in%
+        c("With sampled physician", "With different physician", "With APP only"))))
 who_df <- data.frame(
   group = "Whom the appointment was with (% of offers)",
-  measure = c("Sampled physician", "A different physician", "Advanced practice provider only"),
-  n = as.integer(who), denom = offered, stringsAsFactors = FALSE)
+  measure = c("Sampled physician", "A different physician",
+              "Advanced practice provider only", "Provider type not recorded"),
+  n = as.integer(who_n), denom = offered, stringsAsFactors = FALSE)
 
 tab <- rbind(cascade, reason_df, who_df)
 tab$pct <- pct(tab$n / tab$denom)

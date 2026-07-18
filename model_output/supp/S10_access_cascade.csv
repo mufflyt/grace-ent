@@ -10,5 +10,6 @@
 "Reasons not accepting new patients (% of non-accepting)","retired/left",81,240,"33.8"
 "Reasons not accepting new patients (% of non-accepting)","unspecified",104,240,"43.3"
 "Whom the appointment was with (% of offers)","Sampled physician",370,436,"84.9"
-"Whom the appointment was with (% of offers)","A different physician",58,436,"13.3"
+"Whom the appointment was with (% of offers)","A different physician",54,436,"12.4"
 "Whom the appointment was with (% of offers)","Advanced practice provider only",9,436,"2.1"
+"Whom the appointment was with (% of offers)","Provider type not recorded",3,436,"0.7"

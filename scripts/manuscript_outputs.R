@@ -100,20 +100,30 @@ load_eff <- function(csv, est, panel) {
 fa <- load_eff(file.path(outdir,"part1_access_OR.csv"),  "or",  "Access (OR)")
 fw <- load_eff(file.path(outdir,"part2_wait_IRR.csv"),   "irr", "Timeliness (IRR)")
 fp <- rbind(fa, fw)
-fp$sig <- ifelse(fp$p < 0.05, "p < 0.05", "n.s.")
 fp$term <- factor(fp$term, levels = rev(unique(fp$term)))
 
-g <- ggplot(fp, aes(est, term, color = sig)) +
+# honest subtitle: the joint subspecialty tests are the headline, not the
+# individual reference-category contrasts, so avoid colour-coding by nominal
+# significance (which would over-emphasise non-robust contrasts).
+gt <- tryCatch(read.csv(file.path(outdir, "supp", "S14_global_subspecialty_test.csv"),
+                        check.names = FALSE), error = function(e) NULL)
+gp_txt <- if (!is.null(gt))
+  sprintf("Joint subspecialty test not significant (access p = %.2f, timeliness p = %.2f).",
+          num(gt[["p-value"]][grepl("Access", gt[["Model part"]])]),
+          num(gt[["p-value"]][grepl("Timeliness", gt[["Model part"]])])) else ""
+
+g <- ggplot(fp, aes(est, term)) +
   geom_vline(xintercept = 1, linetype = "dashed", color = "grey50") +
-  geom_errorbarh(aes(xmin = lo, xmax = hi), height = 0.25) +
-  geom_point(size = 2) +
+  geom_errorbarh(aes(xmin = lo, xmax = hi), height = 0.25, color = "grey45") +
+  geom_point(size = 2, color = "#2166ac") +
   facet_wrap(~panel, scales = "free_x") +
   scale_x_log10() +
-  scale_color_manual(values = c("p < 0.05" = "#b2182b", "n.s." = "grey40")) +
   labs(x = "Ratio (log scale) — OR for access, IRR for wait days",
-       y = NULL, color = NULL,
+       y = NULL,
        title = "Otolaryngology appointment access and timeliness",
-       subtitle = "Reference: general otolaryngology, urban. Adjusted two-part model, market random intercept.") +
-  theme_bw(base_size = 11) + theme(legend.position = "none")
+       subtitle = paste("Nominal, unadjusted reference-category contrasts (reference: general otolaryngology, urban).",
+                        gp_txt)) +
+  theme_bw(base_size = 11) +
+  theme(plot.subtitle = element_text(size = 8.5, colour = "grey30"))
 ggsave(file.path(outdir, "forest_access_timeliness.png"), g, width = 10, height = 6, dpi = 150)
 cat("Wrote forest_access_timeliness.png\n")

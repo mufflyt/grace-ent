@@ -1,3 +1,5 @@
-"Factor","Chi-square","df","p-value"
-"Caller (research assistant)",18.62,6,0.005
-"Requested subspecialty",12.21,7,0.094
+"Factor","Model part","Chi-square","df","p-value"
+"Caller (research assistant)","Access (any offer)",18.62,6,0.005
+"Requested subspecialty","Access (any offer)",12.21,7,0.094
+"Caller (research assistant)","Timeliness (wait)",6.44,6,0.376
+"Requested subspecialty","Timeliness (wait)",12.64,7,0.081
