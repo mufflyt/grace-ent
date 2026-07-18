@@ -319,7 +319,13 @@ knitr::include_graphics(file.path(OUT, "forest_access_timeliness.png"))
 
 # Supplementary Material
 
+```{=openxml}
+<w:p><w:pPr><w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:bottom="1440" w:left="1440" w:right="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:pPr></w:p>
+```
+
 ## Supplementary Tables
+
+*Supplementary tables are presented in landscape orientation for legibility.*
 
 ```{r suppT, results='asis'}
 supp_tables <- c(
@@ -358,6 +364,10 @@ for (cap in names(supp_tables)) {
   cat("\n\n", knitr::kable(df, caption = cap, format = "pipe"), sep = "\n")
   cat("\n\n")
 }
+```
+
+```{=openxml}
+<w:p><w:pPr><w:sectPr><w:pgSz w:w="15840" w:h="12240" w:orient="landscape"/><w:pgMar w:top="1440" w:bottom="1440" w:left="1440" w:right="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:pPr></w:p>
 ```
 
 ## Supplementary Figures
