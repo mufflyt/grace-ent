@@ -113,19 +113,40 @@ cent <- aggregate(cbind(long, lat) ~ region_aao, data = us[!is.na(us$region_aao)
 ne <- cent$region_aao == "New England"
 cent$long[ne] <- cent$long[ne] + 6
 cent$lat[ne]  <- cent$lat[ne]  + 2
-mk <- function(fill, lab, pal) ggplot(us, aes(long, lat, group = group, fill = .data[[fill]])) +
-  geom_polygon(color = "white", linewidth = 0.15) +
-  geom_text(data = cent, aes(long, lat, label = region_aao), inherit.aes = FALSE,
-            size = 2.3, fontface = "bold", colour = "grey15") +
-  coord_map("albers", 25, 50) + pal +
-  labs(title = lab, fill = "") + theme_void(base_size = 11) +
-  theme(legend.position = "right")
+mk <- function(fill, lab, pal, legend_title) {
+  ggplot(us, aes(long, lat, group = group, fill = .data[[fill]])) +
+    geom_polygon(colour = "white", linewidth = 0.25) +
+    # white-pill labels stay legible over any fill (incl. the dark NE region)
+    geom_label(data = cent, aes(long, lat, label = region_aao), inherit.aes = FALSE,
+               size = 2.6, fontface = "bold", colour = "grey20",
+               fill = scales::alpha("white", 0.72), label.size = 0,
+               label.padding = grid::unit(0.09, "lines")) +
+    coord_map("albers", 25, 50) + pal +
+    labs(title = lab,
+         subtitle = "States shaded by the value for their AAO-HNS Board of Governors region",
+         fill = legend_title) +
+    theme_void(base_size = 12) +
+    theme(
+      plot.title        = element_text(face = "bold", size = 15),
+      plot.subtitle     = element_text(colour = "grey40", size = 9.5,
+                                        margin = margin(t = 2, b = 8)),
+      legend.position   = "bottom",
+      legend.title      = element_text(size = 9, face = "bold"),
+      legend.text       = element_text(size = 8),
+      legend.key.width  = grid::unit(2.4, "lines"),
+      legend.key.height = grid::unit(0.45, "lines"),
+      plot.margin       = margin(8, 8, 8, 8))
+}
+gcb <- guide_colourbar(title.position = "top", title.hjust = 0.5, ticks.colour = "white")
 g_off <- mk("offer_rate", "Appointment offer rate by AAO-HNS region",
-            scale_fill_viridis_c(option = "C", labels = scales::percent, na.value = "grey90"))
+            scale_fill_viridis_c(option = "C", labels = scales::percent,
+                                 na.value = "grey92", guide = gcb), "Offer rate")
 g_wt  <- mk("median_wait", "Median business-day wait by AAO-HNS region",
-            scale_fill_viridis_c(option = "D", direction = -1, na.value = "grey90"))
-ggsave(file.path(supp, "figS4_choropleth_offer_rate.png"), g_off, width = 8, height = 5, dpi = 150)
-ggsave(file.path(supp, "figS4_choropleth_median_wait.png"), g_wt,  width = 8, height = 5, dpi = 150)
+            scale_fill_viridis_c(option = "D", direction = -1, na.value = "grey92",
+                                 labels = function(x) paste0(x, " d"), guide = gcb),
+            "Median wait")
+ggsave(file.path(supp, "figS4_choropleth_offer_rate.png"), g_off, width = 8.5, height = 5.6, dpi = 200)
+ggsave(file.path(supp, "figS4_choropleth_median_wait.png"), g_wt,  width = 8.5, height = 5.6, dpi = 200)
 cat("wrote figS4_choropleth_offer_rate.png + figS4_choropleth_median_wait.png\n")
 
 cat("\nSupplementary figures in", supp, ":\n"); print(grep("^fig", list.files(supp), value = TRUE))
