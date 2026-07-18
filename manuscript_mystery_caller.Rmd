@@ -1,6 +1,6 @@
 ---
 title: "Subspecialty and Geographic Determinants of New-Patient Appointment Access and Wait Times in Otolaryngology: A National Mystery-Caller Study"
-author: "Grace E. Falk; [RA co-authors — full names & degrees to confirm: Chin, Deol, Gregg, Kim, Roesch, Walsh]; Cristina Cabrera-Muffly, MD; Tyler M. Muffly, MD"
+author: "Grace E. Falk; [RA co-authors — full names & degrees to confirm: Chin, Deol, Gregg, Kim, Roesch, Walsh]; Cristina Cabrera-Muffly, MD; Tyler M. Muffly, MD; Eric J. Dobratz, MD"
 date: "`r format(Sys.Date(), '%B %Y')`"
 bibliography: manuscript/references.bib
 csl: manuscript/american-medical-association.csl
@@ -70,7 +70,7 @@ ft <- function(df, cap = NULL) {
 
 **Corresponding author:** Cristina Cabrera-Muffly, MD; Department of Otolaryngology–Head and Neck Surgery, University of Colorado School of Medicine, Aurora, CO; *[address; email; telephone]*.
 
-**Affiliations:** Grace E. Falk, Old Dominion University / Eastern Virginia Medical School, Norfolk, VA. *[Research-assistant co-authors — affiliations to confirm.]* Cristina Cabrera-Muffly, Department of Otolaryngology–Head and Neck Surgery, University of Colorado School of Medicine, Aurora, CO. Tyler M. Muffly, Denver Health and Hospital Authority, Denver, CO; Department of Obstetrics and Gynecology, University of Colorado School of Medicine, Aurora, CO.
+**Affiliations:** Grace E. Falk, Old Dominion University / Eastern Virginia Medical School, Norfolk, VA. *[Research-assistant co-authors — affiliations to confirm.]* Cristina Cabrera-Muffly, Department of Otolaryngology–Head and Neck Surgery, University of Colorado School of Medicine, Aurora, CO. Tyler M. Muffly, Denver Health and Hospital Authority, Denver, CO; Department of Obstetrics and Gynecology, University of Colorado School of Medicine, Aurora, CO. Eric J. Dobratz, Department of Otolaryngology–Head and Neck Surgery, Eastern Virginia Medical School at Old Dominion University, Norfolk, VA.
 
 *Word count: abstract ≈ 200; main text *[to finalize]*. Tables: 2 main, 10 supplementary. Figures: 2 main, 7 supplementary.*
 
@@ -225,7 +225,7 @@ These findings carry practical implications. Subspecialty-specific bottlenecks�
 
 ## Author contributions
 
-**Grace E. Falk:** Investigation, Data curation, Project administration, Writing – original draft. **[Research-assistant co-authors: Chin, Deol, Gregg, Kim, Roesch, Walsh]:** Investigation (mystery-caller data collection). **Cristina Cabrera-Muffly:** Conceptualization, Supervision, Writing – review & editing. **Tyler M. Muffly:** Conceptualization, Methodology, Formal analysis, Software, Writing – review & editing. All authors reviewed and approved the final manuscript and accept responsibility for its submission.
+**Grace E. Falk:** Investigation, Data curation, Project administration, Writing – original draft. **[Research-assistant co-authors: Chin, Deol, Gregg, Kim, Roesch, Walsh]:** Investigation (mystery-caller data collection). **Cristina Cabrera-Muffly:** Conceptualization, Supervision, Writing – review & editing. **Tyler M. Muffly:** Conceptualization, Methodology, Formal analysis, Software, Writing – review & editing. **Eric J. Dobratz:** Conceptualization, Supervision, Resources, Project administration, Writing – review & editing. All authors reviewed and approved the final manuscript and accept responsibility for its submission.
 
 ## Funding
 
