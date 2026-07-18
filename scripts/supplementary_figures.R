@@ -51,6 +51,20 @@ km_res <- tryCatch(mysterycall_kaplan_meier(
   error = function(e) {cat("S1 KM err:", conditionMessage(e), "\n"); NULL})
 if (!is.null(km_res)) {
   p1 <- if (!is.null(km_res$plot)) km_res$plot else km_res
+  # plainer y-axis label than the package default ("Probability of Appointment
+  # Not Yet Received"): this is a survival curve where the event is securing an
+  # appointment, so S(t) = the fraction who still have no appointment by day t.
+  ylab_km <- "Proportion still without an appointment"
+  # the package sets the label via scale_y_continuous(name=), which overrides
+  # labs(y=), so replace the whole y scale (keeping the % formatting).
+  new_y <- ggplot2::scale_y_continuous(
+    limits = c(0, 1), labels = scales::percent_format(accuracy = 1),
+    name = ylab_km, expand = ggplot2::expansion(mult = c(0, 0.04)))
+  if (inherits(p1, "patchwork")) {
+    suppressMessages(p1[[1]] <- p1[[1]] + new_y)
+  } else {
+    suppressMessages(p1 <- p1 + new_y)
+  }
   ggsave(file.path(supp, "figS1_km_time_to_appointment.png"), p1,
          width = 9, height = 6.8, dpi = 150)
   cat("wrote figS1_km_time_to_appointment.png\n")
@@ -93,8 +107,12 @@ us <- ggplot2::map_data("state")
 us$region_aao <- st_region[us$region]
 us <- merge(us, agg, by.x = "region_aao", by.y = "region", all.x = TRUE)
 us <- us[order(us$order), ]
+# one label per AAO-HNS BoG region, placed at the region's centroid
+cent <- aggregate(cbind(long, lat) ~ region_aao, data = us[!is.na(us$region_aao), ], FUN = mean)
 mk <- function(fill, lab, pal) ggplot(us, aes(long, lat, group = group, fill = .data[[fill]])) +
   geom_polygon(color = "white", linewidth = 0.15) +
+  geom_text(data = cent, aes(long, lat, label = region_aao), inherit.aes = FALSE,
+            size = 2.3, fontface = "bold", colour = "grey15") +
   coord_map("albers", 25, 50) + pal +
   labs(title = lab, fill = "") + theme_void(base_size = 11) +
   theme(legend.position = "right")

@@ -59,7 +59,12 @@ if (!is.null(o6)) wr(if (is.data.frame(o6)) o6 else o6$table, "S6_offer_disparit
 # S7 -- access vs timeliness side by side
 o7 <- tryCatch(mysterycall_multi_model_table(list(Access = acc, Timeliness = wait)),
                error = function(e) {cat("  S7 err:", conditionMessage(e), "\n"); NULL})
-if (!is.null(o7)) wr(o7, "S7_access_vs_timeliness.csv")
+if (!is.null(o7)) {
+  # mysterycall packs "estimate\np=..." into each cell; the embedded newline
+  # breaks pandoc pipe tables, so flatten to a single line.
+  o7[] <- lapply(o7, function(col) gsub("\n", ", ", as.character(col)))
+  wr(o7, "S7_access_vs_timeliness.csv")
+}
 
 # Bundled supplemental tables (docx/text)
 bundle <- tryCatch(mysterycall_supplemental_tables(
