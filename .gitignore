@@ -36,3 +36,6 @@ manuscript/artifact*.html
 /1-s2.0-S0010782425001040-main.pdf
 /1-s2.0-S0010782425001362-main.pdf
 /pharmacy-14-00081.pdf
+
+# Reference PDFs reviewed locally (not part of the repo)
+/pdf_review/
