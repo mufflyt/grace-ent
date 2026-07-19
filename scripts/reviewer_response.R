@@ -110,14 +110,19 @@ cat(sprintf("Non-analyzable waits: %d (=9 missing date + 1 invalid year, record 
 
 # =============================================================================
 cat("\n\n################ 2. GLOBAL SUBSPECIALTY TEST (joint LRT) ################\n\n")
-a_any  <- lrt(anova(fit_acc(d1, "offered", rhs_ = rhs0), m_any))
+a_any  <- lrt(anova(fit_acc(d1, "offered",      rhs_ = rhs0), m_any))     # any offer
+a_samp <- lrt(anova(fit_acc(d,  "offered_samp", rhs_ = rhs0), m_samp))    # with sampled physician
 m_wt   <- fit_wt(d2)
-a_wt   <- lrt(anova(fit_wt(d2, rhs_ = rhs0), m_wt))
-cat(sprintf("ACCESS (any offer): ent_type joint LRT chisq=%.2f df=%d p=%.3f\n", a_any$chisq, a_any$df, a_any$p))
-cat(sprintf("TIMELINESS (wait) : ent_type joint LRT chisq=%.2f df=%d p=%.3f\n", a_wt$chisq, a_wt$df, a_wt$p))
-gtab <- data.frame("Model part"=c("Access (any offer)","Timeliness (wait)"),
-                   "Chi-square"=round(c(a_any$chisq,a_wt$chisq),2), "df"=c(a_any$df,a_wt$df),
-                   "p-value"=round(c(a_any$p,a_wt$p),3), check.names=FALSE)
+a_wt   <- lrt(anova(fit_wt(d2, rhs_ = rhs0), m_wt))                        # wait
+cat(sprintf("ACCESS any-offer   : ent_type joint LRT chisq=%.2f df=%d p=%.3f\n", a_any$chisq, a_any$df, a_any$p))
+cat(sprintf("ACCESS sampled-phys: ent_type joint LRT chisq=%.2f df=%d p=%.3f\n", a_samp$chisq, a_samp$df, a_samp$p))
+cat(sprintf("TIMELINESS wait    : ent_type joint LRT chisq=%.2f df=%d p=%.3f\n", a_wt$chisq, a_wt$df, a_wt$p))
+gtab <- data.frame(
+  "Model part" = c("Access (any offer)","Access (with sampled physician)","Timeliness (wait)"),
+  "Chi-square" = round(c(a_any$chisq, a_samp$chisq, a_wt$chisq), 2),
+  "df"         = c(a_any$df, a_samp$df, a_wt$df),
+  "p-value"    = round(c(a_any$p, a_samp$p, a_wt$p), 3),
+  "N"          = c(nrow(d1), nrow(d), nrow(d2)), check.names = FALSE)
 write.csv(gtab, file.path(SUPP, "S14_global_subspecialty_test.csv"), row.names = FALSE)
 
 # =============================================================================
@@ -129,18 +134,17 @@ cal_tab <- data.frame("Caller"=sub("caller_f","",cal$term),
 print(cal_tab, row.names = FALSE)
 write.csv(cal_tab, file.path(SUPP, "S12_caller_effects.csv"), row.names = FALSE)
 
-a_cal    <- lrt(anova(fit_acc(d1, "offered", rhs_ = rhsc), m_any))   # caller, access
-a_cal_wt <- lrt(anova(fit_wt(d2, rhs_ = rhsc), m_wt))               # caller, timeliness
-cat(sprintf("\nCaller joint LRT  access: chisq=%.2f df=%d p=%.4f | timeliness: chisq=%.2f df=%d p=%.3f\n",
-    a_cal$chisq, a_cal$df, a_cal$p, a_cal_wt$chisq, a_cal_wt$df, a_cal_wt$p))
-cat(sprintf("Subspec joint LRT access: chisq=%.2f df=%d p=%.3f | timeliness: chisq=%.2f df=%d p=%.3f\n",
-    a_any$chisq, a_any$df, a_any$p, a_wt$chisq, a_wt$df, a_wt$p))
+a_cal      <- lrt(anova(fit_acc(d1, "offered",      rhs_ = rhsc), m_any))   # caller, any offer
+a_cal_samp <- lrt(anova(fit_acc(d,  "offered_samp", rhs_ = rhsc), m_samp))  # caller, sampled physician
+a_cal_wt   <- lrt(anova(fit_wt(d2, rhs_ = rhsc), m_wt))                     # caller, timeliness
+cat(sprintf("\nCaller joint LRT  any-offer: chisq=%.2f df=%d p=%.4f | sampled: chisq=%.2f df=%d p=%.3f | wait: chisq=%.2f df=%d p=%.3f\n",
+    a_cal$chisq, a_cal$df, a_cal$p, a_cal_samp$chisq, a_cal_samp$df, a_cal_samp$p, a_cal_wt$chisq, a_cal_wt$df, a_cal_wt$p))
 write.csv(data.frame(
-  "Factor"     = rep(c("Caller (research assistant)","Requested subspecialty"), 2),
-  "Model part" = rep(c("Access (any offer)","Timeliness (wait)"), each = 2),
-  "Chi-square" = round(c(a_cal$chisq, a_any$chisq, a_cal_wt$chisq, a_wt$chisq), 2),
-  "df"         = c(a_cal$df, a_any$df, a_cal_wt$df, a_wt$df),
-  "p-value"    = round(c(a_cal$p, a_any$p, a_cal_wt$p, a_wt$p), 3), check.names = FALSE),
+  "Factor"     = rep(c("Caller (research assistant)","Requested subspecialty"), 3),
+  "Model part" = rep(c("Access (any offer)","Access (with sampled physician)","Timeliness (wait)"), each = 2),
+  "Chi-square" = round(c(a_cal$chisq, a_any$chisq, a_cal_samp$chisq, a_samp$chisq, a_cal_wt$chisq, a_wt$chisq), 2),
+  "df"         = c(a_cal$df, a_any$df, a_cal_samp$df, a_samp$df, a_cal_wt$df, a_wt$df),
+  "p-value"    = round(c(a_cal$p, a_any$p, a_cal_samp$p, a_samp$p, a_cal_wt$p, a_wt$p), 3), check.names = FALSE),
   file.path(SUPP, "S14b_factor_joint_tests.csv"), row.names = FALSE)
 
 cat("\nLeave-one-caller-out: Pediatrics access OR + global ent_type p\n")
@@ -185,22 +189,26 @@ cat(sprintf("Analytic calls=%d; distinct telephone numbers=%d; %d missing a numb
     sum(d$phone_id %in% names(table(d$phone_id))[table(d$phone_id)>1] & !grepl("^nophone", d$phone_id)),
     max(table(d$phone_id[!grepl("^nophone", d$phone_id)]))))
 grab <- function(m, term) { o <- or_ci(m); r <- o[o$term==term, ]; sprintf("%.2f (%.2f-%.2f)", r$or,r$lo,r$hi) }
-# access
+# access: three specs, each with its own joint subspecialty LRT (all nested)
 m_any_ph <- fit_acc(d1, "offered", " + (1|phone_id)")
+g_any_ph <- lrt(anova(fit_acc(d1, "offered", " + (1|phone_id)", rhs_ = rhs0), m_any_ph))
 d1u <- d1[!duplicated(d1$phone_id), ]; m_any_u <- fit_acc(d1u, "offered")
 g_any_u <- lrt(anova(fit_acc(d1u, "offered", rhs_ = rhs0), m_any_u))
-# timeliness
+# timeliness: same three specs + their joint subspecialty LRTs
 m_wt_ph <- fit_wt(d2, " + (1|phone_id)")
+g_wt_ph <- lrt(anova(fit_wt(d2, " + (1|phone_id)", rhs_ = rhs0), m_wt_ph))
 d2u <- d2[!duplicated(d2$phone_id), ]; m_wt_u <- fit_wt(d2u)
+g_wt_u  <- lrt(anova(fit_wt(d2u, rhs_ = rhs0), m_wt_u))
 vc_a <- as.numeric(VarCorr(m_any_ph)$phone_id); vc_w <- as.numeric(VarCorr(m_wt_ph)$cond$phone_id)
 cat(sprintf("Added phone-RE variance: access=%.3f, timeliness=%.3f (both negligible)\n", vc_a, vc_w))
 clus <- data.frame(
   "Model" = c("Primary (CBSA random intercept only)","CBSA + practice-telephone random intercept","One call per telephone number"),
   "N access" = c(nrow(d1), nrow(d1), nrow(d1u)),
   "Pediatrics access OR (95% CI)" = c(grab(m_any,"ent_typePediatrics"), grab(m_any_ph,"ent_typePediatrics"), grab(m_any_u,"ent_typePediatrics")),
+  "Subspecialty access joint p" = round(c(a_any$p, g_any_ph$p, g_any_u$p), 3),
   "N timeliness" = c(nrow(d2), nrow(d2), nrow(d2u)),
   "Laryngology wait IRR (95% CI)" = c(grab(m_wt,"ent_typeLaryngology"), grab(m_wt_ph,"ent_typeLaryngology"), grab(m_wt_u,"ent_typeLaryngology")),
-  "Subspecialty access joint p" = c(round(a_any$p,3), NA, round(g_any_u$p,3)), check.names=FALSE)
+  "Subspecialty timeliness joint p" = round(c(a_wt$p, g_wt_ph$p, g_wt_u$p), 3), check.names=FALSE)
 print(clus, row.names = FALSE)
 write.csv(clus, file.path(SUPP, "S11_clustering_sensitivity.csv"), row.names = FALSE)
 

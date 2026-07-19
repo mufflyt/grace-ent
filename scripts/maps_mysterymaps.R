@@ -52,10 +52,15 @@ if (!is.null(m)) {
   cat("wrote figS4b_offer_rate_by_state.png\n")
 }
 
-# per-state table for reference (offer rate as proportion; median wait among offered)
-by_state <- do.call(rbind, lapply(split(dd, dd$state), function(g) data.frame(
-  state = g$state[1], n = nrow(g),
-  offer_rate = round(mean(g$offered_bin), 3),
-  median_wait = median(g$wait_days[g$offered == 1], na.rm = TRUE))))
+# per-state table for reference (reader-facing: offer rate as %, median wait in days)
+by_state <- do.call(rbind, lapply(split(dd, dd$state), function(g) {
+  mw <- median(g$wait_days[g$offered == 1], na.rm = TRUE)
+  data.frame(
+    "State"                  = g$state[1],
+    "Calls, n"               = nrow(g),
+    "Offer rate, %"          = sprintf("%.1f", 100 * mean(g$offered_bin)),
+    "Median wait, days"      = ifelse(is.na(mw), "—", sprintf("%.0f", mw)),
+    check.names = FALSE)
+}))
 write.csv(by_state, file.path(supp, "state_offer_wait.csv"), row.names = FALSE)
 cat("wrote state_offer_wait.csv (median-wait choropleth remains figS4_choropleth_median_wait.png)\n")

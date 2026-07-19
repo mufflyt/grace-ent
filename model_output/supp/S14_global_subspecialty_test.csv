@@ -1,3 +1,4 @@
-"Model part","Chi-square","df","p-value"
-"Access (any offer)",12.21,7,0.094
-"Timeliness (wait)",12.64,7,0.081
+"Model part","Chi-square","df","p-value","N"
+"Access (any offer)",12.21,7,0.094,731
+"Access (with sampled physician)",11.66,7,0.112,731
+"Timeliness (wait)",12.64,7,0.081,426

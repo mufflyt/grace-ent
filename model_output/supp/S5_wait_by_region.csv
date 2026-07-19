@@ -1,4 +1,4 @@
-"aao_hns_region","median_days","q1","q3","n"
+"AAO-HNS region","Median wait (business days)","25th percentile (days)","75th percentile (days)","Appointments, n"
 "Central",14,5,33,73
 "Mid-Atlantic/Southeast",12,5,24,38
 "Middle Atlantic",14,5,32,43

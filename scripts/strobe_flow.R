@@ -29,7 +29,7 @@ mysterycall_strobe_flow(
   label_waittime = "Timeliness model (business-day wait)",
   label_excl_calldate = "Incomplete data collection",
   label_excl_screen   = "Subspecialty undetermined",
-  label_excl_waittime = "No appointment offered / no wait recorded",
+  label_excl_waittime = "Excluded from timeliness model (n = 305):\nno appointment offered (n = 295);\nappointment offered but no date recorded (n = 10)",
   title       = "Participant flow (STROBE)",
   output_path = "model_output/strobe_flow_mysterycall.png"
 )

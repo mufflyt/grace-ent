@@ -74,18 +74,42 @@ cat("Building supplementary tables ->", supp, "\n")
 try(wr(clean_model_tab(acc$or_table,  "or",  "Odds ratio"),        "S1_access_full_model.csv"))
 try(wr(clean_model_tab(wait$irr_table, "irr", "Incidence rate ratio"), "S2_timeliness_full_model.csv"))
 
-# S3-S5 -- wait time by group
+# S3-S5 -- wait time by group (reader-facing column names)
+wait_grp_labels <- c(ent_type = "Subspecialty", rural = "Rurality",
+                     aao_hns_region = "AAO-HNS region",
+                     median_days = "Median wait (business days)", q1 = "25th percentile (days)",
+                     q3 = "75th percentile (days)", n = "Appointments, n")
 for (g in list(c("ent_type","S3_wait_by_subspecialty.csv"),
                c("rural","S4_wait_by_rurality.csv"),
                c("aao_hns_region","S5_wait_by_region.csv"))) {
   o <- tryCatch(mysterycall_wait_time_by_group(d2, "wait_days", g[1]), error = function(e) NULL)
-  if (!is.null(o)) wr(if (is.data.frame(o)) o else o$table %||% o$summary %||% o, g[2])
+  if (!is.null(o)) {
+    o <- if (is.data.frame(o)) o else o$table %||% o$summary %||% o
+    names(o) <- ifelse(names(o) %in% names(wait_grp_labels), wait_grp_labels[names(o)], names(o))
+    wr(o, g[2])
+  }
 }
 
-# S6 -- offer-rate disparities by AAO-HNS region
+# S6 -- offer-rate disparities by AAO-HNS region (reader-facing subset)
 o6 <- tryCatch(mysterycall_disparities_table(d, outcome_col = "offered",
         group_col = "aao_hns_region", ref_group = "New England"), error = function(e) {cat("  S6 err:", conditionMessage(e), "\n"); NULL})
-if (!is.null(o6)) wr(if (is.data.frame(o6)) o6 else o6$table, "S6_offer_disparities_by_region.csv")
+if (!is.null(o6)) {
+  o6 <- if (is.data.frame(o6)) o6 else o6$table
+  s6 <- data.frame(
+    "AAO-HNS region"     = o6$group,
+    "Calls, n"           = o6$n,
+    "Offers, n"          = o6$n_accepted,
+    "Offer rate, %"      = sprintf("%.1f", 100 * num(o6$rate)),
+    "95% CI, %"          = sprintf("%.1f-%.1f", 100 * num(o6$lower_ci), 100 * num(o6$upper_ci)),
+    "Risk difference vs New England, %" = sprintf("%.1f", 100 * num(o6$abs_diff)),
+    "Risk ratio"         = ifelse(is.na(num(o6$rel_risk)), "—", sprintf("%.2f", num(o6$rel_risk))),
+    "RR 95% CI"          = ifelse(is.na(num(o6$rr_lower)), "—",
+                                  sprintf("%.2f-%.2f", num(o6$rr_lower), num(o6$rr_upper))),
+    "p-value"            = ifelse(is.na(num(o6$p_value)), "—",
+                                  ifelse(num(o6$p_value) < 0.001, "<0.001", sprintf("%.3f", num(o6$p_value)))),
+    check.names = FALSE)
+  wr(s6, "S6_offer_disparities_by_region.csv")
+}
 
 # S7 -- access vs timeliness side by side
 o7 <- tryCatch(mysterycall_multi_model_table(list(Access = acc, Timeliness = wait)),

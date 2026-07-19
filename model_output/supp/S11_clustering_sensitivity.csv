@@ -1,4 +1,4 @@
-"Model","N access","Pediatrics access OR (95% CI)","N timeliness","Laryngology wait IRR (95% CI)","Subspecialty access joint p"
-"Primary (CBSA random intercept only)",731,"2.29 (1.09-4.80)",426,"2.24 (1.13-4.41)",0.094
-"CBSA + practice-telephone random intercept",731,"2.29 (1.09-4.80)",426,"2.34 (1.15-4.77)",NA
-"One call per telephone number",686,"2.36 (1.10-5.08)",398,"2.18 (1.08-4.40)",0.116
+"Model","N access","Pediatrics access OR (95% CI)","Subspecialty access joint p","N timeliness","Laryngology wait IRR (95% CI)","Subspecialty timeliness joint p"
+"Primary (CBSA random intercept only)",731,"2.29 (1.09-4.80)",0.094,426,"2.24 (1.13-4.41)",0.081
+"CBSA + practice-telephone random intercept",731,"2.29 (1.09-4.80)",0.094,426,"2.34 (1.15-4.77)",0.082
+"One call per telephone number",686,"2.36 (1.10-5.08)",0.116,398,"2.18 (1.08-4.40)",0.095

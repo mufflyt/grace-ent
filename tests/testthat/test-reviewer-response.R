@@ -13,9 +13,9 @@ test_that("global subspecialty test uses the correct df and is a valid p", {
 
 test_that("caller factor is jointly significant for offers but not for wait time", {
   f <- rd_num("model_output/supp/S14b_factor_joint_tests.csv")
-  cal_a <- f[grepl("Caller", f$Factor) & grepl("Access", f[["Model part"]]), ]
-  sub_a <- f[grepl("subspecialty", f$Factor) & grepl("Access", f[["Model part"]]), ]
-  cal_w <- f[grepl("Caller", f$Factor) & grepl("Timeliness", f[["Model part"]]), ]
+  cal_a <- f[grepl("Caller", f$Factor) & f[["Model part"]] == "Access (any offer)", ]
+  sub_a <- f[grepl("subspecialty", f$Factor) & f[["Model part"]] == "Access (any offer)", ]
+  cal_w <- f[grepl("Caller", f$Factor) & f[["Model part"]] == "Timeliness (wait)", ]
   expect_lt(cal_a[["p-value"]], 0.05)        # caller jointly significant for offers
   expect_gt(sub_a[["p-value"]], 0.05)        # subspecialty not
   expect_gt(cal_a[["Chi-square"]], sub_a[["Chi-square"]])

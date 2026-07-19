@@ -1,3 +1,3 @@
-"rural","median_days","q1","q3","n"
+"Rurality","Median wait (business days)","25th percentile (days)","75th percentile (days)","Appointments, n"
 "Urban",13,5,30,217
 "Rural",15,6,30,209

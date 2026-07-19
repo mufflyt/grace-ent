@@ -27,8 +27,9 @@ Non-analyzable waits: 10 (=9 missing date + 1 invalid year, record 470) -> timel
 
 ################ 2. GLOBAL SUBSPECIALTY TEST (joint LRT) ################
 
-ACCESS (any offer): ent_type joint LRT chisq=12.21 df=7 p=0.094
-TIMELINESS (wait) : ent_type joint LRT chisq=12.64 df=7 p=0.081
+ACCESS any-offer   : ent_type joint LRT chisq=12.21 df=7 p=0.094
+ACCESS sampled-phys: ent_type joint LRT chisq=11.66 df=7 p=0.112
+TIMELINESS wait    : ent_type joint LRT chisq=12.64 df=7 p=0.081
 
 
 ################ 3. CALLER EFFECTS + GLOBAL TEST + LOCO + BALANCE ############
@@ -41,8 +42,7 @@ TIMELINESS (wait) : ent_type joint LRT chisq=12.64 df=7 p=0.081
   Other   1.31 (0.41-4.21)   0.648
   Walsh   2.32 (1.42-3.80)   0.001
 
-Caller joint LRT  access: chisq=18.62 df=6 p=0.0049 | timeliness: chisq=6.44 df=6 p=0.376
-Subspec joint LRT access: chisq=12.21 df=7 p=0.094 | timeliness: chisq=12.64 df=7 p=0.081
+Caller joint LRT  any-offer: chisq=18.62 df=6 p=0.0049 | sampled: chisq=20.52 df=6 p=0.002 | wait: chisq=6.44 df=6 p=0.376
 
 Leave-one-caller-out: Pediatrics access OR + global ent_type p
  Caller excluded   N Pediatrics access OR Pediatrics p Subspecialty joint p
@@ -78,14 +78,14 @@ Caller balance (Monte Carlo chisq): caller x rurality p=0.282; caller x subspeci
 Analytic calls=731; distinct telephone numbers=670; 16 missing a number; 76 calls share a number (max 6)
 
 Added phone-RE variance: access=0.000, timeliness=0.182 (both negligible)
-                                      Model N access Pediatrics access OR (95% CI) N timeliness
-       Primary (CBSA random intercept only)      731              2.29 (1.09-4.80)          426
- CBSA + practice-telephone random intercept      731              2.29 (1.09-4.80)          426
-              One call per telephone number      686              2.36 (1.10-5.08)          398
- Laryngology wait IRR (95% CI) Subspecialty access joint p
-              2.24 (1.13-4.41)                       0.094
-              2.34 (1.15-4.77)                          NA
-              2.18 (1.08-4.40)                       0.116
+                                      Model N access Pediatrics access OR (95% CI)
+       Primary (CBSA random intercept only)      731              2.29 (1.09-4.80)
+ CBSA + practice-telephone random intercept      731              2.29 (1.09-4.80)
+              One call per telephone number      686              2.36 (1.10-5.08)
+ Subspecialty access joint p N timeliness Laryngology wait IRR (95% CI) Subspecialty timeliness joint p
+                       0.094          426              2.24 (1.13-4.41)                           0.081
+                       0.094          426              2.34 (1.15-4.77)                           0.082
+                       0.116          398              2.18 (1.08-4.40)                           0.095
 
 
 ################ 5. DESIGN-WEIGHTED (rurality) OFFER RATE + WAIT ############
