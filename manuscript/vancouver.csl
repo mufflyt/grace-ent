@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<style xmlns="http://purl.org/net/xbiblio/csl" class="in-text" version="1.0" demote-non-dropping-particle="sort-only">
+  <info>
+    <title>Vancouver</title>
+    <id>http://www.zotero.org/styles/vancouver</id>
+    <link href="http://www.zotero.org/styles/vancouver" rel="self"/>
+    <author><name>Michael Berkowitz</name><email>mberkowi@gmu.edu</email></author>
+    <category citation-format="numeric"/>
+    <category field="medicine"/>
+    <updated>2012-09-27T22:06:38+00:00</updated>
+    <rights license="http://creativecommons.org/licenses/by-sa/3.0/">This work is licensed under a Creative Commons Attribution-ShareAlike 3.0 License</rights>
+  </info>
+  <macro name="author">
+    <names variable="author">
+      <name sort-separator=" " initialize-with="" name-as-sort-order="all" delimiter=", " delimiter-precedes-last="always"/>
+      <label form="long" prefix=", "/>
+      <substitute><names variable="editor"/><text macro="title"/></substitute>
+    </names>
+  </macro>
+  <macro name="editor">
+    <names variable="editor">
+      <name sort-separator=" " initialize-with="" name-as-sort-order="all" delimiter=", " delimiter-precedes-last="always"/>
+      <label form="long" prefix=", " suffix="."/>
+    </names>
+  </macro>
+  <macro name="title">
+    <text variable="title"/>
+  </macro>
+  <macro name="publisher">
+    <group delimiter=": ">
+      <text variable="publisher-place"/>
+      <text variable="publisher"/>
+    </group>
+  </macro>
+  <macro name="journal-title">
+    <text variable="container-title" form="short" strip-periods="true"/>
+  </macro>
+  <macro name="date">
+    <date variable="issued"><date-part name="year"/></date>
+  </macro>
+  <macro name="pages">
+    <text variable="page"/>
+  </macro>
+  <citation collapse="citation-number">
+    <sort><key variable="citation-number"/></sort>
+    <layout prefix="(" suffix=")" delimiter=",">
+      <text variable="citation-number"/>
+    </layout>
+  </citation>
+  <bibliography et-al-min="7" et-al-use-first="6" second-field-align="flush">
+    <layout>
+      <text variable="citation-number" suffix=". "/>
+      <text macro="author" suffix=". "/>
+      <text macro="title" suffix=". "/>
+      <choose>
+        <if type="article-journal" match="any">
+          <group delimiter=". ">
+            <text macro="journal-title"/>
+            <group delimiter=";">
+              <text macro="date"/>
+              <group delimiter=":">
+                <text variable="volume"/>
+                <text macro="pages"/>
+              </group>
+            </group>
+          </group>
+          <text variable="DOI" prefix=". doi: "/>
+        </if>
+        <else>
+          <group delimiter=". ">
+            <text macro="publisher"/>
+            <text macro="date"/>
+          </group>
+        </else>
+      </choose>
+    </layout>
+  </bibliography>
+</style>

@@ -104,6 +104,18 @@ phase2 <- phase2 |>
   )
 
 # -----------------------------------------------------------------------------
+# 3b. Correct known data entry errors — appointment year typos
+# -----------------------------------------------------------------------------
+message("Correcting known appointment date errors ...")
+
+# Record 470 (Chiles, NY): appointment_date entered as 2029 instead of 2026
+typo_rows <- which(lubridate::year(phase2$appointment_date) == 2029)
+phase2$appointment_date[typo_rows] <- lubridate::`year<-`(phase2$appointment_date[typo_rows], 2026)
+message(sprintf("  Fixed %d record(s) with appointment year 2029 -> 2026 (record_id: %s)",
+                length(typo_rows),
+                paste(phase2$record_id[typo_rows], collapse = ", ")))
+
+# -----------------------------------------------------------------------------
 # 4. Validate NPIs
 # -----------------------------------------------------------------------------
 message("Validating NPIs ...")
@@ -170,8 +182,18 @@ phase2 <- phase2 |>
       levels = c("Urban", "Rural"))
   )
 
+phase2 <- phase2 |>
+  mutate(
+    ruca_binary = factor(
+      if_else(ruca_code >= 7, "Rural", "Non-Rural"),
+      levels = c("Non-Rural", "Rural")
+    )
+  )
+
 message("  RUCA category distribution:")
 print(table(phase2$ruca_category, useNA = "ifany"))
+message("  RUCA binary distribution:")
+print(table(phase2$ruca_binary, useNA = "ifany"))
 
 # -----------------------------------------------------------------------------
 # 7. Standardise factor / categorical variables

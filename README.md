@@ -1,114 +1,158 @@
-# grace-ent
+# ENT Physician Registry Validity Study
 
 [![tests](https://github.com/mufflyt/grace-ent/actions/workflows/tests.yml/badge.svg)](https://github.com/mufflyt/grace-ent/actions/workflows/tests.yml)
 
-A mystery caller study examining access to care for ENT (Ear, Nose, and Throat) specialists.
+**Full title:** Validity of National Otolaryngology Workforce Listings: A Stratified Mystery-Caller Study  
+**Target journal:** Otolaryngology–Head and Neck Surgery  
+**IRB:** ODU non-human-subjects research (protocol 24-12-NH-0285, approved December 2024; updated March 2026)
 
-Run the test suite locally with `Rscript tests/run_tests.R` (or `Rscript run_all.R test`).
+---
 
-## Overview
+## What this study does
 
-This project uses a simulated patient (mystery caller) methodology to assess appointment availability, wait times, and other access-to-care metrics for otolaryngology practices.
+Three national databases enumerate U.S. otolaryngologists but count different numbers of physicians
+and have never been validated by direct telephone contact. This study cross-links the three databases
+by NPI, then calls a stratified random sample of listed physicians to test whether the named physician
+still works at the listed address.
 
-## Study Design
+**Central question:** Among NPPES-listed otolaryngologists, what proportion can be confirmed active
+at their listed practice address, and does that confirmation rate vary by corroboration across ABOto
+and ENTHealth?
 
-- **Method:** Mystery caller / secret shopper telephone audit
-- **Specialty:** Otolaryngology (ENT)
-- **Outcome measures:** Appointment availability, scheduling wait times, insurance acceptance, and patient access barriers
+**Primary outcome:** Physician confirmed present at the NPPES-listed practice location (location-valid listing).  
+**Secondary outcome:** Physician confirmed active in otolaryngology anywhere (workforce-valid listing).
 
-## Team
+---
 
-- **Grace Falk, PhD** (PI, Old Dominion University) — falkge@odu.edu
-- **Tyler Muffly, MD** (Co-I, Denver Health) — tyler.muffly@dhha.org
-- **Cristina Cabrera-Muffly, MD** (Co-I, University of Colorado Anschutz)
-- **Eric Dobratz, MD** (ODU)
-- **Cristina Baldassari, MD** (Co-I)
-- **Andrew Tompkins, MD, MBA** (Ohio ENT & Allergy Physicians)
+## The three registries and four strata
 
-## IRB
+| Registry | What it is | Who's in it |
+|---|---|---|
+| **NPPES** (207Y*) | National Plan and Provider Enumeration System | Mandatory for Medicare billing; any ENT taxonomy code qualifies |
+| **ABOto** | American Board of Otolaryngology active certification | Requires ACGME residency + written/oral exams; excludes osteopathic pathway |
+| **ENTHealth** | AAO-HNS member directory | Voluntary membership; self-reported |
 
-Approved as **non-human subjects research** by ODU IRB (original approval December 2024; updated March 2026 to add medical students). UC IRB not required.
+Cross-linking all three by NPI produces four mutually exclusive strata (the **Euler zones**):
 
-## Data Sources
+| Stratum | N | Called? |
+|---|---|---|
+| NPPES only | 2,756 | Pending (supplemental sample) |
+| NPPES + ABOto | 6,748 | Yes — 498 called |
+| NPPES + ENTHealth | 711 | Not sampled |
+| Triple-match (all three) | 4,573 | Yes — 462 called |
 
-| Source | Description |
-|--------|-------------|
-| **NPPES** | National Plan and Provider Enumeration System — ENT physicians identified by taxonomy code 207Y* |
-| **ABOto** | American Board of Otolaryngology active board-certification file — used to verify board-certified ENTs and cross-reference with NPPES |
-| **REDCap call log** | Mystery caller study data — 960 records across ENT physicians; tracks appointment availability, wait times, insurance acceptance, ENT subspecialty type, and RUCA rural/urban classification |
-| **RUCA codes** | Rural-Urban Commuting Area codes (2020, zip-code level) — used to classify physician practice locations as rural or urban |
-| **Healthgrades** | Scraped for physician practice locations, board certifications, education, and specialty details |
-| **ent_data_integrity_for_grace_2026-05-18.zip** | Data integrity summary package: 11,333 ENT physicians (NPPES + ABOto overlap), 791 rural physicians, 9 figures, 2 interactive maps — *pending download from email* |
+The Euler zone file lives at:  
+`~/isochrones/publication_materials/figures/ent_data_integrity/ent_euler_zone_npi_assignments_with_demographics.csv`
 
-## Geographic Covariate Pipeline
+---
 
-Market- and area-level predictors for modeling **business days until a new-patient
-ENT appointment**. Each physician is enriched from their practice `state` and `zip`,
-with ZIP resolved to county and CBSA/MSA through a crosswalk backbone. All sources
-are public and require no API key.
+## Call outcomes (current data: n = 960)
 
-| Covariate | File (`data/raw/`) | Geo level → join key | Call-log coverage | Source |
-|---|---|---|---|---|
-| AAO-HNS Board of Governors district (1–8) + region | `state_to_aao_hns_district.csv` | state | 100% | `mufflyt/tyler` |
-| Medicaid-to-Medicare Fee Index (All Services, 2024) | `medicaid_fee_index_state.csv` | state | 98.0%¹ | KFF |
-| Hospital-market HHI, 387 MSAs | `kff_hhi_msa_2024.xlsx` | MSA (via crosswalk) | 60.7%² | KFF |
-| CDC Social Vulnerability Index 2022 (overall + 4 themes) | `zip_svi_2022.csv` | ZIP (pop-weighted from tracts) | 97.8% | CDC/ATSDR |
-| ZIP → county FIPS → CBSA backbone | `zip_to_county_cbsa.csv` | ZIP | 100% | Census ZCTA + OMB |
-| Board-certified ENT supply per county (+ per 100k) | `county_ent_count.csv` | county FIPS | 99.3% | ABOto/NPPES universe |
-| CMS Medicare + dual-eligible Medicaid enrollment (2025) | `county_cms_enrollment.csv` | county FIPS | 99.3% | CMS Medicare Monthly Enrollment |
+Each called listing is assigned to one of four mutually exclusive categories:
 
-¹ Tennessee is `NA` — KFF publishes no fee-for-service Medicaid data for TN.
-² KFF covers metropolitan MSAs only; the remainder are micropolitan/rural physicians (structural, not a join failure).
+| Category | Meaning | n |
+|---|---|---|
+| `confirmed_valid` | Office reached; staff confirmed physician at this location | 445 |
+| `confirmed_invalid` | Physician relocated, retired, or phone invalid/disconnected | 138 |
+| `unresolved` | Call protocol completed; physician-at-location status unclear | 169 |
+| `not_attempted` | No call disposition recorded | 208 |
 
-### Reproducing
+Validity outcomes are derived from the `taking_new_patients` REDCap field — see
+`scripts/05_database_accuracy_paper.R` Section 3 for the mapping table.
 
-```sh
-# 1. Build the crosswalks (populate data/raw/) — downloads public source files
-Rscript scripts/build_geo_crosswalk.R      # ZIP → county → CBSA
-Rscript scripts/build_zip_svi.R            # population-weighted ZIP-level CDC SVI
-Rscript scripts/build_county_ent_count.R   # county ENT supply from the ABOto universe
-Rscript scripts/build_cms_enrollment.R     # CMS county Medicare/dual-Medicaid enrollment
+---
 
-# 2. Assemble the model-ready dataset (960 × 52)
-Rscript scripts/enrich_call_log.R          # → data/processed/ent_phase2_enriched.csv
-```
-
-`enrich_call_log.R` left-joins every covariate in one pass, preserves all original
-columns, guards against row multiplication, and prints per-covariate coverage.
-
-**Join note:** the call log stores ZIPs without leading zeros — always zero-pad to
-5 digits before joining (`sprintf("%05d", ...)`), or New England/NJ ZIPs silently miss.
-
-**Caveats:** HHI is metropolitan-only (see ²); the CMS "Medicaid" field is
-*dual-eligible* beneficiaries (Medicare ∩ Medicaid), the only county-level Medicaid
-signal CMS publishes — total county Medicaid coverage would need ACS table C27007
-and a Census API key.
-
-## Repository Structure
+## Repository structure
 
 ```
 grace_ent/
-├── R/                          # R scripts
-│   ├── build_ent_locations_v3.R        # Builds ENT provider location database
-│   ├── mystery_caller_power_core.R     # Core NB2 GLMM power simulation functions
-│   ├── scrape_healthgrades_full.R      # Healthgrades scraper for ENT physicians
-│   ├── scrape_healthgrades_locations.R # Companion scraper for practice locations
-│   ├── subspecialty_helpers.R          # Subspecialty utility functions
-│   └── subspecialty_standardizer.R     # ENT subspecialty classification
-├── inst/shiny/
-│   ├── ent_rural_urban_power/          # Power calculator (dev): rural vs urban ENT
-│   ├── ent_rural_urban_power_deploy/   # Power calculator (shinyapps.io deploy)
-│   └── mystery_caller_power/           # General paired-call power calculator
-├── scripts/                    # Power analysis + covariate pipeline scripts
-│   ├── build_geo_crosswalk.R           # ZIP → county → CBSA backbone
-│   ├── build_zip_svi.R                 # population-weighted ZIP-level CDC SVI
-│   ├── build_county_ent_count.R        # county ENT supply from ABOto universe
-│   ├── build_cms_enrollment.R          # CMS county Medicare/dual-Medicaid enrollment
-│   └── enrich_call_log.R               # joins all covariates → model-ready dataset
+│
 ├── data/
-│   ├── raw/                     # Covariate crosswalks + reference data
-│   └── processed/              # Cleaned call log + ent_phase2_enriched.csv
-├── config/                     # Subspecialty configuration YAML files
-├── docs/                       # Vignettes and documentation
-└── call log data pull 7-6-26 for muffly.xlsb.xlsx  # Current call log (n=960)
+│   ├── raw/
+│   │   ├── ruca_2020_zip_crosswalk_usda.csv   # USDA zip-to-RUCA crosswalk
+│   │   └── board_cert_ent_universe_*.csv       # ABOto certification file
+│   └── processed/
+│       ├── ent_phase2_all_<timestamp>.csv      # All 960 call records (produced by 01)
+│       ├── ent_phase2_complete_<timestamp>.csv # Complete records only
+│       └── nppes_only_ent_ruca_<timestamp>.csv # NPPES-only cohort + RUCA (from 04)
+│
+├── scripts/                                    # Run in numbered order
+│   ├── 01_clean_phase2_call_log.R              # Import & clean raw REDCap export → ent_phase2_all
+│   ├── 02_redcap_correction_report.R           # QC report: flags data-entry errors
+│   ├── 03_analysis.R                           # Access-to-care paper (wait times, acceptance rates)
+│   ├── 04_nppes_only_ruca.R                    # Build NPPES-only sampling frame with RUCA codes
+│   ├── 05_database_accuracy_paper.R            # Registry validity paper (primary analysis)
+│   └── 06_fig2_flow_diagram.R                  # CONSORT flow diagram for Figure 2
+│
+├── manuscript/
+│   ├── database_accuracy_manuscript.Rmd        # Main manuscript (knits to Word)
+│   ├── references.bib                          # BibTeX references
+│   └── vancouver.csl                           # Vancouver numbered citation style
+│
+├── output/
+│   ├── figures/                                # PNG figures at 300 DPI
+│   └── tables/                                 # CSV and Excel tables
+│
+└── call log data pull 7-6-26 for muffly.xlsb.xlsx   # Raw REDCap export (input to 01)
 ```
+
+---
+
+## How to reproduce the analysis
+
+Run scripts in order from the project root (set by `here::here()`):
+
+```r
+# 1. Clean raw call log → data/processed/ent_phase2_all_*.csv
+source("scripts/01_clean_phase2_call_log.R")
+
+# 2. (Optional) QC report
+source("scripts/02_redcap_correction_report.R")
+
+# 3. Build NPPES-only sampling frame (used once calls are added)
+source("scripts/04_nppes_only_ruca.R")
+
+# 4. Registry validity analysis → output/tables/ and output/figures/
+source("scripts/05_database_accuracy_paper.R")
+
+# 5. Render flow diagram (Figure 2)
+source("scripts/06_fig2_flow_diagram.R")
+
+# 6. Knit manuscript to Word
+rmarkdown::render("manuscript/database_accuracy_manuscript.Rmd",
+                  output_format = "word_document")
+```
+
+The Euler zone file is produced by a separate project (`~/isochrones/`) and is read
+directly from that path. It does not need to be regenerated for this analysis.
+
+---
+
+## Key variable reference
+
+| Variable | Source | Meaning |
+|---|---|---|
+| `npi` | NPPES | 10-digit National Provider Identifier; join key across all files |
+| `overlap_zone` | Derived | NPPES+ABOto or NPPES+ABOto+ENTHealth (maps from raw `datasets` column) |
+| `taking_new_patients` | REDCap | Raw caller response; basis for all validity outcome derivations |
+| `physician_at_location` | Derived | confirmed_yes / confirmed_no / unknown |
+| `physician_active` | Derived | confirmed_yes / confirmed_no / unknown |
+| `listing_status` | Derived | confirmed_valid / confirmed_invalid / unresolved / not_attempted |
+| `ruca_binary` | USDA 2020 | Rural (RUCA ≥ 7) vs Non-Rural (RUCA 1–6) |
+| `bog_region` | Euler file | AAO-HNS Board of Governors region (used as geographic covariate) |
+| `billed_any_part_b` | Euler file | TRUE if physician billed Medicare Part B in 2022–2023 |
+| `years_since_enum` | Euler file | Years since NPI was first enumerated in NPPES |
+| `weight` | Derived | Inverse-probability sampling weight (population N / sampled n per stratum) |
+
+---
+
+## Team
+
+| Name | Role | Institution |
+|---|---|---|
+| Grace E. Falk, PhD | PI, data acquisition | Old Dominion University |
+| Tyler M. Muffly, MD | Co-I, statistical analysis | Denver Health / CU School of Medicine |
+| Cristina Cabrera-Muffly, MD | Co-I | University of Colorado Anschutz |
+| Eric Dobratz, MD | Co-I | Eastern Virginia Medical School |
+| Cristina Baldassari, MD | Co-I | Eastern Virginia Medical School |
+| Andrew Tompkins, MD, MBA | Co-I | Ohio ENT & Allergy Physicians |
