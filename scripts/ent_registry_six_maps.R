@@ -731,12 +731,12 @@ make_audited_status_map <- function(
   )
 
   status_shapes <- base::c(
-    "Location-confirmed" = 16,
-    "Active elsewhere" = 17,
-    "Retired/inactive" = 4,
-    "Other invalid" = 15,
-    "Unresolved" = 1,
-    "Other/unknown" = 3
+    "Location-confirmed" = 16,   # filled circle
+    "Active elsewhere"   = 17,   # filled triangle up
+    "Retired/inactive"   = 18,   # filled diamond  (was 4 = X, too thin)
+    "Other invalid"      = 15,   # filled square
+    "Unresolved"         = 1,    # open circle
+    "Other/unknown"      = 8     # asterisk  (was 3 = +, invisible at size)
   )
 
   map_plot <- ggplot2::ggplot() +
@@ -1116,7 +1116,10 @@ make_state_corroboration_map <- function(
     sf::st_transform(target_crs)
 
   state_point_sf <- state_map_sf |>
-    dplyr::filter(!base::is.na(.data$ent_per_100k)) |>
+    dplyr::filter(
+      !base::is.na(.data$ent_per_100k),
+      .data$state_id != "DC"   # DC is too small; bubble overlaps Maryland
+    ) |>
     sf::st_point_on_surface()
 
   state_summary <- state_registry_tbl |>
