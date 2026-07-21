@@ -468,15 +468,19 @@ kable(t3, align = c("l","r","r","l"),
 knitr::include_graphics("/Users/tmuffly/grace_ent/output/figures/figure_1_registry_overlap_upset_20260721_184338.png")
 ```
 
-```{r fig2, echo=FALSE, fig.cap="Figure 2. Registry credibility ladder. Each row is an audited stratum, ordered from least (top) to most (bottom) corroborated. Filled circles: location-confirmed percentage (physician confirmed at indexed NPPES address); open circles: workforce-confirmed percentage (physician confirmed in active practice at any location). Horizontal bars are Wilson 95% confidence intervals. Percentage labels refer to location-confirmed estimates. NPPES-only stratum pending.", out.width="95%"}
+```{r fig2-euler, echo=FALSE, fig.cap="Figure 2. Euler diagram of registry overlap among U.S. otolaryngologists. Circle area is proportional to the number of physicians in each registry. Overlapping regions show physicians appearing in multiple registries. Numbers indicate physician counts per zone. NPPES = National Plan and Provider Enumeration System; ABOto = American Board of Otolaryngology; ENTHealth = AAO-HNS member directory.", out.width="95%"}
+knitr::include_graphics("/Users/tmuffly/grace_ent/data/raw/ent_registry_overlap_euler_v2.png")
+```
+
+```{r fig3-credibility, echo=FALSE, fig.cap="Figure 3. Registry credibility ladder. Each row is an audited stratum, ordered from least (top) to most (bottom) corroborated. Filled circles: location-confirmed percentage (physician confirmed at indexed NPPES address); open circles: workforce-confirmed percentage (physician confirmed in active practice at any location). Horizontal bars are Wilson 95% confidence intervals. Percentage labels refer to location-confirmed estimates. NPPES-only stratum pending.", out.width="95%"}
 knitr::include_graphics(here("output", "figures", "fig2_credibility_ladder.png"))
 ```
 
-```{r fig3-journey, echo=FALSE, fig.cap="Figure 3. Listing validation journey. Each box shows the number of physician listings at each stage of the telephone audit cascade: sampled, attempted, reached, and adjudicated. Flows are split into confirmed-valid (physician present at indexed NPPES location), confirmed-invalid (relocated, retired, or wrong number), and unresolved (protocol completed; status unclear). Numbers in parentheses show the percentage of the prior stage.", out.width="95%"}
+```{r fig4-journey, echo=FALSE, fig.cap="Figure 4. Listing validation journey. Each box shows the number of physician listings at each stage of the telephone audit cascade: sampled, attempted, reached, and adjudicated. Flows are split into confirmed-valid (physician present at indexed NPPES location), confirmed-invalid (relocated, retired, or wrong number), and unresolved (protocol completed; status unclear). Numbers in parentheses show the percentage of the prior stage.", out.width="95%"}
 knitr::include_graphics("/Users/tmuffly/grace_ent/output/figures/figure_3_validation_journey_20260721_184338.png")
 ```
 
-```{r fig4-staleness, echo=FALSE, fig.cap="Figure 4. Predicted probability of location-confirmed listing by years since NPPES enumeration. Lines are predicted values from a logistic regression model with an interaction between registry-overlap stratum and years since enumeration. Shaded bands are 95% confidence intervals. Rug marks show observed confirmed listings (top) and not-confirmed listings (bottom). Current analysis includes two audited strata; NPPES-only stratum pending.", out.width="95%"}
+```{r fig5-staleness, echo=FALSE, fig.cap="Figure 5. Predicted probability of location-confirmed listing by years since NPPES enumeration. Lines are predicted values from a logistic regression model with an interaction between registry-overlap stratum and years since enumeration. Shaded bands are 95% confidence intervals. Rug marks show observed confirmed listings (top) and not-confirmed listings (bottom). Current analysis includes two audited strata; NPPES-only stratum pending.", out.width="95%"}
 knitr::include_graphics(here("output", "figures", "fig3_staleness_curve.png"))
 ```
 
@@ -603,18 +607,6 @@ if (length(nppes_only_file) > 0) {
 } else {
   cat("NPPES-only file not found.")
 }
-```
-
-```{r fig-s1, echo=FALSE, fig.cap="Supplementary Figure S1. Study flow of the original 960-listing mystery-caller cohort from sampling through final disposition. Supplemental NPPES-only calls are ongoing and not included.", out.width="95%"}
-knitr::include_graphics(here("output", "figures", "fig2_study_flow.png"))
-```
-
-```{r fig-s2, echo=FALSE, fig.cap="Supplementary Figure S2. Composition of confirmed-invalid listings by registry-overlap stratum. Bars show the percentage of confirmed-invalid listings attributable to each reason category. Numbers above bars are total confirmed-invalid counts within each stratum.", out.width="95%"}
-knitr::include_graphics(here("output", "figures", "fig_s2_invalid_reasons.png"))
-```
-
-```{r fig-s3, echo=FALSE, fig.cap="Supplementary Figure S3. Rural versus non-rural listing validity by registry-overlap stratum. Points are location-confirmed percentages among attempted listings; horizontal bars are Wilson 95% confidence intervals; line connects rural and non-rural estimates within each stratum.", out.width="90%"}
-knitr::include_graphics(here("output", "figures", "fig_s3_rural_dumbbell.png"))
 ```
 
 ---
