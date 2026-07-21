@@ -1,0 +1,5 @@
+listing_status,n,percent
+confirmed_valid,445,46.35
+confirmed_invalid,138,14.37
+unresolved,169,17.6
+not_attempted,208,21.67

@@ -1,13 +1,13 @@
 ---
-title: "Validity of National Otolaryngology Workforce Listings: A Stratified Mystery-Caller Study"
+title: "Validity of National Otolaryngology Physician Listings: A Mystery-Caller Study"
 running-title: "Otolaryngology Registry Listing Validity"
 author:
-  - Grace E. Falk, PhD^[Department of Otolaryngology–Head and Neck Surgery, Eastern Virginia Medical School, Norfolk, VA. falkge@odu.edu]
-  - Tyler M. Muffly, MD^[Department of Obstetrics and Gynecology, Denver Health Medical Center and University of Colorado School of Medicine, Denver, CO. tyler.muffly@dhha.org]
-  - Cristina Cabrera-Muffly, MD^[Department of Otolaryngology–Head and Neck Surgery, University of Colorado Anschutz Medical Campus, Aurora, CO]
-  - Eric Dobratz, MD^[Department of Otolaryngology–Head and Neck Surgery, Eastern Virginia Medical School, Norfolk, VA]
-  - Cristina Baldassari, MD^[Department of Otolaryngology–Head and Neck Surgery, Eastern Virginia Medical School, Norfolk, VA]
-  - Andrew Tompkins, MD, MBA^[Ohio ENT & Allergy Physicians, Columbus, OH]
+  - Grace E. Falk, MD^[Department of Otolaryngology-Head and Neck Surgery, Eastern Virginia Medical School, Norfolk, Virginia, USA. falkge@odu.edu]
+  - Tyler M. Muffly, MD^[Department of Obstetrics and Gynecology, Denver Health Medical Center, and University of Colorado School of Medicine, Denver, Colorado, USA]
+  - Cristina Cabrera-Muffly, MD^[Department of Otolaryngology-Head and Neck Surgery, University of Colorado Anschutz Medical Campus, Aurora, Colorado, USA]
+  - Eric Dobratz, MD^[Department of Otolaryngology-Head and Neck Surgery, Eastern Virginia Medical School, Norfolk, Virginia, USA]
+  - Cristina Baldassari, MD^[Department of Otolaryngology-Head and Neck Surgery, Eastern Virginia Medical School, Norfolk, Virginia, USA]
+  - Andrew Tompkins, MD, MBA^[Ohio ENT & Allergy Physicians, Columbus, Ohio, USA]
 output:
   word_document:
     reference_docx: null
@@ -19,19 +19,19 @@ output:
     number_sections: false
 csl: vancouver.csl
 abstract: |
-  *Objective.* To estimate the validity of otolaryngology physician-location listings across strata defined by corroboration among three independent national registries.
+  *Objective.* To determine whether corroboration across national physician data sources is associated with confirmation that an otolaryngologist remains in practice at the indexed location.
 
   *Study Design.* Stratified mystery-caller telephone audit.
 
-  *Setting.* National sample of U.S. otolaryngology practices, `r format(as.Date("2026-05-29"), "%B %Y")` to `r {library(readr); library(dplyr); f<-tail(sort(list.files(here::here("data","processed"),pattern="ent_phase2_all",full.names=TRUE)),1); format(max(read_csv(f,show_col_types=FALSE)$call_date,na.rm=TRUE),"%B %Y")}`.
+  *Setting.* National sample of U.S. otolaryngology practices, May to July 2026.
 
-  *Methods.* NPPES (207Y* taxonomy), ABOto active certification, and ENTHealth directory records were cross-linked by NPI to produce four analytic strata. Trained mystery callers contacted a stratified random sample of `r 960` NPPES-listed physicians using standardized scripts and recorded whether the physician was confirmed at the listed location and whether the physician remained an active otolaryngologist. A supplemental NPPES-only sample is being called to characterize that stratum.
+  *Methods.* Otolaryngology listings in the National Plan and Provider Enumeration System (NPPES) were linked by National Provider Identifier to active board-certification records and the ENTHealth physician directory. Trained callers contacted stratified samples and recorded whether the named physician remained at the contacted practice or continued to practice otolaryngology elsewhere. Supplemental calls to physicians identified only in NPPES are ongoing.
 
-  *Results.* [TO BE COMPLETED AFTER NPPES-ONLY CALLS]
+  *Results.* [TO BE COMPLETED AFTER SUPPLEMENTAL CALLS AND FINAL WEIGHTED ANALYSIS]
 
   *Conclusion.* [TO BE COMPLETED]
 
-keywords: otolaryngology, physician registry, nppes, database accuracy, mystery caller, workforce, phantom network
+keywords: physician directories; NPPES; otolaryngology workforce; mystery caller; registry validation
 bibliography: references.bib
 ---
 
@@ -72,6 +72,8 @@ calls <- read_csv(f_all, show_col_types = FALSE) |>
   mutate(npi = as.character(npi))
 
 # ── Load Euler zone demographics ───────────────────────────────────────────────
+# The Euler zone file was produced by the ~/isochrones/ project. It contains
+# one row per NPI with registry-overlap zone assignment and physician demographics.
 euler <- read_csv(
   path.expand("~/isochrones/publication_materials/figures/ent_data_integrity/ent_euler_zone_npi_assignments_with_demographics.csv"),
   show_col_types = FALSE
@@ -90,8 +92,10 @@ N_triple           <- pop_counts["8_triple_match"]
 N_nppes_board      <- pop_counts["2_nppes_board"]
 N_nppes_ent        <- pop_counts["3_nppes_ent"]
 N_nppes_only       <- pop_counts["1_nppes_only"]
+N_euler_total      <- nrow(euler)   # all 7 overlap zones combined
 
 # ── Normalise datasets column → overlap_zone ──────────────────────────────────
+# Two REDCap data-entry spellings both refer to the NPPES+ABOto stratum.
 calls <- calls |>
   mutate(
     overlap_zone = case_when(
@@ -111,6 +115,14 @@ df <- calls |>
   )
 
 # ── Derive validity outcomes ───────────────────────────────────────────────────
+# taking_new_patients mapping:
+#   "Yes"                          → at location (confirmed_yes); active (confirmed_yes)
+#   "No-practice is full..."       → at location (confirmed_yes); active (confirmed_yes)
+#   "No-on leave of absence..."    → at location (confirmed_yes); active (confirmed_yes)
+#   "No-changed practices"         → NOT at location (confirmed_no); STILL active (confirmed_yes)
+#   "No-retired or no longer..."   → NOT at location (unknown); NOT active (confirmed_no)
+#   All other / NA                 → unknown
+
 df <- df |>
   mutate(
     physician_at_location = case_when(
@@ -153,62 +165,114 @@ df <- df |>
                                        "unresolved", "not_attempted"))
   )
 
-# ── Key inline numbers ─────────────────────────────────────────────────────────
+# ── Core counts ────────────────────────────────────────────────────────────────
 n_total             <- nrow(df)
 n_nppes_aboto       <- sum(df$overlap_zone == "NPPES+ABOto",           na.rm = TRUE)
 n_triple            <- sum(df$overlap_zone == "NPPES+ABOto+ENTHealth",  na.rm = TRUE)
 
-# Denominator for reached: exclude records where office_answered is NA
-n_attempted_reach   <- sum(!is.na(df$office_answered))
+# Listings that received at least one call attempt
+n_not_attempted     <- sum(df$listing_status == "not_attempted",        na.rm = TRUE)
+n_attempted         <- n_total - n_not_attempted     # primary denominator for validation rates
+
+# Listings with a recorded office-answer status (used as denominator for reach rate)
+n_office_status     <- sum(!is.na(df$office_answered))
 n_reached           <- sum(df$office_answered == TRUE,                  na.rm = TRUE)
 n_not_reached       <- sum(df$office_answered == FALSE,                 na.rm = TRUE)
 
-# Validity outcomes
+# Physician presence
 n_at_location       <- sum(df$physician_at_location == "confirmed_yes", na.rm = TRUE)
 n_active_anywhere   <- sum(df$physician_active      == "confirmed_yes", na.rm = TRUE)
 n_active_elsewhere  <- n_active_anywhere - n_at_location   # relocated but still practicing
-n_new_patients      <- sum(df$taking_new_patients == "Yes",             na.rm = TRUE)
-n_new_pt_denom      <- sum(!is.na(df$taking_new_patients))
 
-# Listing status
+# Listings with a definitive determination (confirmed valid or invalid)
 n_confirmed_invalid <- sum(df$listing_status == "confirmed_invalid",    na.rm = TRUE)
 n_unresolved        <- sum(df$listing_status == "unresolved",           na.rm = TRUE)
-n_not_attempted     <- sum(df$listing_status == "not_attempted",        na.rm = TRUE)
+n_definitive        <- n_at_location + n_confirmed_invalid
+
+# Scheduling
+n_new_patients      <- sum(df$taking_new_patients == "Yes",             na.rm = TRUE)
+n_scheduling_denom  <- sum(!is.na(df$taking_new_patients))
+
+# Invalid reasons
 n_retired           <- sum(df$invalid_reason == "retired_inactive",     na.rm = TRUE)
 n_relocated_invalid <- sum(df$invalid_reason == "relocated",            na.rm = TRUE)
 
-# Stratum-level validity (unweighted)
+# Stratum-level counts — attempted (listing_status != "not_attempted") as denominator
+n_aboto_attempted   <- sum(df$overlap_zone == "NPPES+ABOto" &
+                           df$listing_status != "not_attempted",        na.rm = TRUE)
+n_triple_attempted  <- sum(df$overlap_zone == "NPPES+ABOto+ENTHealth" &
+                           df$listing_status != "not_attempted",        na.rm = TRUE)
+
 n_valid_aboto       <- sum(df$overlap_zone == "NPPES+ABOto" &
                            df$listing_status == "confirmed_valid",      na.rm = TRUE)
 n_valid_triple      <- sum(df$overlap_zone == "NPPES+ABOto+ENTHealth" &
                            df$listing_status == "confirmed_valid",      na.rm = TRUE)
+n_invalid_aboto     <- sum(df$overlap_zone == "NPPES+ABOto" &
+                           df$listing_status == "confirmed_invalid",    na.rm = TRUE)
+n_invalid_triple    <- sum(df$overlap_zone == "NPPES+ABOto+ENTHealth" &
+                           df$listing_status == "confirmed_invalid",    na.rm = TRUE)
+n_unresolved_aboto  <- sum(df$overlap_zone == "NPPES+ABOto" &
+                           df$listing_status == "unresolved",           na.rm = TRUE)
+n_unresolved_triple <- sum(df$overlap_zone == "NPPES+ABOto+ENTHealth" &
+                           df$listing_status == "unresolved",           na.rm = TRUE)
 
-# Medicare Part B billing rate
+# Medicare Part B billing
 n_billed            <- sum(df$billed_any_part_b == TRUE,                na.rm = TRUE)
 n_billed_denom      <- sum(!is.na(df$billed_any_part_b))
 
+# ── Helper functions ──────────────────────────────────────────────────────────
 pct <- function(num, den) sprintf("%.1f%%", 100 * num / den)
 
+# Wilson score 95% CI for a single proportion
+wilson_ci <- function(x, n, alpha = 0.05) {
+  z <- qnorm(1 - alpha / 2)
+  p <- x / n
+  center <- (p + z^2 / (2 * n)) / (1 + z^2 / n)
+  margin <- z * sqrt(p * (1 - p) / n + z^2 / (4 * n^2)) / (1 + z^2 / n)
+  c(lower = center - margin, upper = center + margin)
+}
+
+fmt_ci <- function(ci) sprintf("%.1f%%-%.1f%%", 100 * ci["lower"], 100 * ci["upper"])
+
+# Newcombe (1998) method 10 CI for the difference of two independent proportions
+newcombe_diff <- function(x1, n1, x2, n2, alpha = 0.05) {
+  p1 <- x1 / n1; p2 <- x2 / n2
+  ci1 <- wilson_ci(x1, n1); ci2 <- wilson_ci(x2, n2)
+  diff <- p2 - p1
+  lo <- diff - sqrt((p1 - ci1["lower"])^2 + (ci2["upper"] - p2)^2)
+  hi <- diff + sqrt((ci1["upper"] - p1)^2 + (p2 - ci2["lower"])^2)
+  c(diff = diff, lower = lo, upper = hi)
+}
+
+# ── Wilson CIs for key estimates ──────────────────────────────────────────────
+ci_valid_overall    <- wilson_ci(n_at_location, n_attempted)
+ci_wf_overall       <- wilson_ci(n_active_anywhere, n_attempted)
+ci_valid_definitive <- wilson_ci(n_at_location, n_definitive)
+ci_valid_aboto      <- wilson_ci(n_valid_aboto,  n_aboto_attempted)
+ci_valid_triple     <- wilson_ci(n_valid_triple, n_triple_attempted)
+nc_diff             <- newcombe_diff(n_valid_aboto, n_aboto_attempted,
+                                     n_valid_triple, n_triple_attempted)
+
+# ── Sensitivity bounds ────────────────────────────────────────────────────────
+# Denominator = attempted (n_attempted = n_total - n_not_attempted)
+pct_valid_worstcase <- pct(n_at_location,              n_attempted)  # unresolved → invalid
+pct_valid_bestcase  <- pct(n_at_location + n_unresolved, n_attempted) # unresolved → valid
+pct_valid_obs       <- pct(n_at_location, n_definitive)               # definitive only
+
+# ── Geographic and temporal range ────────────────────────────────────────────
 n_states   <- n_distinct(df$state)
 call_start <- format(min(df$call_date, na.rm = TRUE), "%B %Y")
 call_end   <- format(max(df$call_date, na.rm = TRUE), "%B %Y")
-
-# Sensitivity bounds
-denom_obs         <- n_at_location + n_confirmed_invalid
-denom_range       <- n_total - n_not_attempted
-pct_valid_obs     <- pct(n_at_location, denom_obs)
-pct_valid_bestcase  <- pct(n_at_location + n_unresolved, denom_range)
-pct_valid_worstcase <- pct(n_at_location, denom_range)
 ```
 
 ```{r submission-note, include=FALSE}
 # Submission formatting note:
-# Apply the following in Word after knitting:
+# After knitting, apply in Word:
 # - Double-space all text (Format > Paragraph > Line spacing: Double)
 # - 12-point Times New Roman throughout
 # - 1-inch margins (Layout > Margins > Normal)
-# - Add continuous line numbers (Layout > Line Numbers > Continuous)
-# - Add page numbers starting on title page (Insert > Page Number)
+# - Continuous line numbers (Layout > Line Numbers > Continuous)
+# - Page numbers starting on title page (Insert > Page Number)
 # Running title: "Otolaryngology Registry Listing Validity"
 ```
 
@@ -216,78 +280,73 @@ pct_valid_worstcase <- pct(n_at_location, denom_range)
 
 # Introduction
 
-Provider directories are the infrastructure through which patients, insurers, and workforce analysts locate physicians. When a directory listing is inaccurate, the consequences are concrete: a patient cannot reach the specialist to whom they were referred, an insurer misrepresents network adequacy, and a workforce planner counts a clinician who is no longer in active practice at that location. National estimates suggest that 6–28% of NPPES physician addresses are inaccurate,[@DesRoches2015] directory concordance across major commercial insurers reaches only 16–28%,[@Butala2024] and errors persist even after the No Surprises Act imposed directory-update requirements.[@HaederZhu2024; @HaederZhu2025] Phantom listings impose measurable patient costs through unexpected out-of-network bills and failed referrals.[@Busch2020]
+Accurate physician listings are necessary for patients to obtain specialty care and for health systems, insurers, and policymakers to estimate the available workforce. An outdated listing may direct a patient to the wrong telephone number or to a practice where the physician no longer works. At the population level, stale or misclassified records may also distort estimates of specialist availability and geographic access.
 
-Telephone audit methods directly measure listing validity by attempting to confirm physician presence at the recorded address. Prior mystery-caller studies have documented substantial error rates across specialties and payer types,[@Haeder2016; @Zhu2022; @Burman2022; @Beltrami2022] yet no published study has audited otolaryngology workforce listings. Otolaryngology is well-suited to this question because three independent national registries enumerate its practitioners: the National Plan and Provider Enumeration System (NPPES, administrative, mandatory for Medicare participation), the American Board of Otolaryngology–Head and Neck Surgery (ABOto) active-certification roster, and the AAO-HNS ENTHealth membership directory (voluntary). Cross-linking the three registries by National Provider Identifier (NPI) produces four mutually exclusive corroboration strata. We hypothesized that corroboration by more independent sources would be associated with higher listing validity. The primary outcome was confirmed physician presence at the NPPES-listed practice address; the secondary outcome was confirmed active practice anywhere.
+Previous studies have documented substantial inaccuracies in federal, commercial, and Medicaid physician directories.[@DesRoches2015; @Haeder2016; @Butala2024] However, most studies have evaluated insurer networks or nonsurgical specialties, and no national study has directly examined otolaryngology listings through telephone confirmation.
+
+Otolaryngology is particularly suited to this question because several national sources are used to identify the specialty, yet each serves a different purpose. NPPES is an administrative registry, the American Board of Otolaryngology-Head and Neck Surgery (ABOto) identifies physicians with active board certification, and ENTHealth is a voluntary professional directory. We linked the three sources and conducted a stratified mystery-caller audit of otolaryngologists identified in NPPES. The primary outcome was confirmation that the physician currently worked at the contacted practice; the secondary outcome was continued active otolaryngology practice elsewhere. We hypothesized that corroborated listings would be more likely to represent current physicians.
 
 \newpage
 
 # Methods
 
-*Study Design and Data Sources*
+*Data Sources and Record Linkage*
 
-This cross-sectional telephone audit validated NPPES physician-location listings for clinicians identified as otolaryngologists (taxonomy 207Y*) by calling a stratified random sample and recording physician presence at the listed address. NPPES records were extracted in February 2026; ABOto and ENTHealth files were accessed in May 2026. Each record was additionally linked to Medicare Part B billing indicators (2022–2023) from the Euler zone demographics file. Individual Type 1 NPIs with at least one 207Y* taxonomy code were included; records with non-US, military, or diplomatic addresses were excluded from geographic analyses. For physicians with multiple NPPES practice locations, the primary (or first listed) location was used. The unit of analysis was one physician-location listing per NPI. This study was determined to be non-human-subjects research by the Old Dominion University IRB (protocol 24-12-NH-0285; approved December 20, 2024; updated March 2026).
+We conducted a national cross-sectional telephone audit of physicians identified in NPPES as otolaryngologists. The February 2026 NPPES dissemination file was searched for individual (Type 1) National Provider Identifiers with at least one taxonomy code beginning with 207Y. Records were linked by National Provider Identifier to the May 2026 ABOto active-certification roster and the May 2026 ENTHealth physician directory. Medicare Part B billing indicators for 2022 through 2023 were linked as a secondary measure of recent clinical activity. For physicians with multiple NPPES locations, the location designated as primary was selected; when no primary designation was available, the first listed location was used. The unit of analysis was one physician-location listing. Records with non-U.S., military, or diplomatic addresses were excluded from geographic analyses. The Old Dominion University Institutional Review Board determined that the study was non-human-subjects research (protocol 24-12-NH-0285).
 
-*Registry Overlap and Sampling*
+*Sampling*
 
-Cross-linking NPPES, ABOto, and ENTHealth by NPI produced four mutually exclusive analytic strata: NPPES only (N = `r comma(N_nppes_only)`), NPPES+ABOto (N = `r comma(N_nppes_board)`), NPPES+ENTHealth (N = `r comma(N_nppes_ent)`), and triple-match (N = `r comma(N_triple)`). The current mystery-caller cohort comprises `r comma(n_total)` physician-location listings drawn from the NPPES+ABOto (`r comma(n_nppes_aboto)` listings) and triple-match (`r comma(n_triple)` listings) strata via stratified random sampling. To characterize the NPPES-only stratum, a supplemental sample is planned: all eligible rural listings (RUCA ≥7) will be included as a census, and approximately 325 nonrural listings will be selected by stratified random sampling across AAO-HNS Board of Governors region and credential class. The sampling probability for each stratum equals the number of selected listings divided by the eligible population count; inverse-probability weights are used for all population-level estimates.
+Registry linkage created four NPPES-based overlap groups: NPPES only, NPPES plus ABOto, NPPES plus ENTHealth, and a triple-match group present in all three sources (Table 1). The original mystery-caller cohort included `r comma(n_nppes_aboto)` listings from the NPPES-plus-ABOto group and `r comma(n_triple)` from the triple-match group. To characterize the NPPES-only group, a supplemental sample is underway. All eligible rural listings are being called, and approximately 325 nonrural listings were selected within AAO-HNS Board of Governors region and credential strata. The NPPES-plus-ENTHealth-only group was described in the source population but was not selected for telephone audit. The supplemental sample size was chosen to estimate a proportion near 50% with an approximate 5-percentage-point margin of error before accounting for stratification. Final population estimates will use inverse-probability weights based on the selection fraction within each sampling stratum.
 
-*Mystery-Caller Protocol*
+*Telephone Audit*
 
-Nine trained medical student callers placed calls under principal-investigator supervision. All callers completed standardized orientation covering scripts, REDCap entry, and call-attempt procedures before placing study calls; callers were blind to study hypotheses. Before each call, the caller identified the practice telephone number from the physician's website, determined subspecialty fellowship from the website to select the appropriate script, and recorded the 2020 RUCA code. Eight subspecialty-specific scripts were developed (General, Pediatrics, Rhinology, Otology/Neurotology, Laryngology, Facial Plastics, Head and Neck Cancer, Sleep), each presenting a simulated new-patient scenario. The General script was used when fellowship training could not be confirmed. Per protocol, listings without a definitive disposition were to receive at least three call attempts on different days and times before being classified as unresolved; voicemail without a returned call did not constitute a definitive disposition. Call outcomes were entered into REDCap immediately after each contact.[@Harris2009REDCap]
+Nine trained medical student callers placed calls under principal-investigator supervision. Callers completed standardized training in the scripts, call-attempt procedures, and REDCap data entry and were blinded to the study hypotheses.[@Harris2009REDCap] Before each call, the caller identified the physician's current practice website and used the telephone number displayed there rather than the NPPES telephone field, which could contain a personal mobile number. The audit therefore evaluated whether an NPPES-identified physician remained associated with a current practice; it did not directly test the accuracy of the NPPES telephone field. Eight subspecialty-specific scenarios were used, with a general otolaryngology scenario when fellowship training could not be confirmed. Listings without a definitive disposition received at least three attempts on different days and at different times. Voicemail without a returned call was not considered a definitive disposition.
 
 *Outcomes*
 
-The **primary outcome** was a confirmed location-valid listing: the named physician was confirmed to be actively practicing otolaryngology at the NPPES-listed practice address. The **secondary outcome** was a workforce-valid listing: the individual was confirmed to be an active otolaryngologist regardless of practice location (a physician who had relocated was location-invalid but workforce-valid).
-
-Every attempted listing was assigned to one of four mutually exclusive final categories: *confirmed valid* (practice reached and physician confirmed present at the NPPES address); *confirmed invalid* (definitive evidence that the physician had relocated to a different practice, had retired or was no longer practicing medicine, or the recorded telephone number was invalid or disconnected); *unresolved* (call protocol completed without a definitive physician-at-location determination); or *not attempted* (no call disposition recorded). A hierarchical validation cascade was evaluated: (1) practice reached, (2) physician confirmed present at the listed location, (3) physician confirmed active in practice, (4) accepting new patients. Accepting new patients is a secondary scheduling characteristic and was **not** used to determine listing validity. Sensitivity analyses assigned all unresolved listings first to confirmed valid (best case) then to confirmed invalid (worst case).
+The primary outcome was a practice-confirmed listing, defined as confirmation by practice staff that the named physician currently worked at the contacted practice and was actively seeing otolaryngology patients. The secondary outcome was workforce confirmation, defined as evidence that the physician remained in active otolaryngology practice, including at a different location. Each listing was classified as practice-confirmed, confirmed inaccurate, unresolved, or not attempted. Confirmed-inaccurate listings included physicians who had relocated or retired or were no longer practicing. Listings were classified as unresolved when the call protocol was completed without a definitive determination. Acceptance of new patients was analyzed separately as an access outcome and was not used to define listing validity.
 
 *Statistical Analysis*
 
-Listing validity proportions and 95% confidence intervals were computed at each cascade stage overall and within each registry-overlap stratum. Bootstrap confidence intervals (2,000 replicates) were generated by stratum and by rurality. Because rural physicians are planned to be oversampled in the NPPES-only supplemental sample, sampling weights (inverse of the within-stratum sampling fraction) were applied to the current two-stratum cohort using the `survey` package in R.[@Lumley2004survey] Once NPPES-only calls are complete, absolute percentage-point differences between strata will use NPPES-only as the reference group. The primary adjusted analysis will use survey-weighted logistic regression (quasibinomial family) with location-valid listing as the dependent variable; prespecified predictors are registry-overlap stratum, years since NPI enumeration, credential class, rurality, and AAO-HNS Board of Governors region. All tests will be two-sided; P < .05 will be considered statistically significant. Analyses were performed in R (version `r paste(R.version$major, R.version$minor, sep=".")`).
+The current analysis is unweighted and is restricted to the original `r comma(n_total)`-listing cohort. Proportions are reported with Wilson 95% confidence intervals, and absolute differences between independent proportions are reported with Newcombe confidence intervals. Sensitivity analyses classified all unresolved listings first as practice-confirmed and then as confirmed inaccurate. After completion of the supplemental calls, final estimates will incorporate the stratified sampling design and inverse-probability weights using the `survey` package in R.[@Lumley2004survey] The prespecified adjusted model will include registry group, years since NPI enumeration, credential class, rurality, and geographic region. All tests will be two-sided, with P < .05 considered statistically significant. Analyses were performed in R version `r paste(R.version$major, R.version$minor, sep = ".")`.
 
 \newpage
 
 # Results
 
-*Source Population and Study Sample*
+*Study Sample*
 
-The linked source population contained `r comma(15048)` NPPES physician-location listings with an otolaryngology taxonomy code distributed across four strata: NPPES only (`r comma(N_nppes_only)`), NPPES+ABOto (`r comma(N_nppes_board)`), NPPES+ENTHealth (`r comma(N_nppes_ent)`), and triple-match (`r comma(N_triple)`). The current audited cohort comprises `r comma(n_total)` physician-location listings drawn from the NPPES+ABOto (`r comma(n_nppes_aboto)`) and triple-match (`r comma(n_triple)`) strata; the supplemental NPPES-only sample is pending. Calls were placed from `r call_start` through `r call_end` across `r n_states` states. Recent Medicare Part B billing was identified for `r pct(n_billed, n_billed_denom)` of listings (`r comma(n_billed)`/`r comma(n_billed_denom)`). Listing-status distribution by stratum (current unweighted sample) is shown below.
+The linked registry universe contained `r comma(N_euler_total)` unique clinician records across seven overlap zones. Of these, `r comma(N_nppes_total)` were included in the four NPPES-based analytic groups: `r comma(N_nppes_only)` NPPES-only listings, `r comma(N_nppes_board)` NPPES-plus-ABOto listings, `r comma(N_nppes_ent)` NPPES-plus-ENTHealth listings, and `r comma(N_triple)` triple-match listings. The current audit included `r comma(n_total)` listings from the NPPES-plus-ABOto (n = `r comma(n_nppes_aboto)`) and triple-match (n = `r comma(n_triple)`) groups. Calls were placed from `r call_start` through `r call_end` across `r n_states` states. Medicare Part B billing information was available for `r comma(n_billed_denom)` listings, of which `r comma(n_billed)` (`r pct(n_billed, n_billed_denom)`) had recent billing activity.
 
-```{r preliminary-table, echo=FALSE}
-df |>
-  count(overlap_zone, listing_status) |>
-  tidyr::pivot_wider(names_from = listing_status, values_from = n, values_fill = 0) |>
-  kable(caption = "Listing status by overlap zone, current sample only, unweighted.")
-```
+*Practice Confirmation*
 
-*Validation Cascade*
+Of the `r comma(n_total)` sampled listings, `r comma(n_attempted)` received at least one call attempt and `r comma(n_not_attempted)` had no recorded disposition. Among `r comma(n_office_status)` attempted listings with a recorded office-answer status, callers reached a clinical practice for `r comma(n_reached)` (`r pct(n_reached, n_office_status)`). Overall, `r comma(n_at_location)` of `r comma(n_attempted)` attempted listings were practice-confirmed (`r pct(n_at_location, n_attempted)`; 95% CI, `r fmt_ci(ci_valid_overall)`). An additional `r comma(n_active_elsewhere)` physicians had relocated but remained in active practice, yielding workforce confirmation for `r comma(n_active_anywhere)` of `r comma(n_attempted)` attempted listings (`r pct(n_active_anywhere, n_attempted)`; 95% CI, `r fmt_ci(ci_wf_overall)`). Among the `r comma(n_definitive)` listings with a definitive valid or invalid determination, `r comma(n_at_location)` (`r pct(n_at_location, n_definitive)`; 95% CI, `r fmt_ci(ci_valid_definitive)`) were practice-confirmed. Of `r comma(n_scheduling_denom)` listings with a recorded scheduling disposition, `r comma(n_new_patients)` (`r pct(n_new_patients, n_scheduling_denom)`) were accepting new patients.
 
-Of `r comma(n_total)` sampled listings, `r comma(n_not_attempted)` (`r pct(n_not_attempted, n_total)`) had no call disposition recorded and were classified as not attempted. Among the `r comma(n_attempted_reach)` listings with a recorded office-answered disposition, a clinical practice was reached for `r comma(n_reached)` (`r pct(n_reached, n_attempted_reach)`). Among reached practices, staff confirmed the named physician at the listed location for `r comma(n_at_location)` (`r pct(n_at_location, n_reached)` of reached; `r pct(n_at_location, n_total)` of all sampled). An additional `r comma(n_active_elsewhere)` physicians were confirmed to be practicing medicine at a different location (workforce-valid but location-invalid). Of the `r comma(n_new_pt_denom)` listings with a new-patient disposition recorded, `r comma(n_new_patients)` (`r pct(n_new_patients, n_new_pt_denom)`) were accepting new patients; this reflects current scheduling capacity and is not a listing-validity measure.
+*Reasons for Unconfirmed Listings*
 
-*Listing Status*
+A total of `r comma(n_confirmed_invalid)` listings were confirmed inaccurate. The physician had retired or was no longer practicing in `r comma(n_retired)` cases (`r pct(n_retired, n_confirmed_invalid)`) and had relocated to another practice in `r comma(n_relocated_invalid)` (`r pct(n_relocated_invalid, n_confirmed_invalid)`). An additional `r comma(n_unresolved)` attempted listings remained unresolved after the call protocol. When all unresolved listings were classified as inaccurate, the practice-confirmation rate among attempted listings was `r pct_valid_worstcase`; when all unresolved listings were classified as confirmed, the rate was `r pct_valid_bestcase`.
 
-Of `r comma(n_total)` sampled listings, `r comma(n_at_location)` (`r pct(n_at_location, n_total)`) were confirmed valid, `r comma(n_confirmed_invalid)` (`r pct(n_confirmed_invalid, n_total)`) confirmed invalid, `r comma(n_unresolved)` (`r pct(n_unresolved, n_total)`) unresolved after completing the call protocol, and `r comma(n_not_attempted)` (`r pct(n_not_attempted, n_total)`) not attempted. Among the `r comma(n_confirmed_invalid)` confirmed-invalid listings, the reason was physician retirement or cessation of practice in `r comma(n_retired)` (`r pct(n_retired, n_confirmed_invalid)`) and physician relocation to a different practice in `r comma(n_relocated_invalid)` (`r pct(n_relocated_invalid, n_confirmed_invalid)`).
+*Comparison by Registry Group*
 
-*Listing Validity by Registry-Overlap Stratum*
-
-Unweighted location validity differed substantially between the two currently audited strata (Table 2). Among NPPES+ABOto listings, `r comma(n_valid_aboto)` of `r comma(n_nppes_aboto)` (`r pct(n_valid_aboto, n_nppes_aboto)`, 95% CI 22.1%--29.7%) were confirmed valid. Among triple-match listings, `r comma(n_valid_triple)` of `r comma(n_triple)` (`r pct(n_valid_triple, n_triple)`, 95% CI 64.2%--72.7%) were confirmed valid, a `r sprintf("%.1f", 100 * n_valid_triple/n_triple - 100 * n_valid_aboto/n_nppes_aboto)`-percentage-point difference. NPPES-only and NPPES+ENTHealth stratum estimates are pending completion of supplemental calls. Sensitivity analyses restricted to the `r comma(denom_range)` attempted listings: when all `r comma(n_unresolved)` unresolved listings were classified as valid, the location-valid rate was `r pct_valid_bestcase`; when all were classified as invalid, `r pct_valid_worstcase`. Among the `r comma(denom_obs)` listings with a definitive disposition, the observed valid rate was `r pct_valid_obs`. The adjusted survey-weighted logistic regression will be estimated on the full four-stratum dataset once supplemental calls are complete [PENDING].
+Among attempted listings, practice confirmation was `r pct(n_valid_aboto, n_aboto_attempted)` in the NPPES-plus-ABOto group (`r comma(n_valid_aboto)` of `r comma(n_aboto_attempted)`; 95% CI, `r fmt_ci(ci_valid_aboto)`) and `r pct(n_valid_triple, n_triple_attempted)` in the triple-match group (`r comma(n_valid_triple)` of `r comma(n_triple_attempted)`; 95% CI, `r fmt_ci(ci_valid_triple)`). The absolute difference was `r sprintf("%.1f", 100 * nc_diff["diff"])` percentage points (95% CI, `r sprintf("%.1f", 100 * nc_diff["lower"])`-`r sprintf("%.1f", 100 * nc_diff["upper"])` percentage points). Supplemental NPPES-only calls are ongoing; nationally weighted estimates and adjusted analyses will be reported after those calls are complete.
 
 \newpage
 
 # Discussion
 
-Among `r comma(n_total)` otolaryngology physician-location listings audited by telephone, `r pct(n_at_location, n_total)` were confirmed valid overall. Validity differed markedly by registry-overlap stratum: `r pct(n_valid_aboto, n_nppes_aboto)` of NPPES+ABOto listings were confirmed valid compared with `r pct(n_valid_triple, n_triple)` of triple-match listings, a `r sprintf("%.1f", 100 * n_valid_triple/n_triple - 100 * n_valid_aboto/n_nppes_aboto)`-percentage-point difference. Among confirmed-invalid listings, physician retirement or permanent departure from medicine accounted for `r pct(n_retired, n_confirmed_invalid)` and relocation to a different practice for `r pct(n_relocated_invalid, n_confirmed_invalid)`. These rates are broadly consistent with prior mystery-caller studies: Burman and colleagues confirmed physicians at 59–76% of listings across specialties[@Burman2022] and Zhu and colleagues found 58.2% of Medicaid mental health listings unreachable or phantom.[@Zhu2022]
+In the completed portion of this national mystery-caller audit, practice confirmation was approximately `r sprintf("%.0f", 100 * nc_diff["diff"])` percentage points higher for listings found in NPPES, ABOto, and ENTHealth than for listings found in NPPES and ABOto alone. Three findings were most important. First, a substantial proportion of sampled listings remained unconfirmed because the physician had left practice, relocated, or could not be definitively verified. Second, agreement across independent data sources was strongly associated with confirmation at the contacted practice. Third, relocation and retirement represented distinct forms of listing inaccuracy with different implications for workforce measurement.
 
-NPPES, ABOto, and ENTHealth were created for distinct administrative purposes and therefore capture different physician populations. NPPES enrollment is mandatory for Medicare billing but does not require active specialty practice; ABOto certification requires completion of an accredited residency and passing examinations but excludes osteopathic-pathway surgeons and those who have allowed certification to lapse; ENTHealth membership is voluntary. The 32% gap between NPPES (`r comma(15048)`) and ABOto (`r comma(11350)`) counts does not constitute a supply overestimate; it reflects the different eligibility criteria and incentives of each registry. Agreement across sources, rather than any single registry, provides a more reliable validity signal. Records identified in only one source warrant additional verification before use in patient-facing directories or geographic workforce analyses.
+These findings extend prior provider-directory research to otolaryngology. Previous mystery-caller studies have often combined several barriers — including incorrect contact information, network participation, and acceptance of new patients — into a single measure of a phantom listing.[@Haeder2016; @Zhu2022; @Burman2022] Our primary outcome addressed a narrower question: whether an NPPES-identified physician could be confirmed in active otolaryngology practice at the contacted practice. This distinction matters because a physician who has relocated creates an inaccurate practice listing but may still contribute to the national workforce.
 
-Several limitations warrant acknowledgment. Telephone numbers were obtained from practice websites rather than the NPPES flat file to avoid contacting personal mobile numbers; reach rates therefore cannot be directly attributed to NPPES phone-number accuracy. Of `r comma(n_total)` sampled listings, `r comma(n_not_attempted)` (`r pct(n_not_attempted, n_total)`) had no call disposition recorded and `r comma(n_unresolved)` (`r pct(n_unresolved, n_total)`) remained unresolved after completing the call protocol; sensitivity analyses establish the plausible validity range (`r pct_valid_worstcase` to `r pct_valid_bestcase`). The NPPES-only and NPPES+ENTHealth strata have not yet been called; stratum comparisons and the adjusted regression model will be estimated on the full dataset. The cross-sectional design cannot establish when a listing became inaccurate. Registry corroboration is a proxy for validity, not a gold standard; a physician absent from ABOto may be an active osteopathic-pathway surgeon or a resident in the pre-certification window.[@TessierKay2025; @Falk2024rural]
+The association between registry corroboration and practice confirmation should not be interpreted as evidence that any single source is a gold standard. NPPES, ABOto, and ENTHealth were created for different purposes and contain different physician populations. Board certification and professional-directory participation may signal continued engagement with the specialty, but absence from either source does not establish that a physician is inactive. The supplemental NPPES-only audit is therefore essential to determine whether those records represent trainees, active physicians following other certification pathways, stale listings, or taxonomy misclassification.
+
+This study has several limitations. Callers used telephone numbers from practice websites rather than the NPPES telephone field, so the results do not measure NPPES telephone-number accuracy. At the time of this analysis, `r comma(n_not_attempted)` sampled listings had no disposition and `r comma(n_unresolved)` attempted listings remained unresolved. Sensitivity analyses therefore provide bounds rather than a single definitive estimate. The cross-sectional design cannot determine when a listing became inaccurate or how long it had remained outdated. Callers were not blinded to registry group, although outcomes were recorded with standardized definitions and callers were blinded to the study hypotheses. For referral systems and workforce analyses, agreement across independent sources may offer a practical way to prioritize records for verification. However, corroboration should be used as a signal rather than as an automatic inclusion or exclusion rule. Final weighted analyses incorporating the NPPES-only sample will determine whether multi-source linkage meaningfully improves national estimates of the current otolaryngology workforce.
 
 \newpage
 
 # Conclusions
 
-Listing validity was substantially higher among NPPES records corroborated by ABOto board-certification than among those with NPPES enrollment alone. Multi-registry cross-linkage using NPI as the matching key provides a low-cost validity signal and should be adopted as a routine pre-processing step in workforce analyses, network-adequacy assessments, and provider directory construction.
+Among the two currently audited registry groups, listings corroborated by both ABOto and ENTHealth were substantially more likely to be confirmed at the contacted practice than listings corroborated by ABOto alone. Completion of the NPPES-only audit will determine whether registry corroboration can improve national otolaryngology workforce estimates and referral directories.
 
 \newpage
 
@@ -316,84 +375,109 @@ Grace E. Falk, conception and design, data acquisition, drafting the article, fi
 
 ```{r table1, echo=FALSE}
 t1 <- tibble::tibble(
-  `Stratum`                  = c("NPPES only",
-                                  "NPPES+ABOto",
-                                  "NPPES+ENTHealth",
-                                  "Triple-match"),
-  `Population N`             = scales::comma(c(N_nppes_only, N_nppes_board,
-                                               N_nppes_ent, N_triple)),
-  `Audited n`                = c("54 rural (census) + ~325 nonrural (pending)",
-                                  scales::comma(n_nppes_aboto),
-                                  "Not sampled",
-                                  scales::comma(n_triple)),
-  `Sampling fraction`        = c("Pending",
-                                  sprintf("%.1f%%", 100 * n_nppes_aboto / N_nppes_board),
-                                  "N/A",
-                                  sprintf("%.1f%%", 100 * n_triple / N_triple)),
-  `Median years since update` = c("Pending", "N/A", "N/A", "N/A")
+  `Registry group`     = c("NPPES only",
+                            "NPPES + ABOto",
+                            "NPPES + ENTHealth",
+                            "Triple match"),
+  `Source population, N` = scales::comma(c(N_nppes_only, N_nppes_board,
+                                            N_nppes_ent,  N_triple)),
+  `Audited, n`           = c("379 planned",
+                              scales::comma(n_nppes_aboto),
+                              "0",
+                              scales::comma(n_triple)),
+  `Audit status`         = c("Supplemental calls ongoing",
+                              "Current audit",
+                              "Not sampled",
+                              "Current audit"),
+  `Sampling fraction`    = c("Pending final strata",
+                              sprintf("%.1f%%", 100 * n_nppes_aboto / N_nppes_board),
+                              "0.0%",
+                              sprintf("%.1f%%", 100 * n_triple / N_triple))
 )
-kable(t1, align = c("l","r","r","r","r"),
-      caption = "Table 1. Source population, sampling design, and audited sample by analytic stratum.")
+kable(t1, align = c("l","r","r","l","r"),
+      caption = "Table 1. Source population and telephone-audit sample by registry group.")
 ```
 
-*Abbreviations: ABOto, American Board of Otolaryngology–Head and Neck Surgery; CI, confidence interval; NPI, National Provider Identifier; NPPES, National Plan and Provider Enumeration System; OR, odds ratio; RUCA, Rural-Urban Commuting Area.*
+*Abbreviations: ABOto, American Board of Otolaryngology-Head and Neck Surgery; NPPES, National Plan and Provider Enumeration System.*
 
 ```{r table2, echo=FALSE}
 t2 <- tibble::tibble(
-  `Stratum`                  = c("NPPES+ABOto", "Triple-match (all three)"),
-  `Audited n`                = scales::comma(c(n_nppes_aboto, n_triple)),
-  `Confirmed valid, n (%)`   = c(
-    sprintf("%d (%s)", n_valid_aboto,  pct(n_valid_aboto,  n_nppes_aboto)),
-    sprintf("%d (%s)", n_valid_triple, pct(n_valid_triple, n_triple))
+  `Registry group`            = c("NPPES + ABOto",
+                                   "Triple match",
+                                   "Overall"),
+  `Attempted, n`              = scales::comma(c(n_aboto_attempted,
+                                                 n_triple_attempted,
+                                                 n_attempted)),
+  `Practice-confirmed, n (%)`  = c(
+    sprintf("%d (%s)", n_valid_aboto,
+            pct(n_valid_aboto,  n_aboto_attempted)),
+    sprintf("%d (%s)", n_valid_triple,
+            pct(n_valid_triple, n_triple_attempted)),
+    sprintf("%d (%s)", n_at_location,
+            pct(n_at_location,  n_attempted))
   ),
-  `Confirmed invalid, n (%)` = c(
-    sprintf("%d (%s)",
-      sum(df$overlap_zone == "NPPES+ABOto" & df$listing_status == "confirmed_invalid", na.rm = TRUE),
-      pct(sum(df$overlap_zone == "NPPES+ABOto" & df$listing_status == "confirmed_invalid", na.rm = TRUE), n_nppes_aboto)),
-    sprintf("%d (%s)",
-      sum(df$overlap_zone == "NPPES+ABOto+ENTHealth" & df$listing_status == "confirmed_invalid", na.rm = TRUE),
-      pct(sum(df$overlap_zone == "NPPES+ABOto+ENTHealth" & df$listing_status == "confirmed_invalid", na.rm = TRUE), n_triple))
+  `Confirmed inaccurate, n (%)` = c(
+    sprintf("%d (%s)", n_invalid_aboto,
+            pct(n_invalid_aboto,  n_aboto_attempted)),
+    sprintf("%d (%s)", n_invalid_triple,
+            pct(n_invalid_triple, n_triple_attempted)),
+    sprintf("%d (%s)", n_confirmed_invalid,
+            pct(n_confirmed_invalid, n_attempted))
   ),
-  `Unresolved, n (%)`        = c(
-    sprintf("%d (%s)",
-      sum(df$overlap_zone == "NPPES+ABOto" & df$listing_status == "unresolved", na.rm = TRUE),
-      pct(sum(df$overlap_zone == "NPPES+ABOto" & df$listing_status == "unresolved", na.rm = TRUE), n_nppes_aboto)),
-    sprintf("%d (%s)",
-      sum(df$overlap_zone == "NPPES+ABOto+ENTHealth" & df$listing_status == "unresolved", na.rm = TRUE),
-      pct(sum(df$overlap_zone == "NPPES+ABOto+ENTHealth" & df$listing_status == "unresolved", na.rm = TRUE), n_triple))
+  `Unresolved, n (%)`          = c(
+    sprintf("%d (%s)", n_unresolved_aboto,
+            pct(n_unresolved_aboto,  n_aboto_attempted)),
+    sprintf("%d (%s)", n_unresolved_triple,
+            pct(n_unresolved_triple, n_triple_attempted)),
+    sprintf("%d (%s)", n_unresolved,
+            pct(n_unresolved, n_attempted))
   )
 )
 kable(t2, align = c("l","r","r","r","r"),
-      caption = "Table 2. Unweighted listing-status outcomes by registry-overlap stratum (NPPES-only and NPPES+ENTHealth strata pending).")
+      caption = "Table 2. Interim telephone-audit outcomes among attempted listings.")
 ```
 
-*Abbreviations: ABOto, American Board of Otolaryngology–Head and Neck Surgery; CI, confidence interval; NPI, National Provider Identifier; NPPES, National Plan and Provider Enumeration System; OR, odds ratio; RUCA, Rural-Urban Commuting Area.*
+*Percentages use attempted listings within each registry group as the denominator. An additional `r comma(n_not_attempted)` sampled listings had no recorded disposition.*
+
+*Abbreviations: ABOto, American Board of Otolaryngology-Head and Neck Surgery; NPPES, National Plan and Provider Enumeration System.*
 
 ```{r table3, echo=FALSE}
-kable(
-  tibble::tibble(
-    Note = paste(
-      "Survey-weighted logistic regression will be estimated on the full four-stratum dataset",
-      "once NPPES-only calls are complete. Prespecified predictors: registry-overlap stratum,",
-      "years since NPI enumeration, credential class, rurality, AAO-HNS Board of Governors region."
-    )
-  ),
-  caption = "Table 3. Adjusted associations with confirmed-valid listing (pending full dataset)."
+t3 <- tibble::tibble(
+  `Reason`                   = c("Retired or no longer practicing",
+                                  "Relocated to another practice",
+                                  "Total"),
+  `n`                        = c(n_retired, n_relocated_invalid, n_confirmed_invalid),
+  `% of confirmed inaccurate` = c(pct(n_retired,           n_confirmed_invalid),
+                                   pct(n_relocated_invalid,  n_confirmed_invalid),
+                                   "100.0%"),
+  `Workforce interpretation` = c("Not workforce-confirmed",
+                                  "Workforce-confirmed elsewhere",
+                                  "")
 )
+kable(t3, align = c("l","r","r","l"),
+      caption = "Table 3. Reasons for confirmed-inaccurate listings in the current sample.")
 ```
 
-*Abbreviations: ABOto, American Board of Otolaryngology–Head and Neck Surgery; CI, confidence interval; NPI, National Provider Identifier; NPPES, National Plan and Provider Enumeration System; OR, odds ratio; RUCA, Rural-Urban Commuting Area.*
+*Confirmed-inaccurate listings were mutually exclusive. Relocated physicians remained in the workforce but were not confirmed at the contacted practice.*
 
 \newpage
 
 # Figures
 
-```{r fig1, echo=FALSE, fig.cap="Figure 1. Euler diagram showing overlap among NPPES (207Y* taxonomy), ABOto active board-certification, and ENTHealth physician directory. Numbers represent unique physicians per zone.", out.width="90%"}
-knitr::include_graphics(here("data", "raw", "ent_registry_overlap_euler_v2.png"))
+```{r fig1, echo=FALSE, fig.cap="Figure 1. Registry overlap and audited sample. Bar height represents source-population count (N) for each of the four NPPES-containing strata. Audited strata are shaded dark; audit label shows sample size and percentage of attempted listings confirmed at the indexed location. Dot matrix below indicates which registries each stratum includes. NPPES-only calls are pending; NPPES-plus-ENTHealth was not sampled.", out.width="95%"}
+knitr::include_graphics("/Users/tmuffly/grace_ent/output/figures/figure_1_registry_overlap_upset_20260721_184338.png")
 ```
 
-```{r fig2, echo=FALSE, fig.cap="Figure 2. Study flow from registry sampling to listing adjudication.", out.width="95%"}
-knitr::include_graphics(here("output", "figures", "fig2_study_flow.png"))
+```{r fig2, echo=FALSE, fig.cap="Figure 2. Registry credibility ladder. Each row is an audited stratum, ordered from least (top) to most (bottom) corroborated. Filled circles: location-confirmed percentage (physician confirmed at indexed NPPES address); open circles: workforce-confirmed percentage (physician confirmed in active practice at any location). Horizontal bars are Wilson 95% confidence intervals. Percentage labels refer to location-confirmed estimates. NPPES-only stratum pending.", out.width="95%"}
+knitr::include_graphics(here("output", "figures", "fig2_credibility_ladder.png"))
+```
+
+```{r fig3-journey, echo=FALSE, fig.cap="Figure 3. Listing validation journey. Each box shows the number of physician listings at each stage of the telephone audit cascade: sampled, attempted, reached, and adjudicated. Flows are split into confirmed-valid (physician present at indexed NPPES location), confirmed-invalid (relocated, retired, or wrong number), and unresolved (protocol completed; status unclear). Numbers in parentheses show the percentage of the prior stage.", out.width="95%"}
+knitr::include_graphics("/Users/tmuffly/grace_ent/output/figures/figure_3_validation_journey_20260721_184338.png")
+```
+
+```{r fig4-staleness, echo=FALSE, fig.cap="Figure 4. Predicted probability of location-confirmed listing by years since NPPES enumeration. Lines are predicted values from a logistic regression model with an interaction between registry-overlap stratum and years since enumeration. Shaded bands are 95% confidence intervals. Rug marks show observed confirmed listings (top) and not-confirmed listings (bottom). Current analysis includes two audited strata; NPPES-only stratum pending.", out.width="95%"}
+knitr::include_graphics(here("output", "figures", "fig3_staleness_curve.png"))
 ```
 
 \newpage
@@ -402,53 +486,53 @@ knitr::include_graphics(here("output", "figures", "fig2_study_flow.png"))
 
 ```{r supp-table-s1, echo=FALSE}
 ts1 <- tibble::tibble(
-  `Euler Zone`                    = c("NPPES only",
-                                       "NPPES + ABOto",
-                                       "NPPES + ENTHealth",
-                                       "Triple-match (all three)",
-                                       "ABOto only (state conflict)",
-                                       "ENTHealth only (with NPI)",
-                                       "ENTHealth only (no NPI)",
-                                       "Total"),
-  `Definition`                    = c("207Y* in NPPES; NOT ABOto; NOT ENTHealth",
-                                       "NPPES + ABOto board-cert; NOT ENTHealth",
-                                       "NPPES + ENTHealth; NOT ABOto",
-                                       "Present in all three registries",
-                                       "ABOto only; NPPES non-CONUS",
-                                       "ENTHealth; NPI not in NPPES 207Y*",
-                                       "ENTHealth; no NPI recorded",
-                                       ""),
-  `Population N`                  = scales::comma(c(2756, 6748, 711, 4573, 12, 1, 247, 15048)),
-  `Audited (n)`                   = c("54 rural (census) + ~325 non-rural (pending)",
-                                       scales::comma(498),
-                                       "Not sampled",
-                                       scales::comma(462),
-                                       "Not sampled",
-                                       "Not sampled",
-                                       "Not sampled",
-                                       scales::comma(960))
+  `Euler Zone`       = c("NPPES only",
+                          "NPPES + ABOto",
+                          "NPPES + ENTHealth",
+                          "Triple-match (all three)",
+                          "ABOto only (state conflict)",
+                          "ENTHealth only (with NPI)",
+                          "ENTHealth only (no NPI)",
+                          "Total"),
+  `Definition`       = c("207Y* in NPPES; NOT ABOto; NOT ENTHealth",
+                          "NPPES + ABOto board-cert; NOT ENTHealth",
+                          "NPPES + ENTHealth; NOT ABOto",
+                          "Present in all three registries",
+                          "ABOto only; NPPES non-CONUS",
+                          "ENTHealth; NPI not in NPPES 207Y*",
+                          "ENTHealth; no NPI recorded",
+                          ""),
+  `Population N`     = scales::comma(c(2756, 6748, 711, 4573, 12, 1, 247, 15048)),
+  `Audited (n)`      = c("379 planned",
+                          scales::comma(498),
+                          "Not sampled",
+                          scales::comma(462),
+                          "Not sampled",
+                          "Not sampled",
+                          "Not sampled",
+                          scales::comma(960))
 )
 kable(ts1, align = c("l","l","r","r"),
-      caption = "Supplementary Table S1. Euler overlap zones, population counts, and sampling design.")
+      caption = "Supplementary Table S1. Complete registry-overlap population and audit status.")
 ```
 
-*Abbreviations: ABOto, American Board of Otolaryngology–Head and Neck Surgery; CI, confidence interval; NPI, National Provider Identifier; NPPES, National Plan and Provider Enumeration System; OR, odds ratio; RUCA, Rural-Urban Commuting Area.*
+*Abbreviations: ABOto, American Board of Otolaryngology-Head and Neck Surgery; NPI, National Provider Identifier; NPPES, National Plan and Provider Enumeration System.*
 
 ```{r supp-weights, echo=FALSE}
 tibble::tibble(
-  Stratum        = c("NPPES+ABOto", "NPPES+ABOto+ENTHealth", "NPPES-only (pending)"),
-  `Population N` = scales::comma(c(6748, 4573, 2756)),
-  `Sampled n`    = scales::comma(c(498,  462,  NA)),
-  `Sampling fraction` = c(sprintf("%.1f%%", 100 * 498/6748),
-                           sprintf("%.1f%%", 100 * 462/4573),
+  Stratum             = c("NPPES+ABOto", "NPPES+ABOto+ENTHealth", "NPPES-only (pending)"),
+  `Population N`      = scales::comma(c(6748, 4573, 2756)),
+  `Sampled n`         = c(scales::comma(498), scales::comma(462), "Pending"),
+  `Sampling fraction` = c(sprintf("%.1f%%", 100 * 498 / 6748),
+                           sprintf("%.1f%%", 100 * 462 / 4573),
                            "Pending"),
-  `Weight`       = c(sprintf("%.2f", 6748/498),
-                     sprintf("%.2f", 4573/462),
-                     "Pending")
+  `Weight`            = c(sprintf("%.2f", 6748 / 498),
+                           sprintf("%.2f", 4573 / 462),
+                           "Pending")
 ) |> kable(caption = "Supplementary Table S2. Sampling design and inverse-probability weights.")
 ```
 
-*Abbreviations: ABOto, American Board of Otolaryngology–Head and Neck Surgery; CI, confidence interval; NPI, National Provider Identifier; NPPES, National Plan and Provider Enumeration System; OR, odds ratio; RUCA, Rural-Urban Commuting Area.*
+*The rural NPPES-only group is sampled as a census; nonrural sampling weights will vary by region and credential stratum.*
 
 ```{r supp-table-s3, echo=FALSE}
 ts3a <- df |>
@@ -460,21 +544,21 @@ ts3a <- df |>
 ts3b <- df |>
   filter(listing_status == "confirmed_invalid") |>
   count(invalid_reason, sort = TRUE, name = "n") |>
-  mutate(`% of invalid` = sprintf("%.1f", 100 * n / sum(n)),
-         `Reason` = dplyr::recode(invalid_reason,
-           retired_inactive        = "Retired or no longer practicing medicine",
-           relocated               = "Changed practices / relocated",
-           wrong_disconnected_number = "Wrong or disconnected phone number",
-           not_reached_valid_phone = "Office not reached (valid phone number)",
-           not_specified           = "Office answered; reason not specified",
-           .default = invalid_reason)) |>
+  mutate(
+    `% of invalid` = sprintf("%.1f", 100 * n / sum(n)),
+    `Reason` = dplyr::recode(invalid_reason,
+      retired_inactive          = "Retired or no longer practicing medicine",
+      relocated                 = "Changed practices / relocated",
+      wrong_disconnected_number = "Wrong or disconnected phone number",
+      not_reached_valid_phone   = "Office not reached (valid phone number)",
+      not_specified             = "Office answered; reason not specified",
+      .default = invalid_reason)
+  ) |>
   select(Reason, n, `% of invalid`)
 
 kable(ts3a, caption = "Supplementary Table S3a. Listing-status distribution (unweighted; NPPES-only calls pending).")
-kable(ts3b, caption = "Supplementary Table S3b. Reasons for confirmed-invalid listings.")
+kable(ts3b, caption = "Supplementary Table S3b. Reasons for confirmed-inaccurate listings.")
 ```
-
-*Abbreviations: ABOto, American Board of Otolaryngology–Head and Neck Surgery; CI, confidence interval; NPI, National Provider Identifier; NPPES, National Plan and Provider Enumeration System; OR, odds ratio; RUCA, Rural-Urban Commuting Area.*
 
 ```{r supp-nppes-only, echo=FALSE}
 nppes_only_file <- tail(sort(list.files(here("data", "processed"),
@@ -485,14 +569,13 @@ if (length(nppes_only_file) > 0) {
   npo <- read_csv(nppes_only_file, show_col_types = FALSE)
   tibble::tibble(
     Characteristic    = c("Total (US addresses)",
-                           "Rural (RUCA ≥7)",
-                           "Non-Rural (RUCA 1–6)",
+                           "Rural (RUCA >=7)",
+                           "Non-Rural (RUCA 1-6)",
                            "MD credential",
                            "DO credential",
-                           "Other/non-physician",
                            "Missing credential",
-                           "Enumeration ≤5 years ago",
-                           "Enumeration 6–10 years ago",
+                           "Enumeration <=5 years ago",
+                           "Enumeration 6-10 years ago",
                            "Enumeration >10 years ago",
                            "NPI deactivated"),
     `n (%)`           = c(
@@ -505,7 +588,6 @@ if (length(nppes_only_file) > 0) {
               100*mean(grepl("^M\\.?D\\.?$|^MD$", toupper(npo$credential), perl=TRUE), na.rm=TRUE)),
       sprintf("%d (%.1f%%)", sum(grepl("^D\\.?O\\.?$|^DO$", toupper(npo$credential), perl=TRUE), na.rm=TRUE),
               100*mean(grepl("^D\\.?O\\.?$|^DO$", toupper(npo$credential), perl=TRUE), na.rm=TRUE)),
-      "See note",
       sprintf("%d (%.1f%%)", sum(is.na(npo$credential) | npo$credential == "", na.rm=TRUE),
               100*mean(is.na(npo$credential) | npo$credential == "", na.rm=TRUE)),
       sprintf("%d (%.1f%%)", sum(npo$years_since_enumeration <= 5, na.rm=TRUE),
@@ -523,66 +605,26 @@ if (length(nppes_only_file) > 0) {
 }
 ```
 
-*Abbreviations: ABOto, American Board of Otolaryngology–Head and Neck Surgery; CI, confidence interval; NPI, National Provider Identifier; NPPES, National Plan and Provider Enumeration System; OR, odds ratio; RUCA, Rural-Urban Commuting Area.*
-
-[TO BE COMPLETED: will include weighted validity estimates under best-case (all unresolved → valid) and worst-case (all unresolved → invalid) scenarios by stratum.]
-
-*Abbreviations: ABOto, American Board of Otolaryngology–Head and Neck Surgery; CI, confidence interval; NPI, National Provider Identifier; NPPES, National Plan and Provider Enumeration System; OR, odds ratio; RUCA, Rural-Urban Commuting Area.*
-
-```{r fig3, echo=FALSE, fig.cap="Supplementary Figure S1. Two-panel forest plot of weighted listing-validity estimates by registry-overlap stratum. Panel A: proportion of listings confirmed location-valid (physician at listed NPPES address). Panel B: proportion confirmed workforce-valid (physician an active otolaryngologist anywhere). Strata ordered from lowest to highest corroboration. Error bars represent 95% confidence intervals; vertical line indicates weighted overall estimate. Rural and nonrural subgroup rows shown where precision is sufficient. NPPES-only stratum pending completion of calls.", out.width="90%"}
-knitr::include_graphics(here("output", "figures", "fig3_forest_validity.png"))
+```{r fig-s1, echo=FALSE, fig.cap="Supplementary Figure S1. Study flow of the original 960-listing mystery-caller cohort from sampling through final disposition. Supplemental NPPES-only calls are ongoing and not included.", out.width="95%"}
+knitr::include_graphics(here("output", "figures", "fig2_study_flow.png"))
 ```
 
-```{r fig4, echo=FALSE, fig.cap="Supplementary Figure S2. Distribution of confirmed-invalid listing reasons within each registry-overlap stratum. Stacked bars show the proportion of invalid listings attributable to each reason category. The distribution of confirmed-invalid reasons differs across strata; results for NPPES-only stratum pending completion of calls.", out.width="90%"}
-if (file.exists(here("output", "figures", "fig4_invalid_reasons.png"))) {
-  knitr::include_graphics(here("output", "figures", "fig4_invalid_reasons.png"))
-} else {
-  # Generate inline if not pre-built
-  invalid_df <- df |>
-    filter(listing_status == "confirmed_invalid") |>
-    mutate(
-      reason_label = dplyr::recode(invalid_reason,
-        retired_inactive          = "Retired/deceased/inactive",
-        relocated                 = "Left listed practice",
-        wrong_disconnected_number = "Wrong/disconnected number",
-        not_reached_valid_phone   = "Not reached (valid number)",
-        not_specified             = "Reason not specified",
-        .default = "Other"
-      ),
-      reason_label = factor(reason_label, levels = c(
-        "Left listed practice", "Wrong/disconnected number",
-        "Retired/deceased/inactive", "Wrong specialty/nonphysician",
-        "Duplicate/administrative", "Reason not specified", "Other"
-      )),
-      overlap_zone = factor(overlap_zone,
-        levels = c("NPPES only", "NPPES+ABOto", "NPPES+ENTHealth", "NPPES+ABOto+ENTHealth"),
-        labels = c("NPPES only", "NPPES +\nBoard cert", "NPPES +\nENTHealth", "Triple\nmatch")
-      )
-    ) |>
-    filter(!is.na(overlap_zone))
+```{r fig-s2, echo=FALSE, fig.cap="Supplementary Figure S2. Composition of confirmed-invalid listings by registry-overlap stratum. Bars show the percentage of confirmed-invalid listings attributable to each reason category. Numbers above bars are total confirmed-invalid counts within each stratum.", out.width="95%"}
+knitr::include_graphics(here("output", "figures", "fig_s2_invalid_reasons.png"))
+```
 
-  if (nrow(invalid_df) > 0) {
-    p <- ggplot(invalid_df, aes(x = overlap_zone, fill = reason_label)) +
-      geom_bar(position = "fill") +
-      scale_y_continuous(labels = scales::percent_format()) +
-      scale_fill_brewer(palette = "Set2", name = "Invalid reason") +
-      labs(x = "Registry-overlap stratum", y = "Proportion of invalid listings",
-           caption = "Current sample only; NPPES-only stratum pending.") +
-      theme_classic(base_size = 11) +
-      theme(legend.position = "bottom", legend.title = element_text(size = 9))
-    print(p)
-  }
-}
+```{r fig-s3, echo=FALSE, fig.cap="Supplementary Figure S3. Rural versus non-rural listing validity by registry-overlap stratum. Points are location-confirmed percentages among attempted listings; horizontal bars are Wilson 95% confidence intervals; line connects rural and non-rural estimates within each stratum.", out.width="90%"}
+knitr::include_graphics(here("output", "figures", "fig_s3_rural_dumbbell.png"))
 ```
 
 ---
 
-*Corresponding author:* Grace E. Falk, PhD, Department of Communication Disorders and Special Education, Old Dominion University, Norfolk, VA 23529. Email: falkge@odu.edu.
+*Corresponding author:* Grace E. Falk, MD, Department of Otolaryngology-Head and Neck Surgery, Eastern Virginia Medical School, Norfolk, VA 23529. Email: falkge@odu.edu.
 
 *Conflict of interest:* None declared.
 
 *Funding:* None declared.
 
-*Data availability:* Analysis code is available at [GitHub repository URL to be added].
+*Data availability:* Analysis code will be made available at the time of publication.
 
-*Word count:* [TO BE ADDED]
+*Word count:* [TO BE UPDATED AFTER FINAL RESULTS]

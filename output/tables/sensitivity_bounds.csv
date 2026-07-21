@@ -1,0 +1,4 @@
+scenario,denominator,n_valid_cnt,pct_valid
+Observed (unresolved excluded),583,445,76.3
+Best-case (unresolved → valid),752,614,81.6
+Worst-case (unresolved → invalid),752,445,59.2

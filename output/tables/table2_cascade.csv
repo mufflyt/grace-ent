@@ -1,0 +1,3 @@
+overlap_zone,n_total,n_reached,n_at_location,n_active,n_new_patients,pct_reached_of_total,pct_at_loc_of_total,pct_active_of_total,pct_new_pt_of_total,pct_at_loc_of_reached
+NPPES+ABOto,498,226,128,128,120,45.4,25.7,25.7,24.1,56.6
+NPPES+ABOto+ENTHealth,462,351,317,317,314,76,68.6,68.6,68,90.3
