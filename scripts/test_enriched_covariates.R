@@ -53,9 +53,22 @@ test_that("ZIP-resolved covariates are constant within each zip", {
 test_that("county_fips is a 5-digit code; state prefix matches the state (>=99.5%)", {
   cf <- d$county_fips[nzchar(d$county_fips)]
   expect_true(all(nchar(cf) == 5))
-  data(fips_codes, package = "tidycensus")
-  fips2abbr <- setNames(fips_codes$state, fips_codes$state_code)
-  fips2abbr <- fips2abbr[!duplicated(names(fips2abbr))]
+  # Standard Census Bureau 2-digit state FIPS codes, inlined so this check
+  # doesn't need tidycensus (or its Census-API dependency chain) just for a
+  # static lookup table -- CI is deliberately R + testthat only (see
+  # .github/workflows/tests.yml).
+  fips2abbr <- c(
+    "01" = "AL", "02" = "AK", "04" = "AZ", "05" = "AR", "06" = "CA", "08" = "CO",
+    "09" = "CT", "10" = "DE", "11" = "DC", "12" = "FL", "13" = "GA", "15" = "HI",
+    "16" = "ID", "17" = "IL", "18" = "IN", "19" = "IA", "20" = "KS", "21" = "KY",
+    "22" = "LA", "23" = "ME", "24" = "MD", "25" = "MA", "26" = "MI", "27" = "MN",
+    "28" = "MS", "29" = "MO", "30" = "MT", "31" = "NE", "32" = "NV", "33" = "NH",
+    "34" = "NJ", "35" = "NM", "36" = "NY", "37" = "NC", "38" = "ND", "39" = "OH",
+    "40" = "OK", "41" = "OR", "42" = "PA", "44" = "RI", "45" = "SC", "46" = "SD",
+    "47" = "TN", "48" = "TX", "49" = "UT", "50" = "VT", "51" = "VA", "53" = "WA",
+    "54" = "WV", "55" = "WI", "56" = "WY", "60" = "AS", "66" = "GU", "69" = "MP",
+    "72" = "PR", "78" = "VI"
+  )
   sub <- d[nzchar(d$county_fips) & nzchar(d$state), ]
   match_rate <- mean(fips2abbr[substr(sub$county_fips, 1, 2)] == sub$state, na.rm = TRUE)
   # A handful of legitimate cross-border cases exist (source state typo, or a ZIP
