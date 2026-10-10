@@ -34,7 +34,9 @@ jobs:
         run: |
           Rscript -e 'pk <- c("testthat", "dplyr", "readr", "here", "remotes"); miss <- pk[!vapply(pk, requireNamespace, logical(1), quietly = TRUE)]; if (length(miss)) install.packages(miss)'
           # mysteryroster carries the registry-validity analysis that tests/testthat/test-mysteryroster-parity.R checks
-          Rscript -e 'remotes::install_github("mufflyt/mysteryroster", upgrade = "never")'
+          # tarball URL, not install_github: no GitHub API call, so no token or rate limit
+          Rscript -e 'remotes::install_url("https://github.com/mufflyt/mysteryroster/archive/refs/heads/main.tar.gz", upgrade = "never")'
+          Rscript -e 'cat("mysteryroster", as.character(packageVersion("mysteryroster")), "\n")'
 
       - name: Run test suite
         run: Rscript tests/run_tests.R
