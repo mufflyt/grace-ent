@@ -1,0 +1,16 @@
+{
+  "upload_attempted": true,
+  "skipped_reason": null,
+  "source_path": "/Users/tylermuffly/isochrones/data/ent/enthealth_npi_LATEST.csv",
+  "sha256": "3b38405c3fe27113894524449f091ea937730371fa03ccc554f6fbe6c6c6e0c2",
+  "prior_sha256": "d69884f39ad822d006a9fc24f2efc03bf0d1c921a7f92861a0a25a89d6d5dc2e",
+  "row_count": 6046,
+  "file_size_bytes": 1285387,
+  "dropbox_destination": "/isochrones/ent/enthealth_npi_LATEST.csv",
+  "success": true,
+  "error_message": null,
+  "hostname": "TMuff-2.local",
+  "git_sha": "26737a42a",
+  "duration_seconds": 2.47,
+  "timestamp": "2026-05-07T22:17:38-0600"
+}

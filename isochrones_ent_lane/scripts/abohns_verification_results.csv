@@ -1,0 +1,3 @@
+query_first_name,query_last_name,query_state,abohns_id,full_name,location,certification,initial_certification,expiration,meeting_cc_reqs,source_url,scrape_date
+Brent,Smith,CO,#2095,Brent Smith,"Littleton, Colorado",Otolaryngology - Head & Neck Surgery,10/09/1987,Non-Time Limited,N/A (not required),https://abohns.org/verify-certification?first_name=Brent&last_name=Smith&state=CO&op=Verify+Status&form_id=abohns_verification_form,2026-05-05 20:05:12
+Cristina,Cabrera,CO,#20360,Cristina Cabrera-Muffly,"Aurora, Colorado",Otolaryngology - Head & Neck Surgery,06/01/2010,04/01/2031,Yes,https://abohns.org/verify-certification?first_name=Cristina&last_name=Cabrera&state=CO&op=Verify+Status&form_id=abohns_verification_form,2026-05-05 20:05:14

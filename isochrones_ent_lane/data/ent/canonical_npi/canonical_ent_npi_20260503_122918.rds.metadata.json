@@ -1,0 +1,93 @@
+{
+  "artifact_id": "20260503122918-f2ac1793",
+  "artifact_path": "/Users/tylermuffly/isochrones/data/canonical_abog/canonical_abog_npi_20260503_122918.rds",
+  "artifact_type": "rds",
+  "artifact_format_version": "1.0",
+  "created_at": "2026-05-03T12:29:19Z",
+  "run_id": null,
+  "step_name": "step_0_canonical_abog_npi_matching",
+  "script_name": "R/canonical_abog_npi_pipeline_STABLE.R",
+  "function_name": "canonical_abog_npi_pipeline",
+  "git_commit": "7463c6f5ef998a4f759f36c1fa38c9c9b0064fd8",
+  "git_branch": "feature/seven-subspecialty-expansion",
+  "git_status": "modified",
+  "r_version": "4.4.2",
+  "inputs": [
+    {
+      "input_id": "20260201105456-2304ef2e",
+      "input_path": "/Users/tylermuffly/Dropbox (Personal)/mystery_shopper/Corbi study/ENT/Data/results.xlsx",
+      "input_md5": "13714f07167b4c28171a58804d8c31c8",
+      "input_size_bytes": 887811,
+      "input_timestamp": "2026-02-01T10:54:56Z",
+      "input_relationship": "primary"
+    },
+    {
+      "input_id": "20260503122801-60689c4e",
+      "input_path": "/Volumes/MufflySamsung/DuckDB/nber_my_duckdb.duckdb",
+      "input_md5": "LARGE_FILE_SKIPPED_MD5(size=86.5GB,mtime=20260503122801)",
+      "input_size_bytes": 92879466496,
+      "input_timestamp": "2026-05-03T12:28:01Z",
+      "input_relationship": "reference"
+    }
+  ],
+  "parameters": {
+    "config": {
+      "output_dir": "data/canonical_abog",
+      "analysis_date": "2026-05-03",
+      "strict_pc_resolution": true,
+      "exclude_deactivated_npis": true
+    },
+    "function_params": {
+      "enable_retirement_cohort_filter": false,
+      "enable_matching_validation": true,
+      "enable_grad_year_matching": false,
+      "use_memory_optimization": true,
+      "gender_confidence_threshold": 0.8,
+      "apply_gender_gating": true,
+      "apply_credential_gating": true,
+      "drop_abog_id": true
+    },
+    "retirement_cohort": null
+  },
+  "transformation_type": "matching",
+  "transformation_description": "Matched ABOG physicians to NPIs using 9 strategies",
+  "row_count": 220,
+  "column_count": 70,
+  "column_names": ["url", "full_name", "company_name", "address", "city", "state_code", "post_code", "country", "phone_number", "specialty_primary", "specialty_secondary", "roster_id", "enthealth_id", "zip5", "phone_norm", "state", "city_norm", "first_raw", "last_raw", "middle_raw", "first_clean", "last_clean", "middle_clean", "first_initial", "abog_gender", "abog_gender_conf", "cert_year", "is_common_name", "first_name", "last_name", "middle_name", "first", "last", "city_std", "state_std", "abog_npi_original", "npi", "match_score", "match_strategy", "strategy_order", "strategy_source", "npi_first_name", "npi_last_name", "npi_middle_name", "npi_gender", "exact_name", "middle_ok", "zip_match", "city_match", "spec_signal", "gender_agreement", "year_proximity", "score_total", "is_ambiguous_op", "method_priority", "score_total_adj", "radical_hysterectomy", "debulking", "lymphadenectomy", "slings", "sacrocolpopexy", "compartment_repair", "urodynamics", "total_go", "total_fpmrs_surgery", "years_active_procedures", "inferred_subspecialty", "practicing_subspecialty", "subspecialty_match", "validation_confidence"],
+  "file_size_bytes": 22644,
+  "md5_hash": "975417df5734bbeb2e3b6800a8f68229",
+  "validation_status": "passed",
+  "validation_checks": [
+    {
+      "check_name": "file_integrity",
+      "status": "pass",
+      "details": "RDS file verified: 220 rows readable"
+    },
+    {
+      "check_name": "row_count",
+      "status": "pass",
+      "details": "220 physicians matched"
+    },
+    {
+      "check_name": "strategy_coverage",
+      "status": "pass",
+      "details": "9 matching strategies used"
+    },
+    {
+      "check_name": "average_confidence",
+      "status": "pass",
+      "details": "Average match confidence: 0.866"
+    }
+  ],
+  "quality_metrics": {
+    "completeness": 100,
+    "matched_count": 220,
+    "strategies_used": 9,
+    "average_confidence": 0.8662
+  },
+  "parent_artifacts": ["20260201105456-2304ef2e", "20260503122801-60689c4e"],
+  "notes": "Canonical ABOG-NPI matching pipeline: 220 physicians matched using 9 strategies",
+  "tags": ["abog", "npi", "matching", "canonical", "standalone"],
+  "purpose": "canonical_matching",
+  "metadata_schema_version": "1.0"
+}

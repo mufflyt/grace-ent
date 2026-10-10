@@ -1,0 +1,388 @@
+---
+title: "Sample Size for Mystery Caller Studies"
+subtitle: "A simulation-based vignette using Negative Binomial mixed models with overdispersion as the default assumption"
+author: "Isochrones Project"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    theme: flatly
+    df_print: kable
+  pdf_document:
+    toc: true
+    number_sections: true
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, message = FALSE, warning = FALSE,
+  fig.align = "center", fig.width = 8, fig.height = 5.5,
+  dpi = 150
+)
+```
+
+# Abstract
+
+This vignette explains how to compute sample sizes for **mystery caller studies**
+where each provider is called twice (once with Blue Cross / Blue Shield insurance,
+once with Medicaid) and the primary outcome is the **number of business days until
+the next available new-patient appointment**. The model is a Negative Binomial
+generalized linear mixed model (NB2 GLMM) with a physician-level random intercept
+to account for paired calls per provider. Overdispersion is treated as the default
+state of the data, not a special case. Two estimands are evaluated: the conditional
+rural-by-insurance interaction and the population-marginal Medicaid effect after
+post-stratification weighting. A worked example, all model equations, and the full
+power simulation are provided.
+
+# Glossary of abbreviations
+
+| Abbreviation | Meaning |
+|---|---|
+| NPI | National Provider Identifier (10-digit federal physician ID) |
+| BCBS | Blue Cross / Blue Shield (commercial insurance signal) |
+| GLM | Generalized Linear Model |
+| GLMM | Generalized Linear Mixed Model |
+| LMM | Linear Mixed Model |
+| NB | Negative Binomial distribution |
+| NB1 | Negative Binomial with variance $\phi\mu$ (linear in the mean) |
+| NB2 | Negative Binomial with variance $\mu + \mu^{2}/\phi$ (quadratic in the mean) |
+| OLRE | Observation-Level Random Effect (a per-row random intercept used as a Poisson overdispersion correction) |
+| MDE | Minimum Detectable Effect (the smallest true effect the study is powered to find) |
+| MLE | Maximum Likelihood Estimation |
+| SE | Standard Error |
+| CI | Confidence Interval |
+| SD | Standard Deviation |
+| ICC | Intraclass Correlation Coefficient |
+| IRR | Incidence Rate Ratio (exponentiated coefficient in a log-link count model) |
+| IPW | Inverse Probability Weight |
+| ANOVA | Analysis of Variance |
+| RUCA | Rural-Urban Commuting Area code (US Department of Agriculture classification) |
+| DGP | Data Generating Process (the simulation truth) |
+| MC | Monte Carlo (here, the simulation replicate count) |
+| MoE | Margin of Error |
+
+# Study design
+
+* **Sampling units.** $K$ providers identified by NPI.
+* **Repeated measure.** Each NPI is called twice in a short window:
+  one call presents the patient as **BCBS-insured**; the other as
+  **Medicaid-insured**. The two calls share the same provider, so they are
+  not independent.
+* **Stratification.** Providers are sampled stratified by rurality (rural vs.
+  urban based on RUCA code at the practice ZIP). The natural population is
+  approximately 15% rural; the analysis below also considers an oversampled
+  50/50 design.
+* **Outcome.** $Y$ = number of business days from the call to the next available
+  appointment for a new patient. This is a count outcome, non-negative,
+  and routinely overdispersed in published audit studies (variance well above
+  the mean, long right tail, occasional clinic-closed zero or very large values).
+
+The pairing is the central feature of the design. By calling the same NPI twice,
+the BCBS-vs-Medicaid contrast is **within-physician**, which removes between-
+physician variation from the relevant standard error.
+
+# Statistical model
+
+## Fixed effects (the truth we want to estimate)
+
+Let $i$ index the NPI and $j$ index the call ($j = 1$ for BCBS, $j = 2$ for
+Medicaid). Let
+
+- $M_{ij} = 1$ if call $(i,j)$ uses Medicaid, $0$ otherwise.
+- $R_{i}  = 1$ if NPI $i$ is rural, $0$ otherwise.
+
+The linear predictor on the log scale is
+
+$$
+\eta_{ij} \;=\; \beta_{0} \;+\; \beta_{M}\,M_{ij} \;+\; \beta_{R}\,R_{i} \;+\; \beta_{MR}\,M_{ij} R_{i} \;+\; u_{i}.
+$$
+
+where $u_{i} \sim \mathcal{N}(0, \sigma^{2}_{\text{NPI}})$ is the
+**physician random intercept**. This intercept absorbs the part of the wait
+time that is constant within a provider (busy clinic vs. quiet clinic) and
+makes the BCBS vs. Medicaid comparison properly within-NPI.
+
+Exponentiating gives the four cell means in days:
+
+$$
+\begin{aligned}
+\text{BCBS, urban:}     & \quad \mathbb{E}[Y\mid M=0,R=0] = e^{\beta_{0}} \\
+\text{Medicaid, urban:} & \quad e^{\beta_{0}+\beta_{M}} \\
+\text{BCBS, rural:}     & \quad e^{\beta_{0}+\beta_{R}} \\
+\text{Medicaid, rural:} & \quad e^{\beta_{0}+\beta_{M}+\beta_{R}+\beta_{MR}}
+\end{aligned}
+$$
+
+Exponentiated coefficients are **incidence rate ratios (IRRs)**:
+$e^{\beta_{M}}$ is the Medicaid-vs-BCBS rate ratio for an urban physician.
+
+## Why a Negative Binomial likelihood, not Poisson
+
+A Poisson likelihood enforces $\mathrm{Var}(Y\mid \mu)=\mu$. Real wait-time
+counts almost always have variance well above their mean: a few clinics
+respond same-week, most respond in a few weeks, and a long right tail of
+clinics quote 8+ weeks. The NB likelihood relaxes this constraint. We use
+**NB2** (the default in `glmmTMB::nbinom2`):
+
+$$
+Y \mid \mu \;\sim\; \mathrm{NB}\!\left(\mu, \phi\right), \qquad
+\mathbb{E}[Y\mid\mu]=\mu, \quad
+\mathrm{Var}[Y\mid\mu]=\mu + \frac{\mu^{2}}{\phi}.
+$$
+
+As $\phi \to \infty$ the NB2 collapses to a Poisson. Smaller $\phi$ means more
+overdispersion. With baseline mean wait $\mu_{0}=14$ days and $\phi=6$ the
+implied dispersion ratio is $1 + \mu_{0}/\phi = 1 + 14/6 \approx 3.3$, which
+matches what we see in mystery caller datasets.
+
+The full GLMM is
+
+$$
+\boxed{ \;
+Y_{ij} \mid u_{i} \;\sim\; \mathrm{NB2}\!\left(\mu_{ij},\, \phi\right), \qquad
+\log \mu_{ij} \;=\; \mathbf{x}_{ij}^{\top}\boldsymbol{\beta} + u_{i}, \qquad
+u_{i} \sim \mathcal{N}(0, \sigma^{2}_{\text{NPI}})
+\;}
+$$
+
+## When to use NB instead of Poisson, and when an OLRE will do
+
+In every analysis, first fit a plain Poisson GLM or GLMM and compute the
+**Pearson dispersion ratio**:
+
+$$
+\hat{\varphi} \;=\; \frac{1}{n-p}\sum_{ij}\frac{(y_{ij}-\hat{\mu}_{ij})^{2}}{\hat{\mu}_{ij}}.
+$$
+
+| $\hat{\varphi}$ | Recommended model |
+|---|---|
+| 0.8 to 1.2 | Poisson is adequate. |
+| 1.2 to 1.5 | Poisson with sandwich (robust) standard errors. |
+| 1.5 to 3.0 | NB GLMM or Poisson GLMM with an Observation-Level Random Effect (OLRE). |
+| above 3.0 | NB GLMM strongly preferred (OLRE convergence becomes unstable). |
+
+OLRE means adding $(1 \mid \text{obs\_id})$ where `obs_id` is a unique index
+per row; the per-row random intercept absorbs extra variance. It is the
+standard `lme4` workaround when one cannot use `glmmTMB`. In our setting we
+recommend NB directly because (a) `glmmTMB` is fast and stable on this design,
+and (b) the variance assumption $\mu + \mu^{2}/\phi$ is more realistic for
+right-skewed wait time counts than the OLRE's lognormal mixing.
+
+# Estimands and post-stratification weighting
+
+We care about two different effects from the same model.
+
+## Conditional rural-by-insurance interaction
+
+The coefficient $\beta_{MR}$ in the equation above. On the log scale it is the
+ratio of two rate ratios:
+
+$$
+\beta_{MR} \;=\; \log \frac{\mathrm{IRR}_{\text{Medicaid vs BCBS, rural}}}
+                            {\mathrm{IRR}_{\text{Medicaid vs BCBS, urban}}}.
+$$
+
+A Wald $z$ test on $\beta_{MR}$ answers: *does the Medicaid penalty differ
+between rural and urban providers?* This test does **not** need any weighting
+because it conditions on rurality.
+
+## Population-marginal Medicaid effect
+
+We also want a single, generalizable number for the Medicaid penalty across
+the whole physician population, on the natural (days) scale. Define
+
+$$
+\Delta_{\text{pop}}
+\;=\;
+p_{R}\cdot\!\left(\mathbb{E}[Y\mid M=1,R=1]-\mathbb{E}[Y\mid M=0,R=1]\right)
+\;+\;
+(1-p_{R})\cdot\!\left(\mathbb{E}[Y\mid M=1,R=0]-\mathbb{E}[Y\mid M=0,R=0]\right)
+$$
+
+where $p_{R}$ is the population rural fraction (we use $p_{R}=0.15$).
+
+If we stratify-sample 50/50 rural-urban for power efficiency, the **raw**
+average Medicaid effect from our sample is biased upward, because rural
+contributes 50% of the average instead of 15%. We correct this with **inverse-
+probability post-stratification weights**:
+
+$$
+w_{ij} \;=\;
+\begin{cases}
+\dfrac{p_{R}}{q_{R}}             & R_{i}=1 \quad \text{(rural)} \\[6pt]
+\dfrac{1-p_{R}}{1-q_{R}}         & R_{i}=0 \quad \text{(urban)}
+\end{cases}
+$$
+
+where $q_{R}$ is the **sampling** rural fraction. For a 50/50 design with
+$p_{R}=0.15$: rural rows get $w=0.30$ and urban rows get $w=1.70$, so they
+reproduce the 15/85 population mix.
+
+The weighted marginal effect from `marginaleffects::avg_comparisons()` then
+targets $\Delta_{\text{pop}}$ unbiasedly. With our cell means
+(BCBS-urban = 14, Med-urban = 17, BCBS-rural = 18, Med-rural = 24):
+
+$$
+\Delta_{\text{pop}}
+= 0.15\cdot(24-18) + 0.85\cdot(17-14)
+= 0.90 + 2.55
+= 3.45 \;\text{days}.
+$$
+
+# Simulation methodology
+
+Power is the probability that the study correctly rejects the null hypothesis
+of no effect. With a GLMM we approximate it by Monte Carlo:
+
+1. Set the truth: cell means, $\sigma_{\text{NPI}}$, $\phi$, $p_{R}$, $q_{R}$.
+2. Build a design grid of $K$ NPIs with random rural assignment at rate $q_{R}$
+   and two rows per NPI (BCBS, Medicaid).
+3. For each Monte Carlo replicate $m = 1,\ldots,M$:
+   - Draw NPI random intercepts $u_{i}^{(m)} \sim \mathcal{N}(0,\sigma_{\text{NPI}}^{2})$.
+   - Compute $\mu_{ij}^{(m)} = \exp(\mathbf{x}_{ij}^{\top}\boldsymbol{\beta} + u_{i}^{(m)})$.
+   - Draw outcomes $Y_{ij}^{(m)} \sim \mathrm{NB2}(\mu_{ij}^{(m)}, \phi)$.
+   - Fit `glmmTMB(Y ~ insurance * rural + (1 | npi), family = nbinom2)`.
+   - Record (i) the Wald $p$-value for $\beta_{MR}$ and (ii) the post-stratified
+     marginal Medicaid effect via `marginaleffects::avg_comparisons()` with
+     `wts = "popwt"`.
+4. Estimated power at sample size $K$ is the proportion of replicates with
+   $p < \alpha$ for each estimand.
+
+The full driver script is in `scripts/mystery_caller_power_NB.R`.
+
+# Worked example: the realistic recruitment target
+
+We ran the simulation under these settings:
+
+- BCBS-urban = 14, Medicaid-urban = 17, BCBS-rural = 18, Medicaid-rural = 24 days
+- $\sigma_{\text{NPI}} = 0.30$, $\phi = 6$ (overdispersion ratio about 3.3 at $\mu = 14$)
+- $\alpha = 0.05$, two-sided
+- 50/50 stratified rural-urban sampling, population $p_{R} = 0.15$
+- $M = 30$ Monte Carlo replicates per sample size
+
+```{r results-table, echo = FALSE}
+res <- utils::read.csv(file.path("..", "artifacts", "power_analysis",
+                                 "nb_power_50_50.csv"))
+res$pow_cond_interact <- sprintf("%.0f%%", 100 * res$pow_cond_interact)
+res$pow_marg_unwtd    <- sprintf("%.0f%%", 100 * res$pow_marg_unwtd)
+res$pow_marg_popwtd   <- sprintf("%.0f%%", 100 * res$pow_marg_popwtd)
+res$mean_marg_pop_est <- sprintf("%.2f", res$mean_marg_pop_est)
+colnames(res) <- c("NPIs", "Calls",
+                   "Power: cond. interaction",
+                   "Power: marg., unweighted",
+                   "Power: marg., pop-weighted",
+                   "Est. marginal effect (days)",
+                   "Monte Carlo replicates")
+knitr::kable(res, align = "r",
+             caption = "Power by sample size, NB2 GLMM, 50/50 stratified design.")
+```
+
+```{r power-curve, echo = FALSE, fig.cap = "Power curves for the three estimands as a function of total phone calls. Dashed line at 90 percent. The two marginal estimands hit ceiling power almost immediately; the conditional interaction is the binding constraint."}
+knitr::include_graphics(
+  file.path("..", "artifacts", "power_analysis", "figures",
+            "mystery_caller_power_curves.png")
+)
+```
+
+## Interpretation
+
+- **Marginal Medicaid effect** (both unweighted and population-weighted) is
+  detected at 100% power even at $K=200$. The marginal contrast is a
+  big effect (~3.45 days) with a small standard error, so it is easy to
+  detect. The weighted version recovers the true 3.45-day value; the
+  unweighted version is biased high (about 4.5 days) because the 50/50
+  sample over-represents rural.
+
+- **Rural-by-insurance interaction** is the binding constraint. It requires
+  about $K = 2{,}000$ NPIs (4,000 calls) to reach 90% power under NB2
+  with the assumed overdispersion. Naive Poisson would suggest about
+  $K = 1{,}000$ but its standard errors are too small under overdispersion,
+  so its rejections are inflated. The NB answer is the honest one.
+
+## What if you cannot afford 4,000 calls?
+
+Two levers reduce the requirement:
+
+1. **Stratify harder.** Push beyond 50/50 to oversample rural (say 70/30).
+   The interaction's standard error is minimized when the rural-urban split
+   matches the proportion of the interaction's signal. With more rural in
+   the sample, $K$ for 90% power drops.
+2. **Drop the interaction question.** If the design only needs to detect a
+   marginal Medicaid penalty (no rural-urban differential), the population-
+   weighted estimand reaches 90% power at $K \approx 50$ NPIs (about 100
+   calls) and 100% at $K \approx 200$.
+
+Concretely:
+
+| Research question | Approximate $K$ for 90% power |
+|---|---:|
+| Is there a Medicaid penalty at all (marginal)? | ~50 NPIs / ~100 calls |
+| Is the Medicaid penalty larger in rural areas (interaction)? | ~2,000 NPIs / ~4,000 calls |
+
+# Why we moved away from `simr`
+
+The `simr` package is excellent for the simple case: one `merMod` object,
+one fixed-effect coefficient to test, sweep one variable. It became limiting
+once the design grew:
+
+| Feature | `simr` | Custom simulation loop |
+|---|---|---|
+| Negative Binomial GLMM | Not natively supported (only `lme4` families) | Yes, via `glmmTMB::nbinom2` |
+| Test a derived (marginal) estimand | Awkward | Direct, via `marginaleffects` |
+| Apply inverse-probability weights | Awkward | Trivial, `wts = "popwt"` |
+| Test several estimands per replicate | One at a time | All in one pass |
+| Speed | Wraps `lme4` + Kenward-Roger | Direct, easy to parallelize |
+| Custom data-generating processes | Limited | Anything you can simulate |
+
+Our recommendation is to keep the simulation loop entirely in our own R code:
+`simulate -> fit -> extract estimand -> tally rejections`. The driver is in
+`scripts/mystery_caller_power_NB.R` and is ~150 lines.
+
+# A planned Shiny app
+
+For routine use we will wrap this simulation in a Shiny application so that
+investigators can pick scenarios interactively. Planned inputs:
+
+- Baseline mean wait (days)
+- Hypothesized cell means or a single MDE in days
+- NPI random intercept SD (default 0.30 on log scale; if pilot data exist,
+  estimate from `glmer(y ~ 1 + (1 | npi))` and use the fitted SD)
+- NB dispersion $\phi$ (default 6 for moderate overdispersion)
+- Sampling rural fraction $q_{R}$
+- Population rural fraction $p_{R}$
+- $\alpha$ and target power
+- Monte Carlo replicate count (default 100; warning for >300)
+
+Planned outputs:
+
+- Recommended $K$ for each estimand to hit the target power
+- Power curve plot
+- Sensitivity panel: how $K$ moves as $\phi$, $\sigma_{\text{NPI}}$, and
+  $q_{R}$ change
+- Downloadable CSV of the simulation grid for inclusion in a protocol
+
+The Shiny app skeleton will live at `inst/shiny/mystery_caller_power/`
+once built. Because each Monte Carlo replicate fits a `glmmTMB` model, the
+backend will dispatch sims in parallel with `future.apply` and cache
+identical scenarios.
+
+# Reproducibility
+
+```{r session-info, echo = FALSE}
+sessionInfo()
+```
+
+# References
+
+- Brooks ME et al. (2017). glmmTMB Balances Speed and Flexibility Among
+  Packages for Zero-inflated Generalized Linear Mixed Models. *R Journal*.
+- Bates D, Maechler M, Bolker B, Walker S (2015). Fitting Linear Mixed-
+  Effects Models Using lme4. *J. Statistical Software*.
+- Arel-Bundock V (2024). `marginaleffects`: Predictions, Comparisons, Slopes,
+  Marginal Means, and Hypothesis Tests.
+- Lumley T (2010). *Complex Surveys: A Guide to Analysis Using R*.
+- Harrison XA (2014). Using observation-level random effects to model
+  overdispersion in count data. *PeerJ*.

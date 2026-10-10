@@ -1,0 +1,11 @@
+abohns_id,npi,first_name,last_name,state_full,certification,practicing_status
+1,1000000001,Alice,One,Texas,Otolaryngology - Head & Neck Surgery,Practicing
+2,1000000002,Bob,Two,California,Otolaryngology - Head & Neck Surgery,Practicing
+3,1000000003,Carol,Three,New York,Otolaryngology - Head & Neck Surgery,Practicing
+4,1000000004,Dan,Four,Florida,Otolaryngology - Head & Neck Surgery,Practicing
+5,1000000005,Eve,Five,Illinois,Otolaryngology - Head & Neck Surgery,Practicing
+6,1000000006,Frank,Six,California,Otolaryngology - Head & Neck Surgery,Practicing
+7,1000000007,Grace,Seven,Hawaii,Otolaryngology - Head & Neck Surgery,Practicing
+8,NA,Hank,Eight,Texas,Otolaryngology - Head & Neck Surgery,Likely Retired/Inactive
+11,1000000011,Ivy,Eleven,Pennsylvania,Otolaryngology - Head & Neck Surgery,Practicing
+12,1000000011,Ivy,Twelve,Pennsylvania,Otolaryngology - Head & Neck Surgery,Practicing

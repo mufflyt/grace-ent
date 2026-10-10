@@ -1,0 +1,265 @@
+---
+# Taxonomy Code Configuration — Otolaryngology (ENT)
+# Reference: National Uniform Claim Committee (NUCC) Health Care Provider Taxonomy
+# Board: American Board of Otolaryngology — Head and Neck Surgery (ABOto)
+# Last updated: 2026-05-02
+#
+# Mirror of taxonomy_codes.yml structure, scoped to 207Y family codes.
+# Used by: R/02-nber_nppes.R, R/03-search_and_process_npi.R,
+#          scripts/geocode_ent_from_nppes_api.R
+#
+# Note: Rhinology and Laryngology do NOT have distinct NUCC taxonomy codes.
+# Both subspecialties fall under 207Y00000X (General Otolaryngology) in NPPES.
+# Use config/subspecialty_config.yml (partial_matches) to classify them from
+# Medicare claims patterns and enthealth.org specialty_primary values.
+
+# Primary ENT taxonomy code pattern (SQL LIKE)
+ent_pattern: "207Y%"
+
+# General Otolaryngology
+general_ent:
+  code: "207Y00000X"
+  name: "Otolaryngology"
+  description: "General ear, nose, and throat physician (ENT)"
+  aliases:
+    - "General Otolaryngology"
+    - "General ENT"
+    - "ENT"
+    - "Ear Nose Throat"
+    - "Otolaryngology"
+
+# Seven NUCC-recognized ENT subspecialties
+subspecialties:
+
+  # Otology and Neurotology
+  otology_neurotology:
+    code: "207YX0901X"
+    name: "Otology & Neurotology"
+    abbreviation: "OTOL"
+    description: >-
+      Subspecialty focused on diseases of the ear, temporal bone, and
+      related structures; includes cochlear implants, stapedectomy,
+      acoustic neuroma surgery
+    aliases:
+      - "OTOL"
+      - "Otology"
+      - "Neurotology"
+      - "Otology/Audiology"   # enthealth.org specialty_primary value
+      - "Ear Surgery"
+    merged_with: null
+
+  # Pediatric Otolaryngology
+  pediatric_otolaryngology:
+    code: "207YP0228X"
+    name: "Pediatric Otolaryngology"
+    abbreviation: "PEDS_ENT"
+    description: >-
+      Subspecialty focused on ear, nose, and throat conditions in children;
+      includes tonsillectomy/adenoidectomy, tympanostomy tubes, airway
+      management
+    aliases:
+      - "PEDS_ENT"
+      - "Pediatric ENT"
+      - "Pediatric Otolaryngology"
+      - "Peds ENT"
+    merged_with: null
+
+  # Facial Plastic and Reconstructive Surgery
+  facial_plastic_surgery:
+    code: "207YS0123X"
+    name: "Facial Plastic Surgery"
+    abbreviation: "FACIAL_PLAST"
+    description: >-
+      Subspecialty focused on cosmetic and reconstructive surgery of the
+      face, head, and neck; includes rhinoplasty, facelift, blepharoplasty
+    aliases:
+      - "FACIAL_PLAST"
+      - "Facial Plastics"
+      - "Facial Plastic Surgery"
+      - "Facial Plastic and Reconstructive Surgery"  # enthealth.org value
+      - "Facial Reconstruction"
+    merged_with: null
+
+  # Otolaryngologic Allergy
+  otolaryngic_allergy:
+    code: "207YX0602X"
+    name: "Otolaryngic Allergy"
+    abbreviation: "ALLERGY_ENT"
+    description: >-
+      Subspecialty focused on allergic diseases of the upper airway;
+      includes allergy testing, immunotherapy for rhinitis and sinusitis
+    aliases:
+      - "ALLERGY_ENT"
+      - "Otolaryngic Allergy"
+      - "ENT Allergy"
+      - "Allergy"              # enthealth.org specialty_primary value
+    merged_with: null
+
+  # Otolaryngology / Facial Plastic Surgery (dual certification)
+  otolaryngology_facial_plastic:
+    code: "207YX0905X"
+    name: "Otolaryngology/Facial Plastic Surgery"
+    abbreviation: "ENT_FPS"
+    description: >-
+      Dual subspecialty covering both otolaryngology and facial plastic
+      surgery; physicians hold dual board certification
+    aliases:
+      - "ENT_FPS"
+      - "Otolaryngology/Facial Plastic Surgery"
+    merged_with: null
+
+  # Sleep Medicine (ENT)
+  sleep_medicine:
+    code: "207YS0012X"
+    name: "Sleep Medicine"
+    abbreviation: "SLEEP"
+    description: >-
+      Subspecialty focused on sleep-disordered breathing including
+      obstructive sleep apnea; surgical options include UPPP,
+      hypoglossal nerve stimulation, maxillomandibular advancement
+    aliases:
+      - "SLEEP"
+      - "Sleep Medicine"
+      - "Sleep Surgery"
+      - "Sleep Disorders"
+    merged_with: null
+
+  # Head and Neck Oncology
+  # Note: No separate NUCC taxonomy code for head/neck oncology.
+  # These physicians bill under 207Y00000X in NPPES.
+  # Use phase3_procedure_map_ent.yml (thyroidectomy, neck dissection codes)
+  # to identify them from Medicare claims.
+  head_neck_oncology:
+    code: "207Y00000X"
+    name: "Head and Neck Oncology"
+    abbreviation: "H_N_ONCO"
+    description: >-
+      Subspecialty focused on malignant tumors of the head and neck,
+      thyroid, parathyroid, and salivary glands; uses general ENT
+      taxonomy code (no distinct NUCC code)
+    aliases:
+      - "H_N_ONCO"
+      - "Head and Neck Surgery"   # enthealth.org specialty_primary value
+      - "Head and Neck Oncology"
+      - "Head & Neck"
+      - "H&N Oncology"
+    merged_with: null
+    note: >-
+      Shares 207Y00000X with General Otolaryngology. Distinguish via
+      Medicare claims (thyroidectomy, radical neck dissection codes).
+
+  # Rhinology and Sinus Surgery
+  # Note: No separate NUCC taxonomy code.
+  rhinology:
+    code: "207Y00000X"
+    name: "Rhinology"
+    abbreviation: "RHINO"
+    description: >-
+      Subspecialty focused on medical and surgical management of the
+      nose and sinuses; includes FESS, septoplasty, nasal polyp excision
+    aliases:
+      - "RHINO"
+      - "Rhinology"               # enthealth.org specialty_primary value
+      - "Rhinology and Sinus Surgery"
+      - "Sinus Surgery"
+    merged_with: null
+    note: >-
+      Shares 207Y00000X with General Otolaryngology. Distinguish via
+      Medicare claims (FESS codes: 31254–31297, septoplasty 30520).
+
+  # Laryngology
+  # Note: No separate NUCC taxonomy code.
+  laryngology:
+    code: "207Y00000X"
+    name: "Laryngology"
+    abbreviation: "LARYN"
+    description: >-
+      Subspecialty focused on voice, swallowing, and airway disorders;
+      includes vocal cord injections, laryngoscopy, phonosurgery
+    aliases:
+      - "LARYN"
+      - "Laryngology"             # enthealth.org specialty_primary value
+      - "Voice"
+      - "Vocal Cord"
+    merged_with: null
+    note: >-
+      Shares 207Y00000X with General Otolaryngology. Distinguish via
+      Medicare claims (laryngoscopy with injection/ablation codes: 31570–31578).
+
+# Lookup: Subspecialty name to taxonomy code
+name_to_code:
+  "General Otolaryngology": "207Y00000X"
+  "General ENT": "207Y00000X"
+  "Otolaryngology": "207Y00000X"
+  "Otology & Neurotology": "207YX0901X"
+  "Otology": "207YX0901X"
+  "Neurotology": "207YX0901X"
+  "Otology/Audiology": "207YX0901X"
+  "Pediatric Otolaryngology": "207YP0228X"
+  "Pediatric ENT": "207YP0228X"
+  "Facial Plastic Surgery": "207YS0123X"
+  "Facial Plastic and Reconstructive Surgery": "207YS0123X"
+  "Otolaryngic Allergy": "207YX0602X"
+  "Allergy": "207YX0602X"
+  "Otolaryngology/Facial Plastic Surgery": "207YX0905X"
+  "Sleep Medicine": "207YS0012X"
+  "Head and Neck Surgery": "207Y00000X"
+  "Head and Neck Oncology": "207Y00000X"
+  "Rhinology": "207Y00000X"
+  "Laryngology": "207Y00000X"
+  "Endocrine Surgery": "207Y00000X"
+
+# Lookup: Taxonomy code to canonical subspecialty name
+code_to_name:
+  "207Y00000X": "General Otolaryngology"
+  "207YS0123X": "Facial Plastic Surgery"
+  "207YX0602X": "Otolaryngic Allergy"
+  "207YX0901X": "Otology & Neurotology"
+  "207YX0905X": "Otolaryngology/Facial Plastic Surgery"
+  "207YP0228X": "Pediatric Otolaryngology"
+  "207YS0012X": "Sleep Medicine"
+
+# All valid taxonomy codes (for NPPES filtering)
+all_codes:
+  - "207Y00000X"   # General Otolaryngology (also covers H&N, Rhinology, Laryngology)
+  - "207YS0123X"   # Facial Plastic Surgery
+  - "207YX0602X"   # Otolaryngic Allergy
+  - "207YX0901X"   # Otology & Neurotology
+  - "207YX0905X"   # Otolaryngology/Facial Plastic Surgery
+  - "207YP0228X"   # Pediatric Otolaryngology
+  - "207YS0012X"   # Sleep Medicine
+
+# Subspecialties distinguished by NUCC code (can filter in NPPES directly)
+taxonomy_distinguishable:
+  - "207YX0901X"   # Otology & Neurotology
+  - "207YP0228X"   # Pediatric Otolaryngology
+  - "207YS0123X"   # Facial Plastic Surgery
+  - "207YX0602X"   # Otolaryngic Allergy
+  - "207YS0012X"   # Sleep Medicine
+
+# Subspecialties NOT distinguishable by NUCC code (all bill as 207Y00000X)
+# Use Medicare claims + enthealth.org specialty_primary to classify
+taxonomy_indistinguishable:
+  - "Head and Neck Oncology"  # use thyroidectomy/neck dissection CPT codes
+  - "Rhinology"               # use FESS/septoplasty CPT codes
+  - "Laryngology"             # use laryngoscopy-with-procedure CPT codes
+  - "General Otolaryngology"  # residual after others classified
+
+# SQL pattern for filtering ENT providers
+sql_pattern: "207Y%"
+
+# enthealth.org specialty_primary → pipeline subspecialty code mapping
+# Source: 7,911-record scrape from https://www.enthealth.org/find-ent/
+# (Dropbox: mystery_shopper/Corbi study/ENT/Data/results.xlsx)
+enthealth_specialty_map:
+  "General Otolaryngology": "GEN_ENT"
+  "Facial Plastic and Reconstructive Surgery": "FACIAL_PLAST"
+  "Head and Neck Surgery": "H_N_ONCO"
+  "Pediatric Otolaryngology": "PEDS_ENT"
+  "Neurotology": "OTOL"
+  "Rhinology": "RHINO"
+  "Laryngology": "LARYN"
+  "Otology/Audiology": "OTOL"
+  "Allergy": "ALLERGY_ENT"
+  "Sleep Medicine": "SLEEP"
+  "Endocrine Surgery": "H_N_ONCO"  # thyroid/parathyroid: classified with H&N
