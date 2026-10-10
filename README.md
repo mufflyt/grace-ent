@@ -131,8 +131,13 @@ rmarkdown::render("manuscript/database_accuracy_manuscript.Rmd",
                   output_format = "word_document")
 ```
 
-The Euler zone file is produced by a separate project (`~/isochrones/`) and is read
-directly from that path. It does not need to be regenerated for this analysis.
+The Euler zone file was produced by the isochrones project's ENT lane
+(`scripts/build_ent_euler_table1.R`, NBER DuckDB + `data/ent/` inputs) and is read
+directly from that path. That lane left the isochrones repository on 2026-10-10
+(isochrones PR #1329); a verbatim copy of every deleted file, with per-file sha256,
+is kept here under `isochrones_ent_lane/` (see its `MANIFEST.md`). The CSV itself is
+not committed anywhere; regenerating it needs the snapshot script run inside an
+isochrones checkout with the NBER DuckDB.
 
 ---
 
