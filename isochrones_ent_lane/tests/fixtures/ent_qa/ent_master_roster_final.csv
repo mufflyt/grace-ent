@@ -1,0 +1,8 @@
+npi,first_name,last_name,credentials,specialty_primary,ent_subspecialty,address,suite,city,state,zip5,latitude,longitude,geocoder_provenance,phone_norm,phone_source
+1000000001,Alice,One,MD,General Otolaryngology,GEN_ENT,1 Main,NA,Houston,TX,77001,29.76,-95.37,US_Census_Bureau,(123) 456-7890,enthealth
+1000000002,Bob,Two,MD,Pediatric Otolaryngology,PEDS_ENT,2 Main,NA,Los Angeles,CA,90001,34.05,-118.24,US_Census_Bureau,(223) 456-7890,enthealth
+1000000003,Carol,Three,MD,Neurotology,OTOL,3 Main,NA,New York,NY,10001,40.71,-74,US_Census_Bureau,(323) 456-7890,enthealth
+1000000004,Dan,Four,MD,Sleep Medicine,SLEEP,4 Main,NA,Miami,FL,33001,25.76,-80.19,ArcGIS_World,(423) 456-7890,enthealth
+1000000005,Eve,Five,MD,Pediatric Otolaryngology,PEDS_ENT,5 Main,NA,Chicago,IL,60601,41.87,-87.62,US_Census_Bureau,(523) 456-7890,enthealth
+1000000009,Iris,Nine,DO,General Otolaryngology,GEN_ENT,9 Main,NA,Seattle,WA,98101,47.61,-122.33,US_Census_Bureau,(923) 456-7890,enthealth
+NA,Kate,Thirteen,MD,General Otolaryngology,GEN_ENT,13 Main,NA,Boston,MA,02101,42.36,-71.06,ArcGIS_World,(133) 456-7890,enthealth

@@ -1,0 +1,1253 @@
+---
+title: "Supplemental Digital Content"
+subtitle: "Supplemental Digital Content for Projected Clinical-Practice Departure and Fellowship Pipeline Balance in Gynecologic Oncology and Urogynecology, 2025-2029, Including Exploratory MIGS Analyses"
+output:
+  word_document:
+    reference_docx: templates/green_journal_reference.docx
+    fig_caption: true
+bibliography: references_WORKFORCE_CLIFF.bib
+csl: csl/american-medical-association.csl
+link-citations: true
+---
+
+```{r setup, include=FALSE}
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(here)
+  library(knitr)
+})
+source(here("manuscript/R/workforce_statistics.R"))
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+workforce_summary <- load_workforce_data()
+```
+
+# Appendix S1. Supplemental Methods
+
+## Six-source hierarchical clinical-practice departure detection
+
+Clinical-practice departure was classified by integrating six administrative
+evidence streams, each assigned a fixed priority (for conflict resolution) and
+confidence weight (Appendix Table S2). Higher-priority sources overrode
+lower-priority sources when signals disagreed. The confidence weights determine the
+consensus departure *year* and a confidence score; they do not set a departure-versus-active
+threshold. A candidate departure is detected when at least one qualifying cessation
+signal fires (each only for physicians with prior positive evidence in that source) and
+no active counter-signal overrides (see the explicit Step 1/Step 2 rule in Appendix S4).
+As in the main text, "departure" denotes sustained departure from active clinical
+practice, not age-related retirement.
+
+A single uniform three-year cessation rule was applied to both cohorts; no
+subspecialty-specific inactivity threshold was used. The full algorithm, including the
+exact Step 1/Step 2 Boolean rule, tie-breaking, prior-evidence requirements, and
+missing-data handling, is specified in Appendix S4.
+
+## Workforce projection
+
+The active workforce was projected with a dynamic age-structured stock-flow model
+over the four-year horizon (2025-2029). The workforce was represented as its
+distribution of active physicians by age. In each year every physician aged one
+year, the empirical age-band departure hazard was applied to the current age
+distribution to yield that year's departures, and that year's fellowship
+graduates were added at their entry age; the survivors and new entrants formed
+the next year's distribution. Because the cohort ages into higher-hazard bands,
+this produces modestly more departures than a static single-rate projection; for
+transparency the static projection (2025 baseline plus the four-year net of
+graduates and baseline-rate departures) is retained as a benchmark
+(Appendix Table S1).
+
+The age-band departure hazards were derived empirically from the study cohort's own
+departures over the fully observable window 2016-2021: a person-year life table
+produced age-band annual hazards (events divided by person-years at risk within
+each band, with age reconstructed from the board-certification year). Because
+departure events are sparse within any single subspecialty age band, a single
+**pooled** age-band hazard was estimated across the gynecologic surgical
+subspecialties and applied to each subspecialty's own active-age distribution; the
+per-subspecialty rates differ because of age structure, not separate estimation.
+Appendix S6b reports the by-band event and person-year counts, the unpooled
+subspecialty-specific hazards, and the pooled hazard, and shows that the pooling
+assumption (not separate fitting) determines which subspecialty's rate is higher.
+Because the classifier requires a sustained multi-year absence and the data end in
+2023-2024, departures dated 2022-2023 are unconfirmable and were treated as
+right-censored (they otherwise inflate the rate as provisional over-flags). Applied
+to the 2025 active-age distribution the pooled hazard implies departure rates of
+0.8% to 1.2% per year, at or below the 1.5% to 1.7% national all-surgeon attrition
+benchmark, consistent with these being low-attrition specialties. The URPS baseline
+is the both-pathway (ABOG plus ABU) active workforce.
+
+The 2025 active baseline is an estimate carried forward from the most recent
+administrative signals (Medicare through 2023, Open Payments through 2024), not a
+directly observed 2025 census; it could therefore misclassify physicians who departed
+in 2023-2024 (whose sustained absence is not yet confirmable) or omit physicians
+entering after the data freeze. To bound this, net annual additions (entrants minus
+departures) are about +62 for Gynecologic Oncology and +50 for URPS, so a one- to
+two-year baseline lag shifts the 2025 baseline and the 2029 count by at most roughly
+60 to 120 (Gynecologic Oncology) and 50 to 100 (URPS), about 5% to 9% of the workforce.
+Because recent net flow is positive, an under-counted baseline would make the projected
+growth if anything conservative; a retained-departure bias would act in the opposite
+direction and partly offset it. The completion-to-departure ratio, a flow balance of entrants to
+departures, is unaffected by baseline level in either direction. This baseline-lag
+uncertainty is not captured in the parameter-uncertainty interval.
+
+Annual potential entrants were the fellowship completer count, averaged over the
+four most recent academic years (2020-2021 to 2023-2024): ACGME Data Resource Book
+graduating residents for Gynecologic Oncology (mean 75) and URPS (both-pathway mean
+64, obstetrics-gynecology plus urology; Table D.5), and the NRMP/AAGL match fill for
+MIGS (47), which is not ACGME-accredited and has no ACGME graduate series. NRMP
+positions filled is retained as a benchmark inflow. Because NRMP counts fellows
+beginning training, the optimistic scenario lags each 2026 appointment-year matched
+cohort by its fellowship duration and adds it to graduate output only in the expected
+completion year: Gynecologic Oncology and obstetrics-gynecology-pathway URPS at 3
+years (completing 2029), urology-pathway URPS at 2 years (completing 2028); no
+separate training-attrition discount is applied to the benchmark, and fellows
+completing after 2029 fall outside the horizon. Within the 2025-2029 window the
+benchmark therefore raises URPS output in 2028 (urology component) and 2029 (both),
+and Gynecologic Oncology output in 2029 only.
+
+Uncertainty in the 2029 count was characterized by a 10,000-iteration Monte Carlo
+parameter-uncertainty simulation (seed 20260718) that drew each age-band hazard from its Beta(events+0.5,
+person-years-events+0.5) posterior and each subspecialty's annual graduate output
+by empirical resampling of the four observed annual completer counts; the 2.5th and 97.5th percentiles are reported. Structural sensitivity
+was assessed by varying the observation window (2016-2021, 2016-2019, 2016-2023),
+the departure rate (up to three times the empirical estimate), and the fraction of
+graduates entering practice (70% to 100%), each passed through the same dynamic model.
+
+## Replacement balance
+
+The completion-to-departure ratio is annual fellowship graduates divided by mean annual
+departures, describing headcount replacement balance only. Each cohort was labeled
+above replacement (ratio >1.05), at replacement (0.95-1.05), or below replacement
+(<0.95); the 20% buffer (`r get_adequate_threshold()`) is retained as a stricter
+sensitivity threshold, not an adequacy standard.
+
+# Appendix Table S1. Complete Workforce-Projection Data
+
+```{r table-s1}
+s1 <- workforce_summary %>%
+  transmute(
+    Subspecialty = subspecialty,
+    Abbrev = subspecialty_abbrev,
+    `Baseline 2025 (n)` = format(baseline_2025, big.mark = ",", trim = TRUE),
+    `Projected 2029 (n)` = format(round(projected_2029), big.mark = ",", trim = TRUE),
+    `95% interval` = paste0(format(round(ci95_lower), big.mark = ",", trim = TRUE), "-",
+                      format(round(ci95_upper), big.mark = ",", trim = TRUE)),
+    `Change (%)` = sprintf("%+.1f", percent_change),
+    `2025 rate (%)` = sprintf("%.1f", annual_retirement_rate),
+    `Mean departures/yr` = sprintf("%.1f", avg_annual_retirements),
+    `Graduates/yr` = annual_entrants,
+    `Graduates 4yr` = format(annual_entrants * WORKFORCE_PROJECTION_HORIZON_YEARS,
+                           big.mark = ",", trim = TRUE),
+    `Departures 4yr` = format(round(avg_annual_retirements * WORKFORCE_PROJECTION_HORIZON_YEARS),
+                          big.mark = ",", trim = TRUE),
+    `Ratio` = sprintf("%.2f", replacement_ratio),
+    Assessment = replacement_assessment
+  )
+kable(s1, caption = "**Appendix Table S1.** Complete workforce-projection data for all three gynecologic surgical subspecialties (2025-2029), dynamic age-structured model.")
+```
+
+*Primary workforce-projection values derive from the contract-validated consolidated projection dataset
+(`cliff/data/workforce_projections_consolidated.csv`); secondary sensitivity analyses derive from their respective version-controlled analytic outputs. Graduate and departure
+totals both span the same four-year projection horizon. Graduates are ACGME
+completers (GO, URPS) or the NRMP/AAGL match fill (MIGS, not ACGME-accredited).
+The 95% interval is the 2.5th to 97.5th percentile of a 10,000-iteration Monte Carlo
+parameter-uncertainty simulation propagating age-band hazard uncertainty (Beta posteriors) and year-to-year
+graduate variability (a parameter-uncertainty interval, not a statistical confidence or full predictive interval). URPS, Urogynecology and
+Reconstructive Pelvic Surgery; GO, Gynecologic Oncology; MIGS, Minimally Invasive
+Gynecologic Surgery.*
+
+# Appendix Table S2. Departure-Detection Sources
+
+```{r table-s2}
+s2 <- tibble::tibble(
+  Source = c("ABMS Maintenance of Certification (MOC)", "NPPES deactivation",
+             "PECOS enrollment", "Open Payments", "Medicare Part D",
+             "Medicare Part B"),
+  Priority = c(1, 2, 4, 3, 5, 6),
+  `Confidence weight` = sprintf("%.2f", c(0.95, 0.90, 0.80, 0.70, 0.60, 0.60)),
+  `Departure signal` = c(
+    "MOC lapse", "Permanent NPI deactivation without reactivation",
+    "Medicare enrollment disenrollment", "Industry payment cessation ≥2 years",
+    "Prescribing cessation ≥3 years", "Claims cessation ≥3 years")
+) %>% dplyr::arrange(Priority)
+kable(s2, caption = "**Appendix Table S2.** Six-source hierarchical clinical-practice departure-detection framework, priority order, and confidence weights.")
+```
+
+*ABMS, American Board of Medical Specialties; NPPES, National Plan and Provider
+Enumeration System; PECOS, Provider Enrollment, Chain, and Ownership System.*
+
+# Appendix S2. General Obstetrics and Gynecology Comparator and Benchmark
+
+To benchmark the departure signal in a large, well-defined population and to
+probe the young MIGS departure ages, we applied the departure-*detection* step (the
+Open-Payments-inclusive Step 1, before the non-Open-Payments anchor and before
+age-stratification) to a comparator cohort of general obstetrician-gynecologists
+(Medicare Doctors and Clinicians file primary specialty "Obstetrics/Gynecology",
+excluding every ABOG-certified subspecialist so the comparator is generalist-only).
+This is a crude cross-cohort benchmark, NOT the primary classifier: it uses the full
+certified cohort (Gynecologic Oncology n = 1,190; URPS n = 1,135) rather than the
+anchored active baseline, a crude non-age-stratified rate rather than the pooled
+age-band hazard, Open-Payments-inclusive detection rather than the non-Open-Payments
+anchor, and Healthgrades profile age rather than the certification-anchored age; its
+departure counts and median ages therefore differ from the primary Table 3 (37 and 35
+anchored departures; median age 58 and 47) and are not directly comparable to them.
+Subspecialty was defined by ABOG board certification, not by the administrative
+specialty code, which lumps all OB/GYN subspecialists under a single generic value.
+This is a benchmark and negative control, not an individual-level validation, and the
+generalists are not pooled with the subspecialty projections; the pooled age-band
+hazard applied to specialty-specific age distributions remains the primary model input.
+
+Age at departure used the physicians' actual Healthgrades profile age for the
+ABOG subspecialists (Healthgrades does not scrape a generalist roster) and the
+graduation-year proxy for the general cohort; a single-source graduation-year
+column is shown for a like-for-like comparison across all four cohorts.
+
+```{r table-s3}
+s3 <- readr::read_csv(here::here("cliff","data","general_obgyn_comparator.csv"),
+                      show_col_types = FALSE)
+s3v <- s3 %>%
+  transmute(
+    Cohort = cohort,
+    `N` = format(n, big.mark = ",", trim = TRUE),
+    `Annual departure rate (%)` = sprintf("%.2f", annual_departure_rate_pct),
+    `Age source` = age_source,
+    `Median departure age` = median_departure_age,
+    `IQR` = paste0(p25, "-", p75),
+    `Departures before age 50 (%)` = ifelse(is.na(pct_departures_before_50), "-",
+                                            sprintf("%.1f", pct_departures_before_50)),
+    `Median age, graduation-year basis` = median_age_gradyear
+  )
+kable(s3v, caption = "**Appendix Table S3.** General obstetrics and gynecology comparator versus the three subspecialty cohorts, using the crude Open-Payments-inclusive detection-layer rate (not the primary anchored, age-stratified classifier) on the full certified cohort with Healthgrades ages. Counts and median ages therefore differ from the primary Table 3 and are a cross-cohort benchmark only.")
+```
+
+*Crude (non-age-stratified) annual departure rates are for cross-cohort
+comparison only and are not the age-stratified rates used in the primary model.
+Age at departure is Healthgrades profile age for GO, URPS, and MIGS and the
+graduation-year proxy for the general cohort; the final column places all four on
+a common graduation-year basis. URPS, Urogynecology and Reconstructive Pelvic
+Surgery; GO, Gynecologic Oncology; MIGS, Minimally Invasive Gynecologic Surgery.*
+
+Three findings follow. First, young administratively identified departures are not
+unique to MIGS: the large general obstetrics and gynecology cohort also departs at
+a young median age with a majority of departures before age 50, indicating that the
+young-departure pattern is a property of the billing-cessation estimand rather than
+a MIGS-specific defect. This is best read as a construct-validity **warning**: the
+estimand captures payer exit, employer change, temporary absence, or loss of Medicare
+visibility in addition to true departure from national clinical practice, and the
+comparator demonstrates that the same signal produces implausibly young exits in a
+generalist population. Second, the Gynecologic Oncology and URPS median departure
+ages (in the sixth decade on this Healthgrades-aged benchmark, with roughly 40% of
+events before age 50) are older than MIGS but are not convincingly retirement-like,
+and a large share before age 50 is itself a caution rather than reassurance; we do
+not treat these ages as validation of the classifier. Third, MIGS remains the
+youngest-departing cohort, consistent with its being the newest subspecialty and its
+weaker, voluntary-designation ascertainment, reinforcing that MIGS is the least
+certain of the three.
+
+# Appendix S3. Temporal Back-Test
+
+To test the whole model rather than its components, we froze the active cohort at
+an earlier year and rolled it forward with the age-band departure-hazard model,
+comparing the projected number still active with the observed number still active
+(from each physician's classified departure year). This is a closed-cohort survival
+test with no graduate inflow, so it isolates the departure process. In the
+calibration test the 2016 cohort was aged forward with the full-window hazards; in
+the out-of-sample test the hazards were trained on 2016-2019 only and the 2019
+cohort was projected to 2020-2021 (departures are too sparse before 2019 to train
+on an earlier window).
+
+```{r table-s4}
+s4 <- readr::read_csv(here::here("cliff","data","temporal_backtest.csv"),
+                      show_col_types = FALSE)
+s4v <- s4 %>%
+  transmute(
+    Test = ifelse(mode == "calibration_2016_2021haz", "Calibration (2016 cohort)",
+                  "Out-of-sample (2019 cohort, 2016-2019 hazards)"),
+    Subspecialty = subspecialty_abbrev,
+    `Base` = base, `Target` = target, `N at base` = n_base,
+    `Observed active` = observed_active,
+    `Predicted active` = round(predicted_active),
+    `Error (%)` = sprintf("%+.1f", pct_error)
+  )
+kable(s4v, caption = "**Appendix Table S4.** Temporal back-test: projected versus observed active headcount for a cohort frozen at an earlier year.")
+```
+
+*Predicted counts come from aging the frozen cohort forward under the age-band
+hazard model. The model reproduces the observed active trajectory to within about
+1% at every horizon (mean absolute error 0.5% in the calibration test and 0.8%
+out-of-sample), with a small positive bias at the horizon end reflecting a secular
+rise in attrition that the earlier-window hazards under-capture, which is why the
+primary analysis uses the most recent fully observable hazards. URPS, Urogynecology
+and Reconstructive Pelvic Surgery; GO, Gynecologic Oncology; MIGS, Minimally
+Invasive Gynecologic Surgery.*
+
+# Appendix S4. Departure-Detection Algorithm
+
+**Signals, priority, and weights.** Six administrative signals were integrated
+(Appendix Table S2). In descending priority: (1) a lapse in ABMS Maintenance of
+Certification, defined as certification lapsed with more than ten years since
+certification (weight 0.95); (2) permanent NPPES deactivation without reactivation
+(0.90); (3) cessation of Open Payments industry payments (0.70); (4) disenrollment
+from Medicare provider enrollment in PECOS (0.80); (5) cessation of Medicare Part D
+prescribing (0.60); and (6) cessation of Medicare Part B claims (0.60).
+
+**Tie-breaking.** A higher-priority signal overrode a lower-priority one when they
+disagreed; when no override applied, a weighted-consensus score (the sum of firing
+signals' weights) determined status. The departure year was the confidence-weighted
+consensus year across firing signals.
+
+**Prior-positive-evidence requirement.** Each cessation signal fires only for
+physicians with prior positive evidence in that source: Open Payments cessation is
+evaluated only for physicians who previously received payments, Part D cessation
+only for prior prescribers, and Part B cessation only for prior billers. A physician
+who never received Open Payments, never prescribed, or never billed Medicare cannot
+generate the corresponding cessation signal, so absence of a source is never counted
+against a physician; such physicians are classified from the remaining sources.
+
+**Non-time-limited certification and missing data.** Physicians holding lifetime
+(non-time-limited) board certification cannot generate an ABMS lapse signal and are
+classified from the other sources. Missing data in any source is treated as
+non-informative (no signal), not as evidence of departure.
+
+**Reactivation and re-entry.** Physicians with renewed activity after an apparent
+gap (including a Medicaid-roster active override) are reclassified as active and
+their departure year is withdrawn.
+
+**Death ascertainment.** Death was captured only where a source recorded it and was
+under-ascertained (the licensure-concordance analysis identified board-confirmed
+deaths that the classifier did not flag). A death that is correctly captured is simply
+one kind of departure and is already counted in the hazard. A *missed* death, however,
+is not neutral: the physician remains in the active baseline and contributes no
+departure event, which biases the estimated departure rate downward and the
+completion-to-departure ratio upward. The board-confirmed deaths found during licensure review
+should therefore be folded into the classifier and the effect quantified; because the
+number identified was small relative to the 37 and 35 anchored departures, we expect
+the direction of the headline finding to be unchanged, but this correction is
+outstanding and is listed among the study limitations.
+
+**Leave-one-source-out.** Table S5 describes the departure-*detection* layer (Step 1,
+Open-Payments-inclusive) and shows how many detected departures each source supports.
+In this cohort detection is carried almost entirely by the claims and payments signals:
+Open Payments cessation supports about 80% of detected departures (and is the sole
+signal for roughly 30%), followed by Part D and Part B; the ABMS and NPPES signals
+fired for no departures, because board-certified subspecialists rarely let certification
+lapse or deactivate their NPI. The heavy reliance on Open Payments at the detection
+stage is exactly why the primary definition adds the Step 2 non-Open-Payments anchor:
+removing the Open-Payments-sole departures reduces the detected 56 Gynecologic Oncology
+and 41 URPS departures (2016-2021) to the 37 and 35 primary events, and this anchoring
+motivates the licensure-concordance and back-testing analyses.
+
+```{r table-s6}
+s6 <- readr::read_csv(here::here("cliff","data","loso_source_contribution.csv"),
+                      show_col_types = FALSE)
+s6v <- s6 %>% transmute(
+  Source = source,
+  `Departures supported (n)` = n_departures_supported,
+  `% of departures` = sprintf("%.1f", pct_of_departures),
+  `Lost if source removed (n)` = sole_support_lost_if_removed,
+  `% lost` = sprintf("%.1f", pct_lost_if_removed))
+kable(s6v, caption = "**Appendix Table S5.** Leave-one-source-out: contribution of each departure signal.")
+```
+
+*Based on per-physician signal flags (credentials.retirement_signals_pivot) for
+classified departures; a departure is "lost" if the removed source was its only
+firing signal.*
+
+## Exact classification rule (pseudocode)
+
+The primary classifier is fully specified by the following Boolean rule. There is no
+summed-weight threshold; the confidence weights are used only to pick the consensus
+departure year among firing signals, not to decide departure status.
+
+```text
+# Per-source firing requires PRIOR POSITIVE EVIDENCE in that source
+# (e.g., Part B cessation fires only for a physician who previously billed Part B).
+detection_signals = {ABMS_lapse, NPPES_deactivation, PartB_cessation,
+                     PartD_cessation, PECOS_disenrollment, OpenPayments_cessation}
+anchor_signals    = {ABMS_lapse, NPPES_deactivation, PartB_cessation, PartD_cessation}
+                    # NOTE: PECOS and Open Payments are NOT anchors
+
+active_override    = recent Part B / Part D / PECOS activity OR Medicaid-roster
+                     reactivation after the candidate year
+
+# --- Step 1: detect a candidate departure and its year ---
+candidate_departure = ( any(s fires for this physician  for s in detection_signals) )
+                      AND ( NOT active_override )
+candidate_year      = confidence-weighted consensus year across the firing signals
+                      # weights (Table S2) resolve disagreement on WHEN, not WHETHER
+
+# --- Step 2: primary non-Open-Payments anchor ---
+primary_departure   = candidate_departure
+                      AND ( any(s fires  for s in anchor_signals) )
+                      # a candidate supported only by Open Payments and/or PECOS
+                      # is reclassified as NOT departed for the primary analysis
+```
+
+A uniform three-year cessation rule (Part B/Part D) and the fully observable
+2016-2021 window apply to both cohorts. Table S22 and the worked examples below
+instantiate this rule.
+
+## Classification decision table
+
+The primary departure classifier is a two-step rule, not a single weighted score.
+Step 1 detects a candidate departure and its year from the six administrative
+signals of Appendix S4 (Table S2): each source fires only for physicians with prior
+positive evidence in that source, a higher-priority signal overrides a lower-priority
+one on conflict, and the departure year is the confidence-weighted consensus year
+across firing signals. Step 2 is the primary-definition anchor: a candidate departure
+is retained only if at least one **non-Open-Payments** signal fired, namely Medicare
+Part B cessation, Medicare Part D cessation, NPPES deactivation, or ABMS certification
+lapse. Candidate departures supported only by Open Payments (or only by Open Payments
+and PECOS) are reclassified as not-departed for the primary analysis, because stopping
+industry payments is not a validated indicator of leaving practice. An active
+counter-signal at any point (recent billing, prescribing, enrollment, or a
+Medicaid-roster reactivation) resets the physician to active and withdraws the
+departure year. There is no numeric confidence threshold and no age or ABOG/GOBA
+status weight; the decision is the Step 1 consensus gated by the Step 2 anchor.
+
+```{r table-s22}
+dt <- data.frame(
+  `Departure signal` = c("ABMS MOC lapse","NPPES deactivation","Medicare Part B cessation",
+             "Medicare Part D cessation","PECOS disenrollment","Open Payments cessation"),
+  `Detection priority` = c(1,2,6,5,4,3),
+  `Counts as non-Open-Payments anchor?` = c("Yes","Yes","Yes","Yes","No","No"),
+  `Role in primary definition` = c(
+    "Anchors a departure on its own","Anchors a departure on its own",
+    "Anchors a departure on its own","Anchors a departure on its own",
+    "Detection signal only; does not anchor","Supporting only; cannot classify a departure alone"),
+  check.names = FALSE)
+kable(dt, caption = "**Appendix Table S22.** Primary departure-classification decision table (the exact rule that generated every primary result). A physician is classified as departed when the Step 1 administrative-consensus rule detects a departure AND at least one non-Open-Payments anchor signal fired; departures supported only by Open Payments (with or without PECOS) are reclassified as not-departed. Any active counter-signal overrides to active. A uniform three-year cessation rule applies to both cohorts (see Right-censoring confirmability); there is no subspecialty-specific inactivity threshold.")
+```
+
+**Worked examples.** (a) A gynecologic oncologist whose Part B and Part D claims
+both cease in 2019 with no later reactivation: a non-Open-Payments anchor fires, so
+she is classified as departed in 2019. (b) A urogynecologist whose Open Payments
+receipts stop in 2018 but who continues to bill Medicare Part B: the active
+counter-signal keeps her active, and even without it no non-Open-Payments anchor
+fired, so she is not a primary departure. (c) A physician with a permanent NPPES
+deactivation in 2020: the deactivation anchor fires and classifies a 2020 departure.
+(d) A physician whose only signals are an Open Payments cessation and a PECOS
+disenrollment in 2017: neither counts as a non-Open-Payments anchor, so she is not a
+primary departure, although she would have been counted under the Open-Payments-inclusive
+detection layer. This is precisely why the Open-Payments-inclusive detection layer
+flags 56 Gynecologic Oncology and 41 URPS departures over 2016-2021 while the primary
+non-Open-Payments-anchored definition retains 37 and 35, respectively.
+
+**The baseline gate and the departure-event definition are related but not
+identical.** The 2025 active-workforce baseline (1,052 Gynecologic Oncology; 1,031
+ABOG plus 264 ABU for URPS) is set by the cohorting active-status rule, a
+hierarchical priority classifier (`R/retirement_sql_builder.R`) that assigns a
+retirement year from, in priority order, ABMS lapse, NPPES deactivation, Open
+Payments cessation, PECOS disenrollment, and Part D / Part B cessation, each under a
+prior-positive-evidence and reactivation-override guard. This gate is applied once to
+fix who is in the active stock; the non-Open-Payments anchor is then applied only to
+the historical departure *events* that enter the hazard life table. Because the
+anchor operates on the event set and not on the stock, changing it changes the
+estimated hazard but does not add or remove anyone from the 2025 baseline; no
+physician is "restored."
+
+We note explicitly that the two definitions are **not** identical: the cohorting gate
+can remove a physician from the 2025 active stock on Open-Payments-only inactivity
+(Open Payments is a priority-3 signal in that gate), whereas the primary hazard event
+set excludes Open-Payments-only departures. Both differences push the
+completion-to-departure ratio in the same (upward) direction, because an
+Open-Payments-inclusive stock gate removes *more* physicians (a smaller, and thus
+faster-depleting, baseline) while the anchored event set counts *fewer* departures.
+A fully consistent-definition sensitivity, regenerating the 2025 active stock under
+the non-Open-Payments-anchored rule so that stock and flow use one identical
+definition, requires re-running the cohorting classifier against the per-signal
+retirement table and is an acknowledged outstanding item (it does not change the
+qualitative conclusion, since both current definitions already sit far above
+replacement, but it would remove the residual stock-flow definitional asymmetry).
+
+## Right-censoring confirmability
+
+A departure is fully observable only if the required consecutive inactive years fall within
+the available data. A single uniform three-year cessation rule applies to both cohorts.
+With Medicare data through 2023, a departure year D requires inactivity in D, D+1, D+2
+(observable if D+2 <= 2023, i.e., D <= 2021), which defines the fully-observable 2016-2021
+window for both Gynecologic Oncology and URPS; later candidate years are right-censored and
+excluded from hazard estimation. There is no separate four-year rule for Gynecologic Oncology.
+
+```{r table-s23}
+cf <- data.frame(
+  `Candidate departure year` = c(2019,2020,2021,2022,2023),
+  `Inactive years required` = c("2019-2021","2020-2022","2021-2023","2022-2024","2023-2025"),
+  `Last year needed` = c(2021,2022,2023,2024,2025),
+  `Last available data year` = c(2023,2023,2023,2023,2023),
+  `Fully confirmable` = c("Yes","Yes","Yes","No","No"),
+  check.names = FALSE)
+kable(cf, caption = "**Appendix Table S23.** Right-censoring confirmability by candidate departure year (three-year cessation rule, Medicare data through 2023). Departures through 2021 are fully observable; 2022-2023 are right-censored and excluded from hazard estimation.")
+```
+
+## Reproducibility audit table
+
+To make every reported ratio traceable from raw events to projection, the table below
+passes each departure definition through the **one** authoritative model used for the
+headline result: a single pooled age-band departure hazard (estimated across the two
+board-certified cohorts, gynecologic oncology and both-pathway urogynecology, to borrow
+strength over the sparse per-band events; MIGS excluded), applied by dynamic aging of
+each cohort's own active-age distribution with annual graduate entry. The primary
+non-Open-Payments-anchored row reproduces the consolidated projection table exactly
+(Gynecologic Oncology 7.35, URPS 5.83). The static single-year rate is shown alongside
+the dynamic four-year departures to make the difference between the two explicit; earlier
+drafts reported some sensitivities on a static, subspecialty-specific hazard, which is
+the source of any small numerical differences a reader may recall.
+
+```{r table-s4b-audit}
+au <- readr::read_csv(here::here("cliff","data","departure_audit_table.csv"),
+                      show_col_types = FALSE)
+auv <- au %>% transmute(
+  Definition = definition,
+  Subspecialty = subspecialty_abbrev,
+  Window = window,
+  `Eligible departures (n)` = eligible_departures,
+  `Static 2025 rate (%)` = sprintf("%.2f", static_2025_rate_pct),
+  `Dynamic 4-yr departures` = sprintf("%.1f", dynamic_4yr_departures),
+  `Dynamic annual rate (%)` = sprintf("%.2f", dynamic_annual_rate_pct),
+  `Graduates/yr` = graduate_input,
+  `Completion-to-departure ratio` = sprintf("%.2f", completion_to_departure_ratio),
+  `Projected 2029` = sprintf("%.0f", projected_2029))
+kable(auv, caption = "**Appendix Table S4b.** Reproducibility audit: every departure definition through the one authoritative pooled dynamic model. The primary (non-Open-Payments anchored) row reproduces the consolidated projection. Both the primary and the Open-Payments-inclusive definitions remain above replacement, so the qualitative finding does not depend on the source-inclusion choice.")
+```
+
+# Appendix S5. Estimated-Age Validation
+
+The certification-anchored estimated age (reference year minus certification year
+plus 30) was validated against two external sources: Healthgrades profile age and
+Medicare Doctors and Clinicians graduation year (graduation year plus 27).
+
+```{r table-s8}
+s8 <- readr::read_csv(here::here("cliff","data","age_proxy_validation.csv"),
+                      show_col_types = FALSE)
+s8v <- s8 %>% transmute(
+  Reference = reference, `N` = format(n, big.mark=",", trim=TRUE),
+  `Mean error, y` = sprintf("%+.1f", mean_error),
+  `SD, y` = sprintf("%.1f", sd_error),
+  `Median abs. error, y (IQR)` = sprintf("%.0f (%.0f-%.0f)", median_abs_error, p25_abs, p75_abs),
+  `Correlation` = sprintf("%.2f", correlation),
+  `Same 5-y band (%)` = sprintf("%.1f", pct_same_band))
+kable(s8v, caption = "**Appendix Table S6.** Certification-anchored estimated age versus external age sources.")
+```
+
+*Error is estimated minus reference age. The estimate correlates strongly with both
+references and has a median absolute error of two years, with a small systematic
+under-estimate; because the same estimate sets both the hazard-estimation and the
+active-age distributions, the offset largely cancels in the departure rate.*
+
+## Age-shift sensitivity
+
+Because age-band hazards rise nonlinearly, a systematic age under-estimate could move
+physicians across band boundaries even if the offset otherwise cancels. We recomputed the
+departure rate and completion-to-departure ratio with all ages shifted +0, +2, and +4 years,
+applied to both the pooled age-band hazard life table and the active-age distribution and run
+through the same pooled dynamic model as the headline result (primary non-Open-Payments-anchored
+definition). The +0 row therefore reproduces the Table 2 ratios exactly; the +2 and +4 rows
+show the effect of the estimated-age under-estimate.
+
+```{r table-s24}
+ag <- readr::read_csv(here::here("cliff","data","age_shift_sensitivity.csv"), show_col_types = FALSE)
+agv <- ag %>% dplyr::transmute(
+  Cohort = subspecialty_abbrev,
+  `Age shift (yr)` = sprintf("+%d", age_shift_years),
+  `Departure rate (%/yr)` = sprintf("%.2f", departure_rate_pct),
+  `Mean annual departures` = sprintf("%.1f", avg_annual_departures),
+  `Completion-to-departure ratio` = sprintf("%.2f", replacement_ratio))
+kable(agv, caption = "**Appendix Table S24.** Age-shift sensitivity. Shifting all ages up by 2-4 years modestly raises the departure rate and lowers the ratio, but both cohorts remain well above replacement, so the conclusion is robust to the estimated-age under-estimate.")
+```
+
+# Appendix S6. Cohort Derivation Flow
+
+```{r table-s7}
+s7 <- readr::read_csv(here::here("cliff","data","consort_cohort_flow.csv"),
+                      show_col_types = FALSE)
+lab <- c(URPS="Urogynecology and Reconstructive Pelvic Surgery",
+         GO="Gynecologic Oncology", MIGS="Minimally Invasive Gynecologic Surgery")
+s7 <- s7[match(c("GO","URPS","MIGS"), s7$ab), ]
+s7v <- data.frame(
+  Stage = c("1. Certified/designated, NPI-matched, CONUS practice",
+            "2. Removed: classified deceased",
+            "3. Removed: classified inactive (departed)",
+            "4. ABOG-pathway active baseline",
+            "5a. ABU urology-pathway net-new active identified (URPS)",
+            "5b. Excluded: no datable certification year",
+            "5c. ABU included in the age-structured model",
+            "6. Final active baseline"),
+  `Gynecologic Oncology` = c(s7$certified_matched[1], s7$removed_deceased[1],
+                             s7$removed_inactive[1], s7$active_baseline[1], 0, 0, 0, s7$active_baseline_final[1]),
+  `URPS` = c(s7$certified_matched[2], s7$removed_deceased[2], s7$removed_inactive[2],
+             s7$active_baseline[2], s7$abu_identified[2], -s7$abu_excluded_nocert[2],
+             s7$abu_included[2], s7$active_baseline_final[2]),
+  `MIGS (exploratory)` = c(s7$certified_matched[3], s7$removed_deceased[3],
+                           s7$removed_inactive[3], s7$active_baseline[3], 0, 0, 0, s7$active_baseline_final[3]),
+  check.names = FALSE)
+kable(s7v, caption = "**Appendix Table S7.** Cohort derivation from certification/designation to the final active baseline, by cohort. For URPS the final baseline is the ABOG-pathway active baseline (1,031) plus the ABU-pathway physicians included in the model (264), i.e., 1,031 + 264 = 1,295; the 6 ABU physicians without a datable certification year are excluded from both baseline and projection.")
+```
+
+*The base table is already NPI-matched and restricted to contiguous-U.S. practice.
+Classified deaths are zero here, reflecting death under-ascertainment (Appendix S4),
+not the absence of deaths. Of the 270 ABU urology-pathway net-new active physicians
+identified, 6 lacked a datable certification year and were excluded from both the
+baseline and the projection, so 264 entered the model and 1,031 + 264 = 1,295. MIGS is
+an exploratory focused-practice-designation cohort.*
+
+# Appendix S6b. Pooled Versus Unpooled Age-Band Hazards
+
+The primary model estimates a single **pooled** age-band departure hazard across the
+two board-certified primary cohorts (gynecologic oncology and both-pathway
+urogynecology) and applies it to each cohort's own active-age distribution. The
+exploratory MIGS cohort is **excluded** from the primary hazard because it differs in
+ascertainment, certification status, and graduate numerator; a MIGS-inclusive hazard
+is shown alongside as a sensitivity. Pooling is motivated by sparse per-band events:
+within a single subspecialty most age bands contain only a handful of departures
+(Table S6b), so unpooled subspecialty-specific hazards are unstable. The table reports,
+for each age band, the departure events and person-years by subspecialty, the unpooled
+Gynecologic Oncology and URPS hazards, the pooled hazard actually used, and the
+MIGS-inclusive pooled hazard as a sensitivity.
+
+```{r table-s6b-band}
+hb <- readr::read_csv(here::here("cliff","data","hazard_by_band_pooled_vs_unpooled.csv"),
+                      show_col_types = FALSE)
+hbv <- hb %>% dplyr::transmute(
+  `Age band` = band,
+  `GO events` = go_events, `GO PY` = go_py,
+  `URPS events` = urps_events, `URPS PY` = urps_py,
+  `MIGS events` = migs_events,
+  `GO hazard (unpooled)` = sprintf("%.4f", go_hazard_unpooled),
+  `URPS hazard (unpooled)` = sprintf("%.4f", urps_hazard_unpooled),
+  `Pooled hazard (used, GO+URPS)` = sprintf("%.4f", pooled_hazard),
+  `Pooled +MIGS (sensitivity)` = sprintf("%.4f", pooled_incl_migs_hazard))
+kable(hbv, caption = "**Appendix Table S6b.** Age-band departure events, person-years, and hazards: unpooled (subspecialty-specific) versus the pooled hazard used in the primary model (GO + both-pathway URPS only, primary non-Open-Payments-anchored definition, 2016-2021), with the MIGS-inclusive pooled hazard as a sensitivity. The primary hazard life table totals 36 Gynecologic Oncology and 35 URPS events (71 pooled); adding the exploratory MIGS cohort raises the pool to 81 events. The 37th Gynecologic Oncology anchored departure is dated in its first observable year and contributes no prior at-risk person-time.")
+```
+
+```{r table-s6b-rate}
+hr <- readr::read_csv(here::here("cliff","data","hazard_rate_pooled_vs_unpooled.csv"),
+                      show_col_types = FALSE)
+hrv <- hr %>% dplyr::transmute(
+  Subspecialty = subspecialty_abbrev,
+  `Weighted 2025 rate, pooled GO+URPS hazard (%)` = sprintf("%.2f", rate_pooled_pct),
+  `Weighted 2025 rate, unpooled hazard (%)` = sprintf("%.2f", rate_unpooled_pct),
+  `Weighted 2025 rate, pooled +MIGS sensitivity (%)` = sprintf("%.2f", rate_pooled_incl_migs_pct))
+kable(hrv, caption = "**Appendix Table S6c.** Weighted 2025 static departure rate under the pooled hazard (used) versus each subspecialty's own unpooled hazard. Under unpooled hazards URPS (1.01%) exceeds Gynecologic Oncology (0.90%); under the pooled hazard applied to each age distribution the ordering reverses (Gynecologic Oncology 0.96%, URPS 0.83%). The pooling assumption, not separate estimation, therefore determines which subspecialty's rate is higher, so the per-subspecialty rates should be read as one pooled hazard filtered through two age structures, not as independently estimated specialty hazards.")
+```
+
+Because pooling assumes a common age-conditioned hazard across subspecialties that
+differ in practice structure and Medicare visibility, we present it transparently
+rather than as specialty-specific estimation. A hierarchical (partially pooled)
+survival model would preserve subspecialty identity while borrowing strength across
+the sparse bands and is the preferred next step; the fully pooled and fully unpooled
+rates above bracket its result, and both leave every cohort far above replacement.
+
+# Appendix S7. Individual-Level Adjudication Protocol
+
+The licensure-concordance analysis (main text) compares the classifier with an
+independent administrative reference but is not an individual-level validation. We
+therefore specify a physician-level manual adjudication over a single definitive
+sample (`cliff/data/classifier_adjudication_sample.csv`; scripts/classifier_adjudication.R):
+**all** classified clinical-practice departures in Gynecologic Oncology and URPS
+(2016-2021), enriched with all departures under age 50 and all departures lacking
+independent corroboration, plus a control set of physicians classified continuously
+active (to detect false negatives, the error that most threatens the replacement
+result). For each physician a scoring sheet records the classifier label, classified
+departure year, estimated age, and firing signals, with blank fields for two
+independent reviewers to record an adjudicated active/departed status, a departure
+year, and a confidence rating, using public-record verification (state licensure,
+institutional affiliation, recent publications or presentations, and obituary or
+death-index searches). Positive and negative predictive values, sensitivity,
+specificity, inter-reviewer agreement (Cohen kappa), and adjudication-corrected
+departure rates and completion-to-departure ratios will be reported for Gynecologic
+Oncology and ABOG-pathway URPS, with disagreements resolved by consensus. ABU
+urology-pathway departures are not independently classifiable in this cohort (the ABU
+roster carries no longitudinal activity data), so ABU-specific predictive values and
+corrected hazards are not adjudicated; the projection borrows the ABOG-URPS hazard for
+the ABU component. The sampling frame and instrument are prespecified and complete, and
+the two-reviewer adjudication is pending; because this individual-level validation is
+not yet complete, the primary departure endpoint is reported throughout as a provisional
+administrative classification, and the headcount conclusion is supported instead by the
+tipping-point robustness analysis (Appendix S10), which shows that overturning it would
+require a large fraction of true departures to be missed. We do not present the classifier
+as individually validated.
+
+**Automated corroboration is meaningful only for the Open-Payments-inclusive
+detection layer, and is tautological for the primary definition.** Table S7b below
+reports, for the Open-Payments-inclusive *detection* layer (56 Gynecologic Oncology and
+41 URPS candidate departures, 2016-2021), the fraction with at least one non-Open-Payments
+signal (NPPES deactivation, Medicare billing cessation in the departure year or the year
+after, or an ABMS lapse within two years): 36% and 46% respectively. This corroboration
+is informative there only because that layer includes Open-Payments-only events that the
+non-Open-Payments signals can either confirm or fail to confirm. It is **not** a
+validation of the primary definition: the primary non-Open-Payments-anchored endpoint
+retains exactly the 37 Gynecologic Oncology and 35 URPS candidates that carry such an
+anchor, so by construction 100% of primary departures are non-Open-Payments-corroborated.
+That 100% is definitional, not independent evidence, and does not establish positive
+predictive value; genuine individual-level validation requires the pending chart
+adjudication above.
+
+```{r table-s7-corr}
+cc <- readr::read_csv(here::here("cliff","data","classifier_corroboration.csv"), show_col_types = FALSE)
+cc <- cc[match(c("GO","URPS"), cc$subspecialty_abbrev), ]
+ccv <- data.frame(
+  Cohort = cc$subspecialty_abbrev,
+  `Classified departures (n)` = cc$n_departures,
+  `NPPES deactivated (%)` = cc$pct_nppes_deactivated,
+  `Medicare billing ceased (%)` = cc$pct_billing_ceased,
+  `ABMS retirement concordant (%)` = cc$pct_abms_concordant,
+  `Any signal (provisional PPV proxy, %)` = cc$ppv_proxy_corroborated,
+  check.names = FALSE)
+kable(ccv, caption = "**Appendix Table S7b.** Automated corroboration of the Open-Payments-INCLUSIVE detection-layer departures (56 Gynecologic Oncology, 41 URPS) by non-Open-Payments administrative signals. This is not a validation of the primary definition: the primary non-Open-Payments-anchored endpoint (37 and 35) is 100% non-Open-Payments-corroborated by construction. Neither is a substitute for the pending chart adjudication.")
+```
+
+# Appendix S8. Feminization Sensitivity
+
+These subspecialties are feminizing: the female share of the cohort rose from 33%
+among physicians certified through 2005 to 60%, 72%, and 71% among those certified
+in 2006-2012, 2013-2018, and 2019 onward. Women leave clinical practice at a higher
+hazard than men (hazard ratio ~1.4). We modeled this with a sex-stratified dynamic
+projection in which the empirical age-band hazard is split into sex-specific hazards
+(female = 1.4 x male, calibrated to reproduce the observed mixed-sex rate) and
+graduates enter at the female share of the OB/GYN resident pool that feeds these
+fellowships (about 85%, ACGME), with the observed recent-subspecialist share (72%)
+as a lower bound. The URPS results here are **ABOG-pathway only**: sex is ascertainable
+only for the ABOG-certified cohort (n = 1,031; the external ABU roster carries no sex
+field), and the 85% female entrant share is the obstetrics-gynecology resident pool
+feeding the ABOG pathway, not the urology pathway. The sex-neutral URPS ratio below is
+therefore the ABOG-pathway value computed on the sex-known subsample, which is lower than
+the both-pathway primary ratio (`r get_replacement_ratio("URPS")`) reported in the main text.
+
+```{r table-s10}
+s10 <- readr::read_csv(here::here("cliff","data","feminization_sensitivity.csv"),
+                       show_col_types = FALSE)
+s10v <- s10 %>% transmute(
+  Cohort = subspecialty_abbrev,
+  `Active female (%)` = sprintf("%.1f", active_female_pct),
+  `Ratio, sex-neutral` = sprintf("%.2f", ratio_sexneutral),
+  `Ratio, 72% female entrants` = sprintf("%.2f", ratio_fem_entrants72),
+  `Ratio, 85% female entrants` = sprintf("%.2f", ratio_fem_entrants85),
+  `2029 change, 85% (%)` = sprintf("%+.1f", pct_change_fem85))
+kable(s10v, caption = "**Appendix Table S8.** Feminization sensitivity: sex-stratified projection versus the sex-neutral ratio (URPS is ABOG-pathway, sex-known subsample; not the both-pathway primary).")
+```
+
+*All cohorts remain above replacement. The ratios are essentially unchanged and
+insensitive to the entrant female share (72% versus the ~85% resident pool), because
+entrants are young and depart at low rates regardless of sex; near-term departures
+come from older, male-dominated cohorts, so the early-career feminization effect
+emerges only over a longer horizon as the majority-female younger cohort ages (URPS
+here uses the ABOG-pathway cohort, for which sex is recorded).*
+
+# Appendix S9. Clinical Full-Time-Equivalent Sensitivity
+
+The primary analysis counts physicians (headcount). Because clinical effort per
+physician is below one and varies by subspecialty, we report an exploratory
+clinical full-time-equivalent (FTE) sensitivity. Specialty-specific clinical-effort
+estimates are available but derive from surveys rather than a national FTE census:
+gynecologic oncologists devoted a median 63% of professional effort to clinical
+activities (2020 Society of Gynecologic Oncology State of the Society Survey),[@temkin2022fte]
+and one survey of 118 female pelvic medicine and reconstructive surgery physicians
+reported about 80% clinical or operative effort.[@aua2024fpmrs] We treat the URPS
+factor as provisional (sensitivity range 0.60 to 0.90) because that sample may
+over-represent urology-pathway practice; MIGS effort is not estimated.
+
+```{r table-s9}
+bl <- setNames(workforce_summary$baseline_2025, workforce_summary$subspecialty_abbrev)
+fte <- data.frame(
+  Cohort = c("Gynecologic Oncology", "Urogynecology and Reconstructive Pelvic Surgery (both-pathway)"),
+  `Active headcount` = c(format(bl[["GO"]], big.mark=","), format(bl[["URPS"]], big.mark=",")),
+  `Clinical-effort factor` = c("0.63", "0.80 (0.60-0.90)"),
+  `Approximate clinical FTEs` = c(
+    format(round(bl[["GO"]]*0.63), big.mark=","),
+    sprintf("%s (%s-%s)", format(round(bl[["URPS"]]*0.80), big.mark=","),
+            format(round(bl[["URPS"]]*0.60), big.mark=","), format(round(bl[["URPS"]]*0.90), big.mark=","))),
+  check.names = FALSE)
+kable(fte, caption = "**Appendix Table S9.** Clinical-FTE sensitivity applying specialty-specific clinical-effort factors to the active headcount.")
+```
+
+*Clinical FTE (the share of professional effort devoted to clinical care) differs
+from employment FTE (hours worked relative to a full-time standard) and from
+headcount; no national census resolves all three for these subspecialties.
+Critically, applying the same clinical-effort factor to both the incumbent workforce
+and incoming graduates rescales absolute capacity but leaves the completion-to-departure ratio
+unchanged; the ratio would move only if clinical effort differed systematically
+between existing, departing, and newly graduating physicians (for example, if new
+graduates entered at lower effort or effort declined with age), which available data
+do not resolve. These estimates are therefore a sensitivity, not a primary workforce
+measure.*
+
+## Clinical and operative effort of new graduates
+
+The completion-to-departure ratio changes if incoming graduates deliver less direct clinical and
+operative capacity per physician than the URPS and gynecologic oncology surgeons they
+replace, even when total professional hours are preserved. Several converging trends
+could produce such a shift: a larger share of professional time in administrative and
+nonclinical roles, more part-time and reduced-hours practice, career interruptions for
+childbearing in a predominantly (about 85%) female entering cohort, and lower operative
+volume. Existing data are consistent with a clinical-and-operative, rather than
+total-hours, gap: in obstetrics-gynecology direct patient-care hours were similar by sex,
+but nonclinical hours and annual procedural or delivery volume were lower for women and
+total professional effort was about 91% of men's after age adjustment.[@benedetti2004productivity; @romero2025feminization]
+We therefore stress the entrant-to-incumbent clinical and operative effort as an explicit
+multiplier; the effective completion-to-departure ratio is the headcount ratio times that multiplier:
+
+```{r table-s9b}
+r <- workforce_summary
+eff <- data.frame(
+  Cohort = r$subspecialty_abbrev,
+  `Headcount ratio` = sprintf("%.2f", r$replacement_ratio),
+  `x0.85` = sprintf("%.2f", r$replacement_ratio*0.85),
+  `x0.75` = sprintf("%.2f", r$replacement_ratio*0.75),
+  `x0.65` = sprintf("%.2f", r$replacement_ratio*0.65),
+  check.names = FALSE)
+kable(eff, caption = "**Appendix Table S10.** Effective completion-to-departure ratio under an entrant-to-incumbent clinical-and-operative-effort multiplier (0.85 to 0.65).")
+```
+
+*Every cohort remains above replacement even at a 0.65 multiplier, a 35% reduction in the
+clinical and operative effort of new graduates relative to the surgeons they replace
+(Gynecologic Oncology `r sprintf("%.1f", 0.65*as.numeric(get_replacement_ratio("GO")))`, URPS `r sprintf("%.1f", 0.65*as.numeric(get_replacement_ratio("URPS")))`, MIGS `r sprintf("%.1f", 0.65*as.numeric(get_replacement_ratio("MIGS")))`). The magnitude of any such generational
+shift is uncertain, so this is presented as a stress test rather than a central estimate.
+A related forward risk, not modeled here, is that younger cohorts anticipate earlier
+retirement, which would raise future departure rates beyond this horizon.[@muzyka2025generational]*
+
+# Appendix S10. Break-Even Thresholds
+
+To characterize how much the conclusion can absorb, we computed, for each cohort, the
+single-parameter value at which the completion-to-departure ratio would fall to 1.0 (the point at
+which graduate output stops replacing departures), holding the other inputs at their
+primary values.
+
+```{r table-s11}
+bt <- readr::read_csv(here::here("cliff","data","breakeven_thresholds.csv"),
+                      show_col_types = FALSE)
+btv <- bt %>% transmute(
+  Cohort = subspecialty_abbrev,
+  `Completion-to-departure ratio` = sprintf("%.2f", replacement_ratio),
+  `Break-even departure rate` = sprintf("%.1f%% (%.1fx empirical)", breakeven_departure_rate_pct, breakeven_rate_multiple),
+  `Break-even graduate drop` = sprintf("-%d%% (to %d/yr)", graduate_drop_pct, breakeven_graduates),
+  `Break-even effort multiplier` = sprintf("%.2f", breakeven_effort_multiplier))
+kable(btv, caption = "**Appendix Table S11.** Single-parameter values that would reduce each cohort to replacement (ratio = 1.0).")
+```
+
+```{r s10-prose, results='asis'}
+cat(sprintf(
+  "*No single parameter reaches replacement at a plausible value: the departure rate would have to rise to %.1f%% to %.1f%% per year (%.1f to %.1f times the empirical rate, versus the 1.5%% to 1.7%% national all-surgeon benchmark), graduate output would have to fall %d%% to %d%%, or new graduates would have to work at %d%% to %d%% of incumbent clinical effort. Only a compound worst-case, the departure rate tripled and graduate output reduced 30%% and the entrant effort multiplier at 0.65 simultaneously, pushes Gynecologic Oncology (%.2f) and URPS (%.2f) below replacement; the exploratory MIGS cohort remains above (%.2f). URPS, with the lowest ratio, is the most sensitive of the two board-certified subspecialties.*",
+  min(bt$breakeven_departure_rate_pct), max(bt$breakeven_departure_rate_pct),
+  min(bt$breakeven_rate_multiple), max(bt$breakeven_rate_multiple),
+  min(bt$graduate_drop_pct), max(bt$graduate_drop_pct),
+  as.integer(round(100*min(bt$breakeven_effort_multiplier))), as.integer(round(100*max(bt$breakeven_effort_multiplier))),
+  bt$compound_worstcase_ratio[bt$subspecialty_abbrev=="GO"],
+  bt$compound_worstcase_ratio[bt$subspecialty_abbrev=="URPS"],
+  bt$compound_worstcase_ratio[bt$subspecialty_abbrev=="MIGS"]))
+```
+
+# Appendix S11. Operative-Workforce Analysis (Exploratory)
+
+## S11.1 Rationale and definitions
+
+Because a surgeon can leave operative practice while remaining clinically active,
+headcount replacement (the primary outcome) need not equal replacement of operative
+capacity. Retirement from operative practice is a recognized workforce transition,
+distinct from and typically earlier than complete clinical retirement: in a population
+survey of general surgeons the median age of stopping operating (65 years, interquartile
+range 60-67.5) preceded stopping all clinical work (70 years) by roughly five years.[@poushay2018; @conn2018; @greenfield1994; @acog2018latecareer]
+Prior evidence is almost entirely survey-based, whereas national administrative attrition
+studies define workforce exit through cessation of evaluation-and-management claims or
+clinical payments rather than of operations.[@elemosho2026; @hedden2017] We therefore
+conducted an exploratory analysis operationalizing operative-workforce exit longitudinally
+from Medicare Part B by-service claims (procedure-level HCPCS codes per physician per year),
+restricted to Gynecologic Oncology and URPS; MIGS was excluded because only about 13% of
+that cohort was visible as Medicare operators. **The URPS operative analysis uses the
+ABOG-pathway URPS cohort only** (active n = 1,031), because the ABU (urology-pathway)
+physicians are not claims-linkable in this cohort; both the operator denominator and the
+graduate-entry numerator are therefore ABOG-pathway. All URPS operative figures below should
+be read as ABOG-pathway URPS, not the both-pathway workforce (1,295) used in the primary
+headcount analysis. As a share of the both-pathway workforce the visible-operator percentage
+would be correspondingly lower (e.g., 613/1,295 = 47% rather than 613/1,031 = 60%).
+
+The qualifying major-operation HCPCS list is the subspecialty operative code set from the
+project procedure reference (58210-58958, 38570-49255, 56630-58240 and 57xxx pelvic-floor
+reconstruction, 64xxx neuromodulation, and 58541-58573 laparoscopic hysterectomy families).
+An **established operator** performed at least three qualifying operations per year in at
+least two of the three preceding years, preventing an isolated procedure from counting as
+mature operating. The measured event was **sustained cessation of Medicare-observed
+qualifying surgery**: an established operator whose final qualifying operation was followed
+by three consecutive zero-operation years with no later resumption. With Medicare data
+ending 2023, the event is datable only through 2020, so events were counted over the fully
+observable window 2016-2020. We deliberately use "sustained cessation of Medicare-observed
+qualifying surgery" rather than "operative retirement" for the administrative event,
+because (as S11.4 shows) the two are not equivalent.
+
+## S11.2 Corrected denominator, cessation, and volume
+
+Operator prevalence is expressed as a share of the **active** board-certified cohort
+(is_retired_for_cohorting = FALSE), not the total cohort including retirees; the earlier
+denominator wrongly included retired physicians and understated the share.
+
+```{r table-s12}
+ow <- readr::read_csv(here::here("cliff","data","operative_workforce.csv"),
+                      show_col_types = FALSE)
+ow <- ow[match(c("GO","URPS"), ow$subspecialty_abbrev), ]
+owv <- data.frame(
+  Cohort = ow$subspecialty_abbrev,
+  `Active cohort (n)` = ow$n_active_cohort,
+  `Established Medicare operators (n, % of active)` =
+    sprintf("%d (%.0f%%)", ow$medicare_visible_operators, ow$pct_of_active_visible),
+  `Sustained-cessation rate (%/yr)` = sprintf("%.1f", ow$operative_cessation_rate_pct),
+  `Still billing clinically after last operation (%)` = ow$pct_still_billing_after,
+  check.names = FALSE)
+kable(owv, caption = "**Appendix Table S12.** Established Medicare operators and sustained cessation of Medicare-observed qualifying surgery, active board-certified cohort (2016-2020, Medicare-provisional).")
+```
+
+## S11.3 Time-to-event operative entry and the follow-up-time artifact
+
+A fixed graduate ramp-up window makes the operator-entry numerator depend mechanically on
+follow-up length: new surgeons accrue a Medicare surgical panel only gradually, so a short
+window counts few of them. Estimating the cumulative incidence of becoming an established
+Medicare operator with identical follow-up per certification cohort shows this directly,
+the conversion probability roughly triples between 3 and 8 years. The earlier fixed-ramp
+"matched ratio" (as low as 0.34 at a 3-year window) was therefore a follow-up-time
+artifact, not evidence of a capacity deficit.
+
+```{r table-s13}
+tt <- readr::read_csv(here::here("cliff","data","operative_tte.csv"), show_col_types = FALSE)
+tt <- tt[match(c("GO","URPS"), tt$subspecialty_abbrev), ]
+ttv <- data.frame(
+  Cohort = tt$subspecialty_abbrev,
+  `Certification cohort (2013-2020, n)` = tt$cohort_grads_2013_2020,
+  `Established operator by 3 y (%)` = sprintf("%.0f", 100*tt$ci_operator_by3yr),
+  `by 5 y (%)` = sprintf("%.0f", 100*tt$ci_operator_by5yr),
+  `by 8 y (%)` = sprintf("%.0f", 100*tt$ci_operator_by8yr),
+  check.names = FALSE)
+kable(ttv, caption = "**Appendix Table S13.** Cumulative incidence of becoming an established Medicare operator by years since certification (time-to-event, identical follow-up per cohort). The steep rise from 3 to 8 years is the follow-up-time artifact underlying the earlier fixed-ramp estimate.")
+```
+
+```{r table-s14}
+cp <- readr::read_csv(here::here("cliff","data","operative_capacity.csv"), show_col_types = FALSE)
+cp <- cp[match(c("GO","URPS"), cp$subspecialty_abbrev), ]
+cpv <- data.frame(
+  Cohort = cp$subspecialty_abbrev,
+  `Operators produced/yr (grads x 8-y conversion)` = sprintf("%.1f", cp$operators_produced_per_yr),
+  `Operators ceasing/yr` = sprintf("%.1f", cp$retirers_per_yr),
+  `Operator-count replacement` = sprintf("%.2f", cp$operator_count_replacement),
+  `Entrant vs retiring per-capita op volume` = sprintf("%.1f vs %.1f", cp$entrant_mean_annual_op_volume_yr3to5, cp$retiring_mean_annual_op_volume),
+  `Volume-weighted capacity ratio` = sprintf("%.2f", cp$operative_workforce_capacity_ratio),
+  check.names = FALSE)
+kable(cpv, caption = "**Appendix Table S14.** Operator-count and procedure-volume-weighted operative-workforce replacement. Volume unit = annual qualifying operative services. The volume ratio compares rising entrants (post-certification years 3-5) against tapering retirees (final two operative years), which biases it upward; both estimates are above one but are NOT interpreted given the endpoint's poor validity (S11.4).")
+```
+
+## S11.4 Concordance with complete departure: the validity finding
+
+Each apparent operative cessation was compared for concordance with independent signals
+of *complete clinical-practice departure*: whether total Medicare billing (across all
+HCPCS, not only operations) also stopped, and whether the NPI was deactivated in NPPES. A
+cessation is concordant with complete departure only if at least one fired. These signals
+detect departure from clinical medicine, not cessation of operating specifically, so they
+cannot confirm true operative cessation, by the analysis's own premise a physician can stop
+operating while continuing clinic billing with an active NPI. The concordance is therefore
+interpreted only as evidence that most operative-cessation events are not complete
+departures, not as a positive predictive value for operative cessation.
+
+```{r table-s15}
+aj <- readr::read_csv(here::here("cliff","data","operative_adjudication.csv"), show_col_types = FALSE)
+aj <- aj[match(c("GO","URPS"), aj$subspecialty_abbrev), ]
+ajv <- data.frame(
+  Cohort = aj$subspecialty_abbrev,
+  `Apparent cessations (n)` = aj$n_cessations,
+  `Total billing continued (%)` = aj$pct_total_billing_continued,
+  `Total billing stopped (%)` = aj$pct_total_billing_stopped,
+  `NPPES deactivated (%)` = aj$pct_nppes_deactivated,
+  `Age <50 at event (%)` = aj$pct_age_under_50,
+  `Concordant with complete departure (%)` = aj$pct_corroborated_true_exit,
+  check.names = FALSE)
+kable(ajv, caption = "**Appendix Table S15.** Concordance of apparent operative cessations with independent signals of complete clinical-practice departure. Only a small minority coincide with a complete-departure signal, and most physicians continued billing clinically; because a true operative retiree may keep billing, this does not establish whether events were true operative cessation or loss of Medicare visibility.")
+```
+
+Only `r get_op_corroborated("GO")`% (Gynecologic Oncology) and `r get_op_corroborated("URPS")`%
+(URPS) of apparent operative cessations coincided with a complete-departure signal;
+`r get_op_still_billing("GO")`% and `r get_op_still_billing("URPS")`% continued billing
+clinically. Because Medicare fee-for-service cannot distinguish true cessation of surgery
+from loss of claims visibility, the corrected above-one replacement estimates in S11.3 are
+reported but not interpreted. Reliable measurement of
+operative-capacity replacement requires all-payer claims or institutional operative-log
+data capturing the commercial and facility-billed surgery Medicare omits. A stratified
+sample of apparent operative cessations selected for adjudication (all events younger than 50,
+all with continued billing, and corroborated exits) is provided in the reproducibility archive
+(`cliff/data/operative_cessation_adjudication_sample.csv`).
+
+## S11.5 URPS pathway (ABU) hazard sensitivity
+
+The both-pathway URPS baseline assigns ABU-certified urogynecologists the ABOG-URPS
+departure hazard because ABU-pathway hazards are not independently estimable in this
+cohort. The table brackets that assumption by modeling the ABU component separately and
+scaling its hazard from half to twice the ABOG rate (approximate deterministic projection;
+the authoritative both-pathway ratio is the Monte Carlo value in the main table).
+
+```{r table-s16}
+ab <- readr::read_csv(here::here("cliff","data","abu_pathway_sensitivity.csv"), show_col_types = FALSE)
+kable(ab %>% dplyr::transmute(
+  Scenario = scenario, `Baseline (n)` = baseline, `Annual grads` = annual_grads,
+  `Avg annual departures` = sprintf("%.1f", avg_annual_departures),
+  `Completion-to-departure ratio` = sprintf("%.2f", replacement_ratio)),
+  caption = sprintf("**Appendix Table S16.** URPS completion-to-departure ratio under separate ABU-pathway modeling and ABU-hazard scaling. URPS remains well above replacement across all scenarios. The both-pathway (ABU = ABOG hazard) value here (%.2f) is computed with a deterministic baseline-rate approximation and is therefore not expected to match the primary both-pathway ratio (%s), which comes from the age-structured dynamic model with year-by-year aging into higher-hazard bands; the two differ only by the deterministic-versus-dynamic method, not by inputs.",
+    ab$replacement_ratio[ab$scenario=="Both-pathway (ABU=ABOG hazard)"], get_replacement_ratio("URPS")))
+```
+
+# Appendix S12. Multidimensional Sensitivity Grid
+
+The main-text sensitivity analyses are one-way (single-lever) deviations from the primary
+projection, and all leave both board-certified cohorts above replacement. To report the
+fully-crossed grid honestly, we crossed the observation window (fully-observable 2016-2021,
+drop-2 2016-2019, and the provisional full 2016-2023, which may be upward biased), a departure-rate multiplier
+(1x/2x/3x), and graduate practice-conversion (1.00/0.85/0.70), giving 27 cells per cohort;
+each cell's ratio is the window ratio scaled by conversion divided by the rate multiplier.
+
+```{r table-s17}
+gs <- readr::read_csv(here::here("cliff","data","sensitivity_grid_summary.csv"), show_col_types = FALSE)
+gs <- gs[match(c("GO","URPS","MIGS"), gs$subspecialty_abbrev), ]
+gsv <- data.frame(
+  Cohort = gs$subspecialty_abbrev,
+  `Cells` = gs$n_cells,
+  `Above replacement (>1.05)` = gs$n_above,
+  `At replacement (0.95-1.05)` = gs$n_at,
+  `Below replacement (<0.95)` = gs$n_below,
+  `Worst cell` = sprintf("%.2f", gs$worst_ratio),
+  `One-way minimum` = sprintf("%.2f", gs$oneway_min),
+  check.names = FALSE)
+kable(gsv, caption = "**Appendix Table S17.** Multidimensional sensitivity grid (27 cells per cohort). Every one-way sensitivity stays above replacement; the only at-replacement (Gynecologic Oncology) and below-replacement (URPS) cells occur only where the provisional full window, a tripled departure rate, and 70% graduate conversion coincide.")
+```
+
+*All one-way minima exceed 1.05. At the joint extreme (full window, 3x rate, 0.70 conversion)
+Gynecologic Oncology was at replacement (1.03) and URPS was below replacement (0.88), a compound
+worst case rather than a plausible single deviation; the exploratory MIGS cohort stays above
+replacement in every cell.*
+
+# Appendix S13. MIGS Exploratory Focused-Practice Cohort
+
+Minimally invasive gynecologic surgery (MIGS) is analyzed separately from the two
+board-certified subspecialties because it differs fundamentally: it is a voluntary
+ABOG focused-practice *designation* rather than a board certification, its stock is
+designation-based, its inflow is NRMP/AAGL match fills rather than ACGME completers,
+training non-completion is unobserved, and it is not governed by the same stock-flow
+definitions. It is therefore excluded from the main analysis and reported here only
+as an exploratory cohort.
+
+```{r table-s18}
+kable(data.frame(
+  Quantity = c("2025 baseline (n)", "Annual departure rate (%)", "Mean annual departures",
+               "Annual entrants (NRMP/AAGL match fill)", "Completion-to-departure ratio",
+               "Projected 2029 (n)", "Estimated median departure age (y)"),
+  Value = c(get_baseline("MIGS"), get_annual_rate("MIGS"), get_avg_retirements("MIGS"),
+            as.character(get_annual_entrants("MIGS")), get_replacement_ratio("MIGS"),
+            get_projected("MIGS"),
+            as.character(readr::read_csv(here::here("cliff","data","age_at_departure_by_subspecialty.csv"),
+                         show_col_types=FALSE) |> dplyr::filter(subspecialty_abbrev=="MIGS") |> dplyr::pull(median_age))),
+  check.names = FALSE),
+  caption = "**Appendix Table S18.** MIGS exploratory focused-practice cohort (designation-based; NRMP/AAGL inflow). Reported for completeness, not pooled with the board-certified subspecialties.")
+```
+
+*The estimated median classified departure age of 34 years is an important validity
+warning: it may reflect nonretirement workforce exits, but may equally reflect
+transient administrative invisibility, designation uptake, young physicians without
+Medicare panels, relocation, or coding and cohort-definition artifacts. The general
+obstetrics-gynecology comparator (Appendix S2) shows young administrative departures
+across the whole specialty rather than uniquely in MIGS, but does not validate the
+individual MIGS events. The MIGS replacement estimate should not be interpreted as a
+measure of the national MIGS clinical-practice workforce.*
+
+# Appendix S14. Certification-to-First-Medicare-Activity Transition
+
+The primary model adds fellowship completers to the active board-certified stock in
+their entry year. To test that immediate-entry assumption, we estimated a certification-to-first-Medicare-activity
+transition by linking board-certified GO and URPS certification cohorts (2013-2019,
+with at least four years of follow-up) to their first observed Medicare activity. This
+is a proxy for, not a direct measure of, the fellowship-completion-to-active-practice
+lag: certification is not fellowship graduation (and can follow practice entry), and
+first Medicare billing is not first active practice (non-Medicare practice is invisible). The transition is reported as a **timing ramp**
+normalized to eventual activation, so it measures how quickly graduates reach observed
+active practice rather than the Medicare-visibility ceiling; the separate ever-billed
+ceiling (the fraction ever observed in Medicare) reflects non-Medicare practice, not
+non-entry, and is not applied as a yield penalty.
+
+```{r table-s19}
+tr <- readr::read_csv(here::here("cliff","data","graduation_active_transition.csv"), show_col_types = FALSE)
+trv <- tr %>% dplyr::filter(k <= 4) %>%
+  dplyr::mutate(pct = sprintf("%.0f%%", 100*cum_active_fraction)) %>%
+  dplyr::select(subspecialty_abbrev, k, pct) %>%
+  tidyr::pivot_wider(names_from = k, values_from = pct, names_prefix = "By yr ")
+cel <- tr %>% dplyr::filter(k == 0) %>% dplyr::transmute(subspecialty_abbrev,
+        `Ever-billed ceiling` = sprintf("%.0f%%", 100*ever_billed_ceiling))
+kable(dplyr::left_join(trv, cel, by = "subspecialty_abbrev"),
+      caption = "**Appendix Table S19.** Certification-to-first-Medicare-activity transition: cumulative fraction of a certification cohort with observed Medicare activity by k years after certification (timing ramp, normalized to eventual activation, among certificants ever observed in Medicare), and the ever-billed Medicare-visibility ceiling (not a yield penalty).")
+```
+
+```{r table-s20}
+pj <- readr::read_csv(here::here("cliff","data","graduation_active_transition_projection.csv"), show_col_types = FALSE)
+kable(pj %>% dplyr::transmute(
+  Cohort = subspecialty_abbrev,
+  `Baseline 2025` = format(baseline, big.mark = ","),
+  `Projected 2029 (immediate entry)` = format(projected_2029_immediate, big.mark = ","),
+  `Projected 2029 (transition ramp)` = format(projected_2029_ramped, big.mark = ","),
+  `Growth deferred beyond 2029` = sprintf("%d (%d%%)", difference, pct_of_growth_deferred)),
+  caption = "**Appendix Table S20.** Transition-adjusted projection. Applying the empirical entry ramp defers part of the projected four-year growth beyond 2029; the workforce still grows and the completion-to-departure ratio (a flow balance) is unchanged.")
+```
+
+*Among certificants eventually observed in Medicare, 96% appeared within three years, so
+observed activity accrues over roughly two to three years; only 89% (GO) and 84% (URPS)
+of certificants were ever Medicare-visible, and while the remainder plausibly reflects
+non-Medicare practice, some may not enter U.S. subspecialty practice. The immediate-entry
+assumption thus modestly overstates near-term growth but not the direction of the conclusion. The completion-to-departure ratio compares
+annual entrants with annual departures and is unaffected by entry timing; the transition
+function refines the projected stock trajectory, not the replacement balance.*
+
+# Appendix S15. Open Payments Construct-Validity Sensitivity
+
+Cessation of Open Payments (industry-payment) reporting supported about 80% of classified
+departures under the prior definition and was the sole firing source for about 30%, whereas
+ABMS lapse and NPPES deactivation identified none, and Part D and Part B contributed fewer
+unique cases. Because stopping industry payments is not a validated indicator of leaving
+clinical practice, **the primary departure definition requires a non-Open-Payments
+corroborating source** (Medicare Part B or D, NPPES deactivation, or ABMS lapse); an Open
+Payments cessation alone no longer classifies a departure. The table below passes both the
+Open-Payments-inclusive definition and the primary non-Open-Payments-anchored definition
+through the same pooled dynamic model used for the headline result, so the primary row
+reproduces Table 2 exactly. Removing the Open-Payments-only departures lowers the departure
+rate and raises the ratio; we report this as the direction of the arithmetic only and do not
+assert which definition is closer to truth, which awaits the individual chart adjudication.
+Both cohorts remain above replacement under either definition.
+
+```{r table-s21}
+os <- readr::read_csv(here::here("cliff","data","open_payments_sensitivity.csv"), show_col_types = FALSE)
+lab <- c(`op_inclusive` = "Open Payments-inclusive definition",
+         `non_op_anchored (primary)` = "Non-Open-Payments anchor required (primary)")
+osv <- os %>% dplyr::transmute(
+  Definition = lab[rule], Cohort = subspecialty_abbrev,
+  `Departure rate (%/yr)` = sprintf("%.2f", departure_rate_pct),
+  `Mean annual departures` = sprintf("%.1f", avg_annual_departures),
+  `Completion-to-departure ratio` = sprintf("%.2f", replacement_ratio))
+kable(osv, caption = "**Appendix Table S21.** Departure rate and fellowship-completion-to-departure ratio under the Open-Payments-inclusive and primary non-Open-Payments-anchored definitions, both passed through the same pooled dynamic model (the primary row reproduces Table 2). Both board-certified cohorts remain above replacement under either definition; the direction of the difference is reported without a claim as to which definition is closer to truth.")
+```
+
+*Both cohorts remain above replacement under either definition. Requiring a
+non-Open-Payments anchor (Medicare Part B or D cessation, NPPES deactivation, or ABMS
+lapse; excluding Open-Payments-only departures) lowers the departure rate and raises
+the ratio. We report this direction of the arithmetic only and make no claim as to
+which definition is closer to truth, which awaits the individual chart adjudication;
+in particular we do not assert that the Open-Payments-inclusive definition was
+conservative, because that would require knowing which Open-Payments-only events are
+true departures. The error that could threaten the result is missed departures (false
+negatives), addressed by the tipping-point analysis and the pending active-control
+adjudication (Appendix S7).*
+
+# Age-Specific Mortality Sensitivity (Reviewer #2)
+
+```{r table-s25}
+ms <- readr::read_csv(here::here("cliff","data","mortality_sensitivity.csv"), show_col_types = FALSE)
+msv <- ms %>% dplyr::transmute(
+  Cohort = subspecialty_abbrev,
+  `Active stock` = format(n_active, big.mark = ","),
+  `Departures/yr (primary)` = sprintf("%.1f", departures_primary),
+  `Expected deaths/yr` = sprintf("%.1f", expected_mortality_per_yr),
+  `Ratio (primary)` = sprintf("%.1f", ratio_primary),
+  `Ratio (half missed)` = sprintf("%.1f", ratio_adj_half_missed),
+  `Ratio (all missed)` = sprintf("%.1f", ratio_adj_all_missed),
+  `2029 (primary)` = format(projected_2029_primary, big.mark = ","),
+  `2029 (mortality-adj)` = format(projected_2029_mortality_adj, big.mark = ","))
+kable(msv, caption = "**Appendix Table S25.** Age- and sex-specific expected-mortality sensitivity. Expected annual deaths in the active stock are computed from the SSA Period Life Table, 2020 (as used in the 2023 OASDI Trustees Report; q(x) by single year of age and sex) applied to each active physician's certification-anchored age and recorded sex, then added to the departure numerator. Because general-population mortality overstates mortality among practicing physicians (healthy-worker effect), the all-missed column is a conservative upper bound; the half-missed column reflects that some deaths are already captured administratively (NPPES deactivation, billing cessation). Both cohorts remain above one-for-one under every column.")
+```
+
+# Consistent-Definition Baseline Sensitivity (Reviewer #3)
+
+```{r table-s26}
+cb <- readr::read_csv(here::here("cliff","data","consistent_definition_baseline_sensitivity.csv"), show_col_types = FALSE)
+cbv <- cb %>% dplyr::transmute(
+  Cohort = subspecialty_abbrev,
+  `Baseline (primary)` = format(baseline_primary, big.mark = ","),
+  `Baseline (anchored)` = format(baseline_consistent, big.mark = ","),
+  `Delta` = sprintf("%+d", baseline_delta),
+  `Ratio (primary)` = sprintf("%.1f", ratio_primary),
+  `Ratio (anchored)` = sprintf("%.1f", ratio_consistent),
+  `2029 (primary)` = format(projected_2029_primary, big.mark = ","),
+  `2029 (anchored)` = format(projected_2029_consistent, big.mark = ","))
+kable(cbv, caption = "**Appendix Table S26.** Consistent-definition baseline sensitivity. The 2025 active stock is regenerated under the SAME non-Open-Payments anchored rule used for departure events (a physician is active if not classified as departed under the anchored rule by 2025), removing the stock-versus-flow definitional asymmetry. The anchored baseline is modestly larger (the stricter anchor classifies fewer physicians as departed), and the completion-to-departure ratios remain well above replacement, so pairing a broad cohorting baseline with an anchored departure definition does not materially bias the stock-flow balance.")
+```
+
+# Inactivity-Threshold Sensitivity (Reviewer #9)
+
+```{r table-s27}
+it <- readr::read_csv(here::here("cliff","data","inactivity_threshold_sensitivity.csv"), show_col_types = FALSE)
+itv <- it %>% dplyr::transmute(
+  Cohort = subspecialty_abbrev,
+  `Inactivity threshold (yr)` = threshold_years,
+  `Departure events (window)` = n_events_in_window,
+  `Departure rate (%/yr)` = sprintf("%.2f", departure_rate_pct),
+  `Mean annual departures` = sprintf("%.1f", avg_annual_departures),
+  `Completion-to-departure ratio` = sprintf("%.2f", replacement_ratio),
+  Assessment = assessment)
+kable(itv, caption = "**Appendix Table S27.** Inactivity-duration sensitivity (distinct from the calendar-window sensitivity). A departure event is re-derived directly from Medicare Part B clinical activity: a physician whose last Part B active year is L is classified as departed in year L+1 only if the required T-year absence is fully observable by 2023 (L + T <= 2023); otherwise the exit is right-censored. Only the age-band hazard changes with T; the active baseline and entrant counts are held at the primary values. This isolates the Part B inactivity signal and is more aggressive than the multi-source consensus primary definition, so ratios are lower than the primary 5.6/7.1; nonetheless both board-certified cohorts remain above replacement at every threshold. The 2- and 3-year thresholds are indistinguishable within the fully-observable 2016-2021 window (both require the last active year to fall by 2020 for an in-window event), and a stricter 4-year threshold raises the ratio because fewer exits meet the longer absence requirement.")
+```
+
+# Hierarchical Partial-Pooling Hazard (Reviewer #4)
+
+```{r table-s28}
+hh <- readr::read_csv(here::here("cliff","data","hierarchical_hazard_comparison.csv"), show_col_types = FALSE)
+mlab <- c(unpooled = "Unpooled (specialty-specific)", pooled = "Pooled (primary)",
+          partial_pooled = "Partial-pooled (hierarchical)",
+          `partial_pooled_abu_0.5x` = "Partial-pooled, ABU hazard x0.5",
+          `partial_pooled_abu_2x` = "Partial-pooled, ABU hazard x2")
+hhv <- hh %>% dplyr::transmute(
+  Cohort = subspecialty_abbrev,
+  Method = mlab[method],
+  `Completion-to-departure ratio` = sprintf("%.2f", replacement_ratio),
+  `95% interval` = ifelse(is.na(ci_lo), "-", sprintf("%.2f to %.2f", ci_lo, ci_hi)),
+  Events = events, `Person-years` = person_years)
+kable(hhv, caption = "**Appendix Table S28.** Hierarchical partial-pooling sensitivity for the age-band departure hazard. A binomial discrete-time hazard model with a shared age-band shape (fixed band effects) and a specialty deviation (random intercept) was fit by penalized maximum likelihood with a weakly-informative prior on the between-specialty variance (blme::bglmer); with only two board-certified cohorts, plain maximum likelihood collapses the specialty variance to zero (full pooling), so the variance prior is what makes this a genuine partial pool. Ratios are recomputed by applying each hazard set to the cohort's active-age distribution through the same dynamic model. Uncertainty: unpooled and pooled intervals are a 4,000-draw Beta(events+0.5, person-years-events+0.5) posterior on the band hazards; the partial-pooled interval is a 300-iteration parametric bootstrap of the fitted model (seed 20260720). The partial-pooled ratio lies between the unpooled and pooled estimates for each cohort, and all methods (with their intervals) remain above one-for-one replacement. ABU-hazard uncertainty is folded in by scaling the ABU share of the URPS hazard by 0.5 and 2.")
+```
+
+# Graduate-Supply Scenarios (Reviewer #8)
+
+```{r table-s29}
+gs <- readr::read_csv(here::here("cliff","data","graduate_growth_scenarios.csv"), show_col_types = FALSE)
+gsv <- gs %>% dplyr::transmute(
+  Cohort = subspecialty_abbrev, Scenario = scenario_label,
+  `Annual graduates` = sprintf("%.0f", annual_graduates),
+  `Completion-to-departure ratio` = sprintf("%.2f", replacement_ratio),
+  `Projected 2029` = format(projected_2029, big.mark = ","), Assessment = assessment)
+kable(gsv, caption = "**Appendix Table S29.** Graduate-supply scenarios beyond the flat four-year mean. The four observed ACGME completer counts (AY2020-21..2023-24) are recast into transparent forward assumptions and each is passed through the same dynamic model (only the annual entrant count changes; the pooled hazard and active baseline are held at primary values). Cohort accounting uses the most recent observed year (fellows already in final training, the most directly projectable near-term output); contraction uses the lowest of the four recent years; the cautious trend is the four-year mean plus half the observed linear annual trend over the horizon midpoint, capped at the highest observed year. The conservative (70% conversion) and optimistic (NRMP benchmark) scenarios are shown for reference. Both board-certified cohorts remain above replacement under every graduate-supply scenario.")
+```
+
+# Estimated-Baseline Lag Decomposition (Reviewer #5)
+
+```{r table-s30}
+bl <- readr::read_csv(here::here("cliff","data","baseline_lag_decomposition.csv"), show_col_types = FALSE)
+blv <- bl %>% dplyr::transmute(
+  Cohort = subspecialty_abbrev,
+  `Directly supported (2023 Part B)` = directly_supported,
+  `Carried forward 1-2 yr` = carried_fwd_1_2yr,
+  `Carried forward >=3 yr` = carried_fwd_3plus,
+  `No Part B history` = no_admin_history,
+  `ABU net-new` = abu_net_new,
+  `Estimated 2025 baseline` = format(baseline_total, big.mark = ","),
+  `Ratio (primary)` = sprintf("%.2f", ratio_primary),
+  `Ratio (long-lag removed)` = sprintf("%.2f", ratio_lag_trimmed))
+kable(blv, caption = "**Appendix Table S30.** Decomposition of the estimated 2025 active baseline by administrative-support recency (Medicare Part B last-active year). The baseline is carried forward from admin data ending 2023-2024; the great majority of each Part B-observable cohort had Part B activity in the latest administrative year (2023), and only a small number rest on a three-year-or-longer carry-forward. The final column is a baseline-lag sensitivity: removing the long-lag (>=3-year carried-forward) physicians from the active stock, the most adverse plausible baseline-classification error, does not weaken the conclusion (the ratio is unchanged to slightly higher, because those physicians also carry projected departures). ABU net-new urogynecologists (URPS only) are recent certificants added to the both-pathway baseline; physicians with no Medicare Part B history (non-Medicare panels) are a residual limitation.")
+```
+
+# Age-Band-Stratified Temporal Back-Test (Reviewer #10)
+
+```{r table-s31}
+bt <- readr::read_csv(here::here("cliff","data","temporal_backtest_ageband.csv"), show_col_types = FALSE)
+btv <- bt %>% dplyr::transmute(
+  Cohort = subspecialty_abbrev, `Age band (2016)` = age_band,
+  `N at base` = n_base, `Observed active 2021` = observed_active,
+  `Predicted active 2021` = sprintf("%.1f", predicted_active),
+  `Error (%)` = ifelse(is.na(pct_error), "-", sprintf("%+.1f", pct_error)))
+kable(btv, caption = "**Appendix Table S31.** Age-band-stratified closed-cohort temporal back-test. The board-certified cohort active in 2016 is frozen and rolled forward to 2021 under the age-band hazard model (pure survival, no entrants); the predicted number still active is compared with the observed number within each base-year age band. Calibration is close in the well-populated bands (within a few percent through age 59, which hold the large majority of physicians); the oldest bands contain as few as four to nine physicians per cohort, so their percentage errors reflect small counts rather than model misfit. ABU net-new urogynecologists are absent from the historical back-test cohort (no pre-2024 roster) and are not included.")
+```
+
+# Data Availability
+
+All input data sources are publicly available. Board certification, NPI, practice location, and Medicare and Open Payments records are identifiable professional records; reported analytic results are aggregated. The consolidated
+workforce-projection table analyzed here is version-controlled with the analysis
+code and is validated on load by a fail-closed data contract
+(`manuscript/R/workforce_data_contract.R`); primary workforce-projection values are
+generated programmatically from that consolidated dataset, and secondary sensitivity
+analyses from their respective version-controlled analytic outputs.
+
+# Supplemental References
+
+<div id="refs"></div>

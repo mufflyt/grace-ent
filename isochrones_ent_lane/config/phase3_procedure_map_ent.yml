@@ -1,0 +1,520 @@
+---
+# ==============================================================================
+# PHASE 3: Medicare Claims-Based Subspecialty Procedure Mapping — ENT
+# ==============================================================================
+# Purpose: Map ENT subspecialties to CPT/HCPCS procedures for Medicare-based
+#          identification and subspecialty classification
+# Date: 2026-05-02
+# Version: 1.0.0
+# Board: American Board of Otolaryngology — Head and Neck Surgery (ABOto)
+#
+# Usage: Identifies ENT physicians practicing subspecialty care via Medicare
+#   Part B claims. Primary use case: classify the ~4,444 ENT physicians (of
+#   7,911 in enthealth.org) with NULL specialty_primary by claims pattern.
+#
+# Key difference from OB/GYN map: Three ENT subspecialties (Rhinology,
+# Laryngology, Head & Neck Oncology) share NUCC code 207Y00000X with General
+# ENT. Procedure codes are the ONLY way to distinguish them in NPPES data.
+#
+# Medicare coverage notes:
+#   - Pediatric procedures (e.g., tonsillectomy age <12) rarely appear in
+#     Medicare Part B since Medicare covers age ≥65 and disabled adults.
+#     Adult-coded equivalents (42821, 42826, 42836) are used instead.
+#   - Cosmetic rhinoplasty (30400-30460) is NOT covered by Medicare.
+#     Functional/reconstructive rhinoplasty (30520 septoplasty, 30465
+#     rhinoplasty for nasal airway obstruction) IS covered.
+#   - REI-equivalent exclusion: purely cosmetic facial plastic procedures
+#     are excluded; reconstructive/functional codes retained.
+#
+# Confidence Score: 0.88
+# Min Years Required: 2
+# ==============================================================================
+
+metadata:
+  component: phase3_procedure_mapping_ent
+  version: 1.0.0
+  created: "2026-05-02"
+  specialty: "ent"
+  board: "ABOto"
+  description: >-
+    CPT/HCPCS procedure codes for Medicare-based ENT subspecialty matching.
+    Validates against enthealth.org 7,911-physician scrape
+    (Dropbox: mystery_shopper/Corbi study/ENT/Data/results.xlsx).
+  data_source: "Medicare Part B claims (2013-2023)"
+  codes_total: 56
+  codes_by_subspecialty:
+    H_N_ONCO: 14    # Head and Neck Oncology (thyroid + neck dissection)
+    RHINO: 12       # Rhinology (FESS + septoplasty + polyp excision)
+    OTOL: 10        # Otology & Neurotology (cochlear + stapedectomy + tympanoplasty)
+    LARYN: 9        # Laryngology (laryngoscopy + vocal cord)
+    GEN_ENT: 7      # General ENT (tonsillectomy + adenoidectomy + epistaxis)
+    SLEEP: 4        # Sleep Medicine (UPPP + hypoglossal nerve stim)
+
+# ==============================================================================
+# SUBSPECIALTY PROCEDURE MAPPINGS
+# ==============================================================================
+
+subspecialties:
+
+  # ============================================================================
+  # Head and Neck Oncology (H_N_ONCO)
+  # ============================================================================
+  # Taxonomy: 207Y00000X (no distinct code — identified by procedure only)
+  # enthealth.org values: "Head and Neck Surgery", "Endocrine Surgery"
+  H_N_ONCO:
+    full_name: "Head and Neck Oncology"
+    aboto_code: "H_N_ONCO"
+    taxonomy_code: "207Y00000X"
+    taxonomy_note: "No distinct NUCC code; all bill as General Otolaryngology"
+
+    procedures:
+
+      # Thyroid surgery (highest-volume H&N oncology procedures in Medicare)
+      - code: "60240"
+        description: "Thyroidectomy, total"
+        category: "thyroid_surgery"
+
+      - code: "60252"
+        description: "Thyroidectomy, total; for malignancy with limited neck dissection"
+        category: "thyroid_surgery"
+
+      - code: "60254"
+        description: "Thyroidectomy, total; for malignancy with radical neck dissection"
+        category: "thyroid_surgery"
+
+      - code: "60220"
+        description: "Total thyroid lobectomy, unilateral"
+        category: "thyroid_surgery"
+
+      - code: "60260"
+        description: "Thyroidectomy, removal of all remaining thyroid tissue"
+        category: "thyroid_surgery"
+
+      # Parathyroid surgery
+      - code: "60500"
+        description: "Parathyroidectomy or exploration of parathyroid glands"
+        category: "parathyroid_surgery"
+
+      - code: "60502"
+        description: "Parathyroidectomy, re-exploration"
+        category: "parathyroid_surgery"
+
+      # Neck dissection — most specific H&N oncology codes
+      - code: "38720"
+        description: "Cervical lymphadenectomy, radical (radical neck dissection)"
+        category: "neck_dissection"
+
+      - code: "38724"
+        description: "Cervical lymphadenectomy, modified radical (modified neck dissection)"
+        category: "neck_dissection"
+
+      - code: "38700"
+        description: "Superficial parotidectomy"
+        category: "salivary_gland"
+
+      - code: "42410"
+        description: "Excision of parotid tumor, lateral lobe without nerve dissection"
+        category: "salivary_gland"
+
+      - code: "42415"
+        description: "Excision of parotid tumor or parotid gland with nerve dissection"
+        category: "salivary_gland"
+
+      # Larynx cancer
+      - code: "31360"
+        description: "Laryngectomy, total"
+        category: "laryngeal_cancer"
+
+      - code: "31365"
+        description: "Laryngectomy, total with radical neck dissection"
+        category: "laryngeal_cancer"
+
+    keyword_pattern: >-
+      thyroidectomy|neck dissection|parotidectomy|laryngectomy|radical neck|
+      lymphadenectomy|head and neck|parathyroidectomy|salivary gland|mandibulectomy
+
+  # ============================================================================
+  # Rhinology and Sinus Surgery (RHINO)
+  # ============================================================================
+  # Taxonomy: 207Y00000X (no distinct code — identified by procedure only)
+  # enthealth.org value: "Rhinology"
+  RHINO:
+    full_name: "Rhinology and Sinus Surgery"
+    aboto_code: "RHINO"
+    taxonomy_code: "207Y00000X"
+    taxonomy_note: "No distinct NUCC code; all bill as General Otolaryngology"
+
+    procedures:
+
+      # Functional Endoscopic Sinus Surgery (FESS) — most specific rhinology codes
+      - code: "31254"
+        description: "Nasal/sinus endoscopy, surgical; with ethmoidectomy, partial"
+        category: "fess"
+
+      - code: "31255"
+        description: "Nasal/sinus endoscopy, surgical; with ethmoidectomy, total"
+        category: "fess"
+
+      - code: "31256"
+        description: "Nasal/sinus endoscopy, surgical; with maxillary antrostomy"
+        category: "fess"
+
+      - code: "31267"
+        description: "Nasal/sinus endoscopy, surgical; with removal of tissue from maxillary sinus"
+        category: "fess"
+
+      - code: "31276"
+        description: "Nasal/sinus endoscopy, surgical; with frontal sinus exploration"
+        category: "fess"
+
+      - code: "31287"
+        description: "Nasal/sinus endoscopy, surgical; with sphenoid sinusotomy"
+        category: "fess"
+
+      - code: "31288"
+        description: "Nasal/sinus endoscopy, surgical; with sphenoid sinusotomy and tissue removal"
+        category: "fess"
+
+      # Septoplasty — high Medicare volume
+      - code: "30520"
+        description: "Septoplasty or submucous resection, with or without cartilage scoring"
+        category: "septal_surgery"
+
+      # Nasal polyp excision
+      - code: "30110"
+        description: "Excision, nasal polyp(s), simple"
+        category: "nasal_polyp"
+
+      - code: "30115"
+        description: "Excision, nasal polyp(s), extensive"
+        category: "nasal_polyp"
+
+      # Turbinate surgery
+      - code: "30130"
+        description: "Excision inferior turbinate, partial or total, any method"
+        category: "turbinate_surgery"
+
+      - code: "30140"
+        description: "Submucous resection inferior turbinate, partial or complete, any method"
+        category: "turbinate_surgery"
+
+    keyword_pattern: >-
+      sinusotomy|ethmoidectomy|sinusitis|nasal polyp|septoplasty|turbinate|
+      maxillary antrostomy|frontal sinus|sphenoid|endoscopic sinus|FESS
+
+  # ============================================================================
+  # Otology and Neurotology (OTOL)
+  # ============================================================================
+  # Taxonomy: 207YX0901X (distinct NUCC code)
+  # enthealth.org values: "Neurotology", "Otology/Audiology"
+  OTOL:
+    full_name: "Otology and Neurotology"
+    aboto_code: "OTOL"
+    taxonomy_code: "207YX0901X"
+
+    procedures:
+
+      # Cochlear implant — highest-specificity otology code
+      - code: "69714"
+        description: "Implantation, osseointegrated implant, skull; with mastoidectomy"
+        category: "cochlear_implant"
+
+      - code: "69716"
+        description: "Revision/removal of osseointegrated implant of skull"
+        category: "cochlear_implant"
+
+      - code: "69930"
+        description: "Cochlear device implantation, with or without mastoidectomy"
+        category: "cochlear_implant"
+
+      # Stapedectomy / stapedotomy
+      - code: "69660"
+        description: "Stapedectomy or stapedotomy with reestablishment of ossicular continuity"
+        category: "stapedectomy"
+
+      - code: "69661"
+        description: "Stapedectomy or stapedotomy with reoperative procedure"
+        category: "stapedectomy"
+
+      # Tympanoplasty / mastoidectomy
+      - code: "69631"
+        description: "Tympanoplasty without mastoidectomy (including canalplasty, atticotomy, middle ear surgery)"
+        category: "tympanoplasty"
+
+      - code: "69632"
+        description: "Tympanoplasty with mastoidectomy (including canalplasty, middle ear surgery)"
+        category: "tympanoplasty"
+
+      - code: "69633"
+        description: "Tympanoplasty with mastoidectomy and ossicular chain reconstruction"
+        category: "tympanoplasty"
+
+      # Labyrinthectomy (Meniere's disease)
+      - code: "69801"
+        description: "Labyrinthotomy, with perfusion of vestibuloactive drug(s)"
+        category: "labyrinthine_surgery"
+
+      # Acoustic neuroma / lateral skull base
+      - code: "61591"
+        description: "Infratemporal pre-auricular approach to middle cranial fossa (Fisch type B)"
+        category: "skull_base"
+
+    keyword_pattern: >-
+      cochlear implant|stapedectomy|stapedotomy|tympanoplasty|mastoidectomy|
+      labyrinthectomy|otosclerosis|ossicular|acoustic neuroma|skull base|
+      hearing loss|cholesteatoma
+
+  # ============================================================================
+  # Laryngology (LARYN)
+  # ============================================================================
+  # Taxonomy: 207Y00000X (no distinct code — identified by procedure only)
+  # enthealth.org value: "Laryngology"
+  LARYN:
+    full_name: "Laryngology"
+    aboto_code: "LARYN"
+    taxonomy_code: "207Y00000X"
+    taxonomy_note: "No distinct NUCC code; all bill as General Otolaryngology"
+
+    procedures:
+
+      # Direct laryngoscopy with procedures — most specific laryngology codes
+      - code: "31535"
+        description: "Laryngoscopy, direct, operative, with biopsy"
+        category: "laryngoscopy_diagnostic"
+
+      - code: "31540"
+        description: "Laryngoscopy, direct, operative, with excision of tumor"
+        category: "laryngoscopy_operative"
+
+      - code: "31541"
+        description: "Laryngoscopy, direct, operative, with excision of tumor using operating microscope or telescope"
+        category: "laryngoscopy_operative"
+
+      # Vocal cord injections — hallmark laryngology procedure
+      - code: "31570"
+        description: "Laryngoscopy, direct, with injection into vocal cord(s)"
+        category: "vocal_cord_injection"
+
+      - code: "31571"
+        description: "Laryngoscopy, direct, with injection into vocal cord(s), with operating microscope or telescope"
+        category: "vocal_cord_injection"
+
+      # Laser ablation and other phonosurgery
+      - code: "31572"
+        description: "Laryngoscopy, flexible or rigid fiberoptic, with ablation or destruction of lesion(s)"
+        category: "phonosurgery"
+
+      - code: "31574"
+        description: "Laryngoscopy, flexible, with injection augmentation of vocal cord(s)"
+        category: "vocal_cord_injection"
+
+      - code: "31578"
+        description: "Laryngoscopy, flexible or rigid fiberoptic, with laser destruction of lesion(s)"
+        category: "phonosurgery"
+
+      # Tracheotomy (done by laryngologists and general ENT)
+      - code: "31600"
+        description: "Tracheotomy, planned (separate procedure)"
+        category: "airway_management"
+
+    keyword_pattern: >-
+      laryngoscopy|vocal cord|laryngeal|phonosurgery|voice|dysphonia|
+      tracheotomy|larynx|glottis|subglottis|vocal fold|laryngoplasty
+
+  # ============================================================================
+  # General ENT (GEN_ENT)
+  # ============================================================================
+  # Taxonomy: 207Y00000X
+  # enthealth.org value: "General Otolaryngology" (most common, n=2,534)
+  GEN_ENT:
+    full_name: "General Otolaryngology"
+    aboto_code: "GEN_ENT"
+    taxonomy_code: "207Y00000X"
+
+    procedures:
+
+      # Tonsillectomy and adenoidectomy — highest-volume adult ENT procedures in Medicare
+      - code: "42821"
+        description: "Tonsillectomy and adenoidectomy; age 12 or over"
+        category: "tonsillectomy_adenoidectomy"
+
+      - code: "42826"
+        description: "Tonsillectomy only; age 12 or over"
+        category: "tonsillectomy_adenoidectomy"
+
+      - code: "42836"
+        description: "Adenoidectomy only; age 12 or over"
+        category: "tonsillectomy_adenoidectomy"
+
+      # Epistaxis control
+      - code: "30901"
+        description: "Control nasal hemorrhage, anterior, simple"
+        category: "epistaxis"
+
+      - code: "30905"
+        description: "Control nasal hemorrhage, posterior, with posterior nasal packs"
+        category: "epistaxis"
+
+      # Ear tube (myringotomy with tube) — most common ENT procedure overall
+      # NOTE: 69421 requires general anesthesia (mostly pediatric); 69433 is
+      # local anesthesia and more common in adults/Medicare
+      - code: "69433"
+        description: "Tympanostomy (requiring insertion of ventilating tube), local or topical anesthesia"
+        category: "myringotomy"
+
+      - code: "69436"
+        description: "Tympanostomy (requiring insertion of ventilating tube), general anesthesia"
+        category: "myringotomy"
+
+    keyword_pattern: >-
+      tonsillectomy|adenoidectomy|tympanostomy|ear tube|myringotomy|
+      epistaxis|nasal hemorrhage|otitis media|tonsil
+
+  # ============================================================================
+  # Sleep Medicine / Surgical Sleep (SLEEP)
+  # ============================================================================
+  # Taxonomy: 207YS0012X
+  # enthealth.org value: "Sleep Medicine" (n=46)
+  SLEEP:
+    full_name: "Sleep Medicine"
+    aboto_code: "SLEEP"
+    taxonomy_code: "207YS0012X"
+
+    procedures:
+
+      # Uvulopalatopharyngoplasty (UPPP) — hallmark surgical sleep procedure
+      - code: "42145"
+        description: "Palatopharyngoplasty (UPPP, uvulopalatopharyngoplasty)"
+        category: "sleep_surgery"
+
+      # Hypoglossal nerve stimulator (Inspire) — rapidly growing Medicare procedure
+      - code: "64568"
+        description: "Incision for implantation of cranial nerve (e.g. vagus, trigeminal) neurostimulator electrode array"
+        category: "hypoglossal_stimulator"
+
+      - code: "64569"
+        description: "Revision or replacement of cranial nerve (e.g. vagus, trigeminal) neurostimulator electrode array"
+        category: "hypoglossal_stimulator"
+
+      # Maxillomandibular advancement (MMA) — surgical sleep for severe OSA
+      - code: "21199"
+        description: "Osteotomy of facial bones; Le Fort I, single piece"
+        category: "maxillomandibular_advancement"
+
+    keyword_pattern: >-
+      palatopharyngoplasty|UPPP|uvulopalatopharyngoplasty|sleep apnea|
+      hypoglossal|inspire|OSA|obstructive sleep|tongue base|palate surgery
+
+# ==============================================================================
+# MATCHING PARAMETERS
+# ==============================================================================
+
+matching_rules:
+  # Minimum number of distinct procedure codes required
+  min_distinct_procedures: 2
+
+  # Minimum number of years procedures must appear in claims
+  min_years_present: 2
+
+  # Total claim volume threshold (across all years)
+  min_total_claims: 5
+
+  # Confidence score for Phase 3 matches
+  confidence_score: 0.88
+
+  # Match type label in output
+  match_type: "medicare_ent_subspecialty_procedures"
+
+  # ENT-specific: Rhinology/Laryngology/H&N share 207Y00000X; procedure-based
+  # assignment takes precedence over taxonomy-based for these three
+  taxonomy_override_subspecialties:
+    - "H_N_ONCO"
+    - "RHINO"
+    - "LARYN"
+
+# ==============================================================================
+# DATABASE CONFIGURATION
+# ==============================================================================
+
+database:
+  # Primary table for procedure lookup
+  table: "main.medicare_part_b_by_service_all_years"
+
+  # Column names (actual schema from Medicare Part B table)
+  column_mapping:
+    npi: "Rndrng_NPI"
+    hcpcs_code: "HCPCS_Cd"
+    hcpcs_description: "HCPCS_Desc"
+    line_service_count: "Tot_Srvcs"
+    beneficiary_count: "Tot_Benes"
+    year: "data_year"
+
+# ==============================================================================
+# QUERY TEMPLATES
+# ==============================================================================
+
+queries:
+  find_subspecialty_npis: |
+    SELECT
+      Rndrng_NPI as npi,
+      COUNT(DISTINCT HCPCS_Cd) as n_distinct_procedures,
+      COUNT(DISTINCT data_year) as n_years_present,
+      SUM(Tot_Srvcs) as total_claims,
+      STRING_AGG(DISTINCT HCPCS_Cd, ',') as procedure_codes
+    FROM {medicare_table}
+    WHERE (
+      HCPCS_Cd IN ({procedure_codes})
+      OR LOWER(HCPCS_Desc) REGEXP '{keyword_pattern}'
+    )
+    GROUP BY Rndrng_NPI
+    HAVING COUNT(DISTINCT data_year) >= {min_years_present}
+      AND COUNT(DISTINCT HCPCS_Cd) >= {min_distinct_procedures}
+      AND SUM(Tot_Srvcs) >= {min_total_claims}
+
+  match_by_procedures: |
+    SELECT
+      a.aboto_id,
+      n.npi,
+      n.n_distinct_procedures,
+      n.n_years_present,
+      n.total_claims,
+      n.procedure_codes,
+      '{subspecialty}' as matched_subspecialty,
+      {confidence_score} as confidence_score,
+      'medicare_ent_subspecialty_procedures' as match_type
+    FROM temp_unmatched_ent a
+    INNER JOIN temp_subspecialty_npis n
+      ON UPPER(TRIM(n.provider_last_name)) = UPPER(TRIM(a.last_name))
+      AND UPPER(TRIM(n.provider_first_name)) = UPPER(TRIM(a.first_name))
+    WHERE a.subspecialty = '{subspecialty}'
+
+# ==============================================================================
+# DOCUMENTATION
+# ==============================================================================
+
+documentation:
+  known_limitations:
+    - "Pediatric tonsillectomy (42820/42825) excluded: Medicare population is
+       primarily age 65+; pediatric codes rarely appear in Part B claims"
+    - "Cosmetic rhinoplasty (30400-30460) excluded: not covered by Medicare"
+    - "Otolaryngic Allergy (207YX0602X) excluded: allergy testing CPT codes
+       (95004-95071) are not ENT-specific and would generate false positives"
+    - "Facial Plastic Surgery (207YS0123X) excluded: insufficient Medicare-covered
+       codes specific to the subspecialty; use taxonomy code 207YS0123X directly"
+    - "Sleep Medicine (207YS0012X) excluded from taxonomy-indistinguishable list:
+       can be identified via NUCC code; procedure codes provided as supplement"
+  expected_medicare_coverage:
+    H_N_ONCO: "Excellent — thyroidectomy and neck dissection are high-volume Medicare procedures"
+    RHINO: "Good — FESS and septoplasty have strong Medicare representation"
+    OTOL: "Good — cochlear implants and stapedectomy are Medicare-covered"
+    LARYN: "Moderate — laryngoscopy codes present but lower volume than surgical subspecialties"
+    GEN_ENT: "Good — adult tonsillectomy and epistaxis present"
+    SLEEP: "Growing — UPPP historic; hypoglossal stimulator (Inspire) growing rapidly since 2020"
+  enthealth_data_source:
+    file: "mystery_shopper/Corbi study/ENT/Data/results.xlsx"
+    scrape_url: "https://www.enthealth.org/find-ent/"
+    total_records: 7911
+    records_with_specialty: 3467
+    records_null_specialty: 2491
+    scrape_date: "2023-04-04"
+    scraper: "Bartosz via Upwork"

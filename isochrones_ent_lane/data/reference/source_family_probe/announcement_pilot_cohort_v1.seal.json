@@ -1,0 +1,20 @@
+{
+  "artifact": "announcement_pilot_cohort_v1.csv",
+  "sha256": "43d0aaaa5434ec2aafa7efab72cf1deb5882650de15b70b999b43cc42dd05459",
+  "sealed_at": "2026-09-13",
+  "seed": 20260913,
+  "definition": "ANNOUNCEMENT_SEARCH_PILOT_60_NONGOLD_40_CONSENSUS_RETIRED_20_BELIEVED_ACTIVE",
+  "production_writes": 0,
+  "exclusions": {
+    "gold_npis": 71,
+    "probe_cohort_npis": 127,
+    "holdout_exclusion_npis": 139
+  },
+  "frame": {
+    "universe_v2_sha": "ccf233e81cc6c15b21da373a9ccc3cd093d9514295674af0f9da8a2dbc5a9bb3",
+    "consensus_source": "credentials.retirement_consensus.retirement_year_final (nber fork, read_only)",
+    "candidates_retired": 1631,
+    "candidates_active": 5008
+  },
+  "adjudication_rule": "precision may only be quoted from rows the PI has adjudicated; unadjudicated hits are proposals"
+}

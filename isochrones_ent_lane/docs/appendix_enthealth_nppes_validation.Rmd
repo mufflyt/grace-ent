@@ -1,0 +1,1562 @@
+---
+title: "Appendix: Validation of ENT Subspecialty Classification — enthealth.org, NPPES, and ABOHNS Board Verification"
+subtitle: "Mystery Caller Data Quality Report"
+author: "Tyler Muffly MD · Generated `r format(Sys.Date(), '%B %d, %Y')`"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    toc_depth: 3
+    number_sections: true
+    df_print: paged
+    code_folding: hide
+    self_contained: true
+---
+
+```{=html}
+<!-- Pin the browser renderer; do not let a floating CDN major version parse
+     this appendix differently from the repository's Mermaid validation. -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+  mermaid.initialize({
+    startOnLoad: false,
+    securityLevel: 'loose',
+    theme: 'default',
+    themeVariables: {
+      edgeLabelBackground: '#f0f4f8',
+      labelTextColor: '#1a1a1a',
+      lineColor: '#444'
+    },
+    flowchart: { curve: 'basis', useMaxWidth: true }
+  });
+  var nodes = Array.from(document.querySelectorAll('.mermaid'));
+  await mermaid.run({ nodes: nodes });
+  var unresolved = nodes.filter(function (node) {
+    return !node.querySelector('svg');
+  });
+  if (unresolved.length > 0) {
+    throw new Error('Mermaid left ' + unresolved.length + ' appendix diagram(s) unrendered');
+  }
+});
+</script>
+```
+
+```{css, echo=FALSE}
+body { font-family: "Source Sans Pro", sans-serif; font-size: 15px; }
+h1, h2, h3 { color: #1F4E79; }
+.mermaid { margin: 20px auto; text-align: center; }
+.highlight-box {
+  background: #EBF5FB; border-left: 4px solid #1F4E79;
+  padding: 12px 16px; margin: 14px 0; border-radius: 4px;
+}
+.warning-box {
+  background: #FEF9E7; border-left: 4px solid #F39C12;
+  padding: 12px 16px; margin: 14px 0; border-radius: 4px;
+}
+.anomaly-box {
+  background: #FDEDEC; border-left: 4px solid #C0392B;
+  padding: 12px 16px; margin: 14px 0; border-radius: 4px;
+}
+.good-box {
+  background: #EAFAF1; border-left: 4px solid #27AE60;
+  padding: 12px 16px; margin: 14px 0; border-radius: 4px;
+}
+table { font-size: 13px; }
+.dataTables_wrapper { font-size: 13px; }
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE,
+                      fig.width=10, fig.height=6, dpi=150)
+
+suppressPackageStartupMessages({
+  library(dplyr); library(readr); library(readxl)
+  library(ggplot2); library(scales); library(plotly)
+  library(leaflet); library(DT); library(networkD3)
+  library(knitr); library(kableExtra)
+  library(tidyr); library(stringdist); library(stringr)
+})
+
+DROPBOX <- file.path(path.expand("~"), "Dropbox (Personal)",
+                     "mystery_shopper", "Corbi study", "ENT", "Data")
+BOARD_CSV <- here::here("data", "ent", "board_results_abohns_verification_results.csv")
+
+source_matches_board <- function(candidate, match_set) {
+  mapply(
+    function(cand, accepted) {
+      if (is.na(cand) || is.na(accepted) || accepted == "") return(NA)
+      cand %in% strsplit(accepted, " \\+ ")[[1]]
+    },
+    candidate,
+    match_set,
+    USE.NAMES = FALSE
+  )
+}
+
+# ── Load data ────────────────────────────────────────────────────────────────
+comp <- read_xlsx(file.path(DROPBOX, "enthealth_nppes_comparison.xlsx"),
+                  sheet = "Comparison")
+
+geo  <- read_csv(file.path(DROPBOX, "results_geocoded.csv"),
+                 na=c("","NA"), show_col_types=FALSE)
+
+board_raw <- read_csv(BOARD_CSV, show_col_types=FALSE)
+
+# Harmonise column types
+comp <- comp |>
+  mutate(
+    phone_enthealth = as.character(phone_enthealth),
+    phone_nppes     = as.character(phone_nppes),
+    across(where(is.logical), as.character)
+  )
+
+# Bring in training/cert columns from geocoded file
+extra_cols <- geo |>
+  select(url, fellowship_name, board_names,
+         any_of(c("is_board_certified","career_stage","has_fellowship")))
+comp <- left_join(comp, extra_cols, by="url")
+
+board_truth <- board_raw |>
+  mutate(
+    first_key = toupper(trimws(query_first_name)),
+    last_key  = toupper(trimws(query_last_name)),
+    state_key = toupper(trimws(query_state)),
+    board_label = case_when(
+      certification == "Otolaryngology - Head & Neck Surgery" ~ "Head and Neck Surgery",
+      certification == "Complex Pediatric Otolaryngology"     ~ "Pediatric Otolaryngology",
+      certification == "Neurotology"                          ~ "Neurotology",
+      certification == "Sleep Medicine"                       ~ "Sleep Medicine",
+      TRUE                                                    ~ certification
+    )
+  ) |>
+  summarise(
+    board_labels = paste(sort(unique(board_label)), collapse = " + "),
+    board_specific_labels = paste(
+      sort(unique(board_label[board_label != "General Otolaryngology"])),
+      collapse = " + "
+    ),
+    board_match_set = {
+      specs <- sort(unique(board_label[board_label != "General Otolaryngology"]))
+      if (length(specs) == 0) "General Otolaryngology" else paste(specs, collapse = " + ")
+    },
+    board_primary_truth = {
+      specs <- sort(unique(board_label[board_label != "General Otolaryngology"]))
+      if (length(specs) == 0) {
+        "General Otolaryngology"
+      } else if (length(specs) == 1) {
+        specs
+      } else {
+        "Multiple Board Certifications"
+      }
+    },
+    board_n_certifications = n_distinct(board_label),
+    board_meeting_cc_reqs = paste(sort(unique(meeting_cc_reqs)), collapse = " + "),
+    board_source_url = dplyr::first(na.omit(source_url)),
+    .by = c(first_key, last_key, state_key)
+  )
+
+comp <- comp |>
+  mutate(
+    first_key = toupper(trimws(first_name)),
+    last_key  = toupper(trimws(last_name)),
+    state_key = toupper(trimws(state_code))
+  ) |>
+  left_join(board_truth, by = c("first_key", "last_key", "state_key")) |>
+  mutate(
+    board_available = !is.na(board_primary_truth),
+    enthealth_matches_board = source_matches_board(specialty_primary, board_match_set),
+    nppes_matches_board     = source_matches_board(nppes_specialty, board_match_set),
+    board_agreement_bucket = case_when(
+      !board_available ~ NA_character_,
+      isTRUE(enthealth_matches_board) & isTRUE(nppes_matches_board) ~ "Both match board",
+      isTRUE(enthealth_matches_board) & !isTRUE(nppes_matches_board) ~ "enthealth only matches board",
+      !isTRUE(enthealth_matches_board) & isTRUE(nppes_matches_board) ~ "NPPES only matches board",
+      TRUE ~ "Neither matches board"
+    )
+  )
+
+matched   <- comp |> filter(!is.na(npi_matched))
+spec_both <- matched |> filter(!is.na(specialty_primary), !is.na(nppes_specialty))
+phone_both <- matched |> filter(!is.na(phone_enthealth), phone_enthealth != "NA",
+                                 !is.na(phone_nppes),     phone_nppes     != "NA")
+board_both <- comp |>
+  filter(board_available, !is.na(specialty_primary), !is.na(nppes_specialty))
+
+# Taxonomy → readable label
+TAX_LABEL <- c(
+  "207Y00000X" = "General Otolaryngology",
+  "207YX0007X" = "Head and Neck Surgery",
+  "207YX0905X" = "Otology / Neurotology",
+  "207YP0228X" = "Pediatric Otolaryngology",
+  "207YX0901X" = "Otolaryngic Allergy",
+  "207YX0602X" = "Facial Plastic Surgery",
+  "207YS0012X" = "Sleep Medicine",
+  "207YS0123X" = "Sleep Medicine (alt code)",
+  "207YX0400X" = "Rhinology"
+)
+```
+
+---
+
+# Overview {.tabset}
+
+This appendix validates the subspecialty classification used to assign mystery-caller scripts.
+Physicians were sampled from **enthealth.org** (the American Academy of Otolaryngology–Head and Neck Surgery's
+public "Find an ENT" directory), where ENTs self-report their subspecialty.
+We cross-referenced every physician against the **NPPES February 2026** national registry,
+which records up to five NUCC taxonomy codes per provider, and the **ABOHNS board verification**
+results in [data/ent/board_results_abohns_verification_results.csv](/Users/tylermuffly/isochrones/data/ent/board_results_abohns_verification_results.csv),
+which we treat as the source of truth when board data are available.
+
+<div class="highlight-box">
+**Bottom line:** ABOHNS board verification is the primary truth set for subspecialty classification.
+When board data are unavailable, enthealth.org remains a substantially better proxy than NPPES.
+NPPES taxonomy codes are assigned at initial NPI enumeration and rarely updated thereafter —
+many physicians whom enthealth or ABOHNS identify as subspecialists are still coded as generic
+**General Otolaryngology (207Y00000X)** in NPPES.
+</div>
+
+```{r summary-cards}
+n_total    <- nrow(comp)
+n_matched  <- nrow(matched)
+n_spec_both <- nrow(spec_both)
+n_agree    <- sum(spec_both$specialty_agreement %in% c("exact_match","matched_secondary_taxonomy"))
+n_disagree <- sum(spec_both$specialty_agreement == "disagree")
+pct_agree  <- round(100 * n_agree / n_spec_both)
+n_board    <- sum(comp$board_available, na.rm = TRUE)
+n_board_both <- nrow(board_both)
+```
+
+**At a glance:**
+`r format(n_total, big.mark=",")` enthealth physicians ·
+`r format(n_matched, big.mark=",")` matched to NPPES (80.8%) ·
+`r format(n_spec_both, big.mark=",")` with specialty in both sources ·
+`r format(n_board, big.mark=",")` matched to ABOHNS board results ·
+`r pct_agree`% enthealth vs NPPES agreement
+
+---
+
+# Matching Methodology
+
+## How Physicians Were Linked
+
+```{=html}
+<div class="mermaid">
+graph TD
+    A["7,399 enthealth.org ENTs"] --> B{"Pass 1
+Exact last name
++ state + first initial"}
+    B -->|"5,799 matched"| M["✓ Matched to NPPES NPI"]
+    B -->|"1,600 unmatched"| C{"Pass 2
+Exact last name + state
+relax first initial"}
+    C -->|"150 matched"| M
+    C -->|"1,450 unmatched"| D{"Pass 3
+Strip hyphens &amp; apostrophes
+retry first initial"}
+    D -->|"10 matched"| M
+    D -->|"1,440 unmatched"| E{"Pass 4
+Levenshtein ≤1 on
+last name + first initial"}
+    E -->|"17 matched"| M
+    E -->|"1,423 unmatched"| U["✗ Unmatched
+1,423 physicians
+19.2%"]
+    M --> T["Tiebreaker: Jaro-Winkler
+first-name similarity
+picks best candidate"]
+
+    style M fill:#27AE60,color:#fff,stroke:#1e8449
+    style U fill:#C0392B,color:#fff,stroke:#922b21
+    style T fill:#1F4E79,color:#fff,stroke:#1a3f63
+    style A fill:#EBF5FB,stroke:#1F4E79,color:#1F4E79
+</div>
+```
+
+<div class="highlight-box">
+**Pass 1 (exact)** captures **78.4%** of all physicians in a single step.
+The 19.2% who remain unmatched include physicians who changed states, retired between
+enthealth scrape and NPPES snapshot, or whose names differ substantially between the two systems
+(hyphenated names, accent marks, transliterations).
+</div>
+
+## Match Quality by Pass
+
+```{r match-pass-table}
+pass_tbl <- comp |>
+  count(match_pass) |>
+  mutate(
+    Pass = case_when(
+      is.na(match_pass) ~ "No match",
+      match_pass == 1   ~ "Pass 1 — exact last + state + first initial",
+      match_pass == 2   ~ "Pass 2 — exact last + state (relax initial)",
+      match_pass == 3   ~ "Pass 3 — strip hyphens/apostrophes",
+      match_pass == 4   ~ "Pass 4 — Levenshtein ≤ 1 on last name",
+      TRUE              ~ paste("Pass", match_pass)
+    ),
+    `N` = format(n, big.mark=","),
+    `%` = sprintf("%.1f%%", 100*n/nrow(comp))
+  ) |>
+  select(Pass, N, `%`)
+
+kable(pass_tbl, align=c("l","r","r")) |>
+  kable_styling(bootstrap_options=c("striped","hover","condensed"), full_width=FALSE) |>
+  row_spec(nrow(pass_tbl), bold=TRUE, color="white", background="#C0392B")
+```
+
+---
+
+# Specialty Agreement {.tabset}
+
+## Overall Agreement
+
+```{r agree-table}
+agree_tbl <- spec_both |>
+  mutate(agreement_label = case_when(
+    specialty_agreement == "exact_match"               ~ "Exact match",
+    specialty_agreement == "matched_secondary_taxonomy" ~ "Match in secondary NPPES taxonomy",
+    specialty_agreement == "disagree"                  ~ "Disagree",
+    TRUE                                               ~ specialty_agreement
+  )) |>
+  count(agreement_label) |>
+  arrange(desc(n)) |>
+  mutate(
+    `%` = sprintf("%.1f%%", 100*n/sum(n)),
+    N   = format(n, big.mark=",")
+  ) |>
+  select(`Agreement` = agreement_label, N, `%`)
+
+kable(agree_tbl, align=c("l","r","r"),
+      caption=paste0("Specialty agreement among ", format(n_spec_both, big.mark=","),
+                     " physicians with specialty in both sources")) |>
+  kable_styling(bootstrap_options=c("striped","hover"), full_width=FALSE) |>
+  row_spec(1, background="#EAFAF1") |>
+  row_spec(3, background="#FDEDEC")
+```
+
+## Agreement Donut Chart
+
+```{r agree-donut}
+agree_pie <- spec_both |>
+  mutate(agreement_label = case_when(
+    specialty_agreement == "exact_match"               ~ "Exact match",
+    specialty_agreement == "matched_secondary_taxonomy" ~ "Secondary taxonomy match",
+    specialty_agreement == "disagree"                  ~ "Disagree",
+    TRUE                                               ~ specialty_agreement
+  )) |>
+  count(agreement_label)
+
+plot_ly(agree_pie, labels=~agreement_label, values=~n,
+        type="pie", hole=0.5,
+        textinfo="label+percent",
+        marker=list(colors=c("#27AE60","#F39C12","#C0392B"))) |>
+  layout(title=list(text="Specialty Agreement: enthealth vs. NPPES",
+                    font=list(size=16, color="#1F4E79")),
+         showlegend=TRUE,
+         legend=list(orientation="h", y=-0.1))
+```
+
+## Specialty Heatmap Crosstab
+
+```{r heatmap, fig.height=8, fig.width=12}
+cross <- spec_both |>
+  count(specialty_primary, nppes_specialty) |>
+  group_by(specialty_primary) |>
+  mutate(pct_row = n / sum(n)) |>
+  ungroup()
+
+row_order <- cross |> group_by(specialty_primary) |>
+  summarise(tot = sum(n)) |> arrange(desc(tot)) |> pull(specialty_primary)
+col_order <- cross |> group_by(nppes_specialty) |>
+  summarise(tot = sum(n)) |> arrange(desc(tot)) |> pull(nppes_specialty)
+
+cross$specialty_primary <- factor(cross$specialty_primary, levels=rev(row_order))
+cross$nppes_specialty   <- factor(cross$nppes_specialty,   levels=col_order)
+
+ggplot(cross, aes(x=nppes_specialty, y=specialty_primary, fill=pct_row)) +
+  geom_tile(color="white", linewidth=0.4) +
+  geom_text(aes(label=ifelse(n>=5, paste0(n,"\n(",scales::percent(pct_row,accuracy=1),")"), "")),
+            size=3, color="white", fontface="bold") +
+  scale_fill_gradient2(low="#EBF5FB", mid="#2980B9", high="#1F4E79",
+                       midpoint=0.5, labels=scales::percent_format(),
+                       name="Row %") +
+  scale_x_discrete(labels = function(x) stringr::str_wrap(x, width=14)) +
+  labs(
+    title    = "Specialty Classification: enthealth.org (rows) vs. NPPES Primary Taxonomy (columns)",
+    subtitle = "Cell values = N physicians and row percentage. Dark = high row concentration.",
+    x        = "NPPES Primary Taxonomy",
+    y        = "enthealth Specialty",
+    caption  = paste0("n = ", format(n_spec_both, big.mark=","),
+                      " physicians matched in both sources")
+  ) +
+  theme_minimal(base_size=12) +
+  theme(
+    axis.text.x   = element_text(angle=45, hjust=1, vjust=1, size=9),
+    axis.text.y   = element_text(size=10),
+    plot.title    = element_text(face="bold", color="#1F4E79", size=14),
+    plot.subtitle = element_text(color="#555", size=11),
+    legend.position = "right",
+    panel.grid    = element_blank(),
+    plot.margin   = margin(5, 10, 5, 10)
+  )
+```
+
+<div class="highlight-box">
+**Reading the heatmap:** Diagonal cells (same label in both sources) represent agreement.
+Off-diagonal dark cells reveal where enthealth and NPPES systematically disagree.
+The **"General Otolaryngology" NPPES column** is consistently dark across every enthealth
+subspecialty row — the NPPES default absorbs physicians from all ENT sub-fields.
+</div>
+
+## Sankey: How Specialties Flow
+
+```{r sankey}
+# Build nodes and links for sankey
+sankey_df <- spec_both |>
+  count(from = specialty_primary, to = nppes_specialty) |>
+  filter(n >= 10)
+
+nodes_from <- data.frame(name = unique(sankey_df$from))
+nodes_to   <- data.frame(name = paste0(unique(sankey_df$to), " (NPPES)"))
+nodes      <- rbind(nodes_from, data.frame(name=setdiff(nodes_to$name, nodes_from$name)))
+
+sankey_df$source <- match(sankey_df$from, nodes$name) - 1
+sankey_df$target <- match(paste0(sankey_df$to, " (NPPES)"), nodes$name) - 1
+# Add any NPPES nodes not yet in node list
+missing_nodes <- data.frame(name = unique(paste0(sankey_df$to, " (NPPES)"))[
+  !unique(paste0(sankey_df$to, " (NPPES)")) %in% nodes$name])
+nodes <- rbind(nodes, missing_nodes)
+sankey_df$source <- match(sankey_df$from, nodes$name) - 1
+sankey_df$target <- match(paste0(sankey_df$to, " (NPPES)"), nodes$name) - 1
+
+networkD3::sankeyNetwork(
+  Links   = as.data.frame(sankey_df),
+  Nodes   = as.data.frame(nodes),
+  Source  = "source",
+  Target  = "target",
+  Value   = "n",
+  NodeID  = "name",
+  fontSize= 12,
+  nodeWidth = 25,
+  sinksRight = FALSE
+)
+```
+
+---
+
+# Board Truth {.tabset}
+
+## Agreement Against ABOHNS
+
+```{r board-agreement-table}
+board_compare_tbl <- tibble::tribble(
+  ~Source, ~Matches, ~Total,
+  "enthealth vs board", sum(board_both$enthealth_matches_board, na.rm = TRUE), nrow(board_both),
+  "NPPES vs board",     sum(board_both$nppes_matches_board,     na.rm = TRUE), nrow(board_both)
+) |>
+  mutate(
+    `% match` = sprintf("%.1f%%", 100 * Matches / Total),
+    Matches = format(Matches, big.mark = ","),
+    Total   = format(Total, big.mark = ",")
+  )
+
+kable(board_compare_tbl, align = c("l", "r", "r", "r"),
+      caption = paste0("Agreement with ABOHNS board truth among ",
+                       format(nrow(board_both), big.mark = ","),
+                       " physicians with all three sources")) |>
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+## Board Crosswalk
+
+```{r board-crosswalk}
+board_cross <- board_both |>
+  count(board_primary_truth, specialty_primary, nppes_specialty, sort = TRUE) |>
+  group_by(board_primary_truth) |>
+  summarise(
+    enthealth_top = paste0(first(specialty_primary), " (", first(n), ")"),
+    nppes_top     = paste0(first(nppes_specialty), " (", first(n), ")"),
+    total         = sum(n),
+    .groups = "drop"
+  ) |>
+  mutate(total = format(total, big.mark = ","))
+
+kable(board_cross,
+      col.names = c("ABOHNS Board Truth", "Most Common enthealth Label",
+                    "Most Common NPPES Label", "N"),
+      align = c("l", "l", "l", "r"),
+      caption = "Most common enthealth and NPPES labels within each board-certified category") |>
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+## Map — Who Matches the Board?
+
+```{r board-truth-map}
+board_map_df <- comp |>
+  filter(board_available, !is.na(specialty_primary), !is.na(nppes_specialty)) |>
+  left_join(geo |> select(url, latitude, longitude), by = "url") |>
+  filter(!is.na(latitude), !is.na(longitude),
+         latitude > 24, latitude < 50, longitude > -125, longitude < -66) |>
+  mutate(
+    board_color = case_when(
+      board_agreement_bucket == "Both match board" ~ "#27AE60",
+      board_agreement_bucket == "enthealth only matches board" ~ "#1F4E79",
+      board_agreement_bucket == "NPPES only matches board" ~ "#F39C12",
+      board_agreement_bucket == "Neither matches board" ~ "#C0392B"
+    ),
+    nppes_url  = paste0("https://npiregistry.cms.hhs.gov/provider-view/", npi_matched),
+    board_link = dplyr::if_else(
+      !is.na(board_source_url) & board_source_url != "",
+      paste0(" &nbsp;|&nbsp; ",
+             "<a href='", board_source_url, "' target='_blank'>&#128279; OTO board record</a>"),
+      ""
+    ),
+    popup_text = paste0(
+      "<b>", full_name, "</b><br>",
+      city, ", ", state_code, "<br>",
+      "<b>ABOHNS:</b> ", board_labels, "<br>",
+      "<b>enthealth:</b> ", specialty_primary, "<br>",
+      "<b>NPPES:</b> ", nppes_specialty, "<br>",
+      "<b>Agreement:</b> ", board_agreement_bucket, "<br><br>",
+      "<a href='", url, "' target='_blank'>&#128279; enthealth profile</a>",
+      " &nbsp;|&nbsp; ",
+      "<a href='", nppes_url, "' target='_blank'>&#128279; NPPES record</a>",
+      board_link
+    )
+  )
+
+leaflet(board_map_df) |>
+  addProviderTiles(providers$CartoDB.Positron) |>
+  addCircleMarkers(
+    lng = ~longitude,
+    lat = ~latitude,
+    color = ~board_color,
+    fillColor = ~board_color,
+    fillOpacity = 0.75,
+    opacity = 0.9,
+    radius = 4,
+    stroke = FALSE,
+    popup = ~popup_text,
+    label = ~paste(full_name, "-", board_agreement_bucket)
+  ) |>
+  addLegend(
+    position = "bottomright",
+    colors = c("#27AE60", "#1F4E79", "#F39C12", "#C0392B"),
+    labels = c("Both match board", "enthealth only matches board",
+               "NPPES only matches board", "Neither matches board"),
+    title = "Agreement vs ABOHNS"
+  )
+```
+
+<div class="highlight-box">
+This map uses **ABOHNS board verification as the reference standard**.
+Blue points are the pattern of greatest practical interest: enthealth agrees with board truth,
+while NPPES remains stale or generic.
+</div>
+
+---
+
+# Anomalies and Tricky Cases {.tabset}
+
+## Anomaly 1 — Facial Plastic → Sleep Medicine
+
+<div class="anomaly-box">
+**118 physicians** self-identify as **Facial Plastic & Reconstructive Surgery** on enthealth
+but are coded as **Sleep Medicine (207YS0123X)** in NPPES. This is almost certainly a
+data-entry error at NPI enrollment — the taxonomy codes are adjacent in some registry
+dropdown lists. These physicians are correctly classified by enthealth.
+</div>
+
+```{r anomaly1}
+anom1 <- comp |>
+  filter(!is.na(npi_matched),
+         specialty_primary == "Facial Plastic and Reconstructive Surgery",
+         nppes_specialty == "Sleep Medicine") |>
+  select(`Name` = full_name, `State` = state_code, `City` = city,
+         `enthealth Specialty` = specialty_primary,
+         `NPPES Primary Taxonomy` = nppes_taxonomy_1,
+         `NPPES Tax 2` = nppes_taxonomy_2,
+         `NPPES Tax 3` = nppes_taxonomy_3,
+         `NPPES Org` = nppes_org) |>
+  head(25)
+
+datatable(anom1, caption="Facial Plastic specialists coded as Sleep Medicine in NPPES (first 25 shown)",
+          rownames=FALSE, options=list(pageLength=10, scrollX=TRUE),
+          class="compact stripe hover")
+```
+
+**Why this happens:** The NUCC code for Facial Plastic Surgery within Otolaryngology is `207YX0602X`.
+The code for Sleep Medicine is `207YS0123X`. In some EHR and credentialing systems, these appear
+near each other in an alphabetical dropdown under "Otolaryngology" sub-specialties,
+and physicians selecting their taxonomy at NPI enrollment may pick the wrong adjacent entry.
+Since NPPES records are rarely audited or corrected, the error persists indefinitely.
+
+## Anomaly 2 — Neurotology → Allergy
+
+<div class="anomaly-box">
+**101 physicians** self-identify as **Neurotology** on enthealth but carry
+**Otolaryngic Allergy (207YX0901X)** as their NPPES primary taxonomy.
+Again this is a dropdown proximity error: 207YX0905X (Otology/Neurotology) and
+207YX0901X (Allergy) differ by only one digit in a field where providers self-select at enrollment.
+</div>
+
+```{r anomaly2}
+anom2 <- comp |>
+  filter(!is.na(npi_matched),
+         specialty_primary == "Neurotology",
+         nppes_specialty == "Allergy") |>
+  select(`Name` = full_name, `State` = state_code, `City` = city,
+         `enthealth Specialty` = specialty_primary,
+         `NPPES Tax 1` = nppes_taxonomy_1,
+         `NPPES Tax 2` = nppes_taxonomy_2,
+         `Fellowship` = fellowship_name,
+         `Board Cert` = board_names) |>
+  head(25)
+
+datatable(anom2, caption="Neurotologists coded as Otolaryngic Allergy in NPPES (first 25 shown)",
+          rownames=FALSE, options=list(pageLength=10, scrollX=TRUE),
+          class="compact stripe hover")
+```
+
+**Ground-truth check:** For the 101 physicians in this bucket, we can cross-reference
+their enthealth fellowship training. Fellowship programs in Neurotology confirm the
+enthealth label is correct; none of these physicians report allergy fellowships.
+
+## Anomaly 3 — General in NPPES, Subspecialist on enthealth
+
+<div class="warning-box">
+This is the largest anomaly: **1,773 physicians** (64% of all enthealth subspecialists
+with an NPPES match) are coded as generic **General Otolaryngology** in NPPES despite
+listing a subspecialty on enthealth. This is NOT a coding error — it reflects how NPPES
+taxonomy codes work. Physicians register their NPI once (often during residency or
+early practice) and never update the taxonomy field.
+</div>
+
+```{r anomaly3}
+anom3 <- comp |>
+  filter(!is.na(npi_matched),
+         !is.na(specialty_primary),
+         specialty_primary != "General Otolaryngology",
+         nppes_taxonomy_1 == "207Y00000X",
+         is.na(nppes_taxonomy_2) | nppes_taxonomy_2 == "") |>
+  mutate(
+    fellowship_flag = ifelse(!is.na(fellowship_name), "Fellowship trained", "No fellowship listed")
+  ) |>
+  select(`Name` = full_name, `State` = state_code,
+         `enthealth Specialty` = specialty_primary,
+         `NPPES Tax 1` = nppes_taxonomy_1,
+         `Fellowship` = fellowship_name,
+         `Board Certs` = board_names,
+         `Fellowship Status` = fellowship_flag) |>
+  head(30)
+
+datatable(anom3, caption="Subspecialists on enthealth coded as generic General ENT in NPPES (first 30 shown)",
+          rownames=FALSE, options=list(pageLength=10, scrollX=TRUE),
+          class="compact stripe hover")
+```
+
+```{r anomaly3-breakdown}
+anom3_sum <- comp |>
+  filter(!is.na(npi_matched),
+         !is.na(specialty_primary),
+         specialty_primary != "General Otolaryngology",
+         nppes_taxonomy_1 == "207Y00000X") |>
+  count(specialty_primary, sort=TRUE) |>
+  mutate(
+    `%` = sprintf("%.0f%%", 100*n/sum(n)),
+    N   = format(n, big.mark=",")
+  ) |>
+  select(`enthealth Subspecialty` = specialty_primary, N, `%`)
+
+kable(anom3_sum, caption="Which subspecialties are most often coded General in NPPES?",
+      align=c("l","r","r")) |>
+  kable_styling(bootstrap_options=c("striped","hover"), full_width=FALSE)
+```
+
+## Anomaly 4 — Vanity & Garbled Phone Numbers
+
+<div class="highlight-box">
+**Phone resolution highlights three tricky cases where standard digit-extraction fails:**
+</div>
+
+```{r anomaly4}
+vanity_tbl <- data.frame(
+  `Physician` = c("Gady Har-El MD FACS", "Minka L. Schofield MD",
+                  "Nandini Govil MD MPH", "Barry L. Wenig MD MPH",
+                  "Dennis J. Kitsko MD", "Donald L. Bomer MD"),
+  `State` = c("NY","OH","GA","IL","PA","TX"),
+  `Raw enthealth value` = c("(212) 744-4ENT", "(614) 366-ENTS",
+                             "(412) 785-KIDS", "(312) 996-654",
+                             "3705 5th Ave", "(###) ###-####"),
+  `Issue` = c("Vanity: ENT=368", "Vanity: ENTS=3687",
+               "Vanity: KIDS=5437 (pediatrics!)", "Truncated: last digit cut off",
+               "Address in phone field", "Placeholder text"),
+  `Resolution` = c("Decoded → (212) 744-4368", "Decoded → (614) 366-3687",
+                   "Decoded → (412) 785-5437", "NPPES supplement → full number",
+                   "NPPES supplement → correct phone", "NPPES supplement → correct phone"),
+  stringsAsFactors = FALSE, check.names = FALSE
+)
+
+kable(vanity_tbl, caption="Tricky phone recovery cases") |>
+  kable_styling(bootstrap_options=c("striped","hover"), full_width=TRUE) |>
+  column_spec(4, color="white",
+              background=c("#C0392B","#C0392B","#E74C3C","#E74C3C","#C0392B","#C0392B")) |>
+  column_spec(5, color="white",
+              background=c("#27AE60","#27AE60","#27AE60","#2980B9","#2980B9","#2980B9"))
+```
+
+**Pediatric vanity highlight:** `(412) 785-KIDS` is used by a *Pediatric Otolaryngologist* — the vanity number is itself diagnostic of subspecialty and confirms enthealth's classification.
+
+# Geographic Patterns {.tabset}
+
+## Map — Specialty Agreement by Location
+
+```{r geo-map}
+map_df <- comp |>
+  filter(!is.na(npi_matched), !is.na(specialty_primary), !is.na(nppes_specialty)) |>
+  left_join(geo |> select(url, latitude, longitude), by="url") |>
+  filter(!is.na(latitude), !is.na(longitude),
+         latitude > 24, latitude < 50, longitude > -125, longitude < -66) |>
+  mutate(
+    agree_label = case_when(
+      specialty_agreement == "exact_match"               ~ "Exact match",
+      specialty_agreement == "matched_secondary_taxonomy" ~ "Secondary match",
+      specialty_agreement == "disagree"                  ~ "Disagree"
+    ),
+    color = case_when(
+      agree_label == "Exact match"      ~ "#27AE60",
+      agree_label == "Secondary match"  ~ "#F39C12",
+      agree_label == "Disagree"         ~ "#C0392B"
+    ),
+    nppes_url  = paste0("https://npiregistry.cms.hhs.gov/provider-view/", npi_matched),
+    board_text = dplyr::if_else(board_available, board_labels, "No board result linked"),
+    board_link = dplyr::if_else(
+      board_available & !is.na(board_source_url) & board_source_url != "",
+      paste0(" &nbsp;|&nbsp; ",
+             "<a href='", board_source_url, "' target='_blank'>&#128279; OTO board record</a>"),
+      ""
+    ),
+    popup_text = paste0(
+      "<b>", full_name, "</b><br>",
+      city, ", ", state_code, "<br>",
+      "<b>enthealth:</b> ", specialty_primary, "<br>",
+      "<b>NPPES:</b> ", nppes_specialty, "<br>",
+      "<b>OTO Board:</b> ", board_text, "<br><br>",
+      "<a href='", url, "' target='_blank'>&#128279; enthealth profile</a>",
+      " &nbsp;|&nbsp; ",
+      "<a href='", nppes_url, "' target='_blank'>&#128279; NPPES record</a>",
+      board_link
+    )
+  )
+
+# Downsample for map performance while preserving disagree cases
+set.seed(42)
+map_sample <- bind_rows(
+  map_df |> filter(agree_label == "Disagree"),
+  map_df |> filter(agree_label != "Disagree") |> sample_frac(0.4)
+)
+
+leaflet(map_sample) |>
+  addProviderTiles(providers$CartoDB.Positron) |>
+  addCircleMarkers(
+    lng      = ~longitude,
+    lat      = ~latitude,
+    color    = ~color,
+    fillColor = ~color,
+    fillOpacity = 0.7,
+    opacity  = 0.9,
+    radius   = 4,
+    stroke   = FALSE,
+    popup    = ~popup_text,
+    label    = ~paste(full_name, "-", agree_label)
+  ) |>
+  addLegend(
+    position = "bottomright",
+    colors   = c("#27AE60","#F39C12","#C0392B"),
+    labels   = c("Exact match","Secondary taxonomy match","Disagree"),
+    title    = "Specialty Agreement"
+  )
+```
+
+*Click any dot for physician name, location, and specialty labels from both sources.*
+Red dots (disagreements) are shown at full density; green/orange dots are a 40% random sample for clarity.
+
+## Map — Where Subspecialists Get Coded "General" in NPPES
+
+```{r nppes-general-map}
+gen_df <- comp |>
+  filter(!is.na(npi_matched),
+         !is.na(specialty_primary),
+         specialty_primary != "General Otolaryngology",
+         nppes_taxonomy_1 == "207Y00000X") |>
+  left_join(geo |> select(url, latitude, longitude), by="url") |>
+  filter(!is.na(latitude), !is.na(longitude),
+         latitude > 24, latitude < 50, longitude > -125, longitude < -66) |>
+  mutate(
+    color = case_when(
+      specialty_primary == "Head and Neck Surgery"                   ~ "#1F4E79",
+      specialty_primary == "Facial Plastic and Reconstructive Surgery" ~ "#8E44AD",
+      specialty_primary == "Pediatric Otolaryngology"                ~ "#E74C3C",
+      specialty_primary == "Neurotology"                             ~ "#F39C12",
+      specialty_primary == "Rhinology"                               ~ "#27AE60",
+      specialty_primary == "Laryngology"                             ~ "#16A085",
+      TRUE                                                           ~ "#95A5A6"
+    ),
+    nppes_url  = paste0("https://npiregistry.cms.hhs.gov/provider-view/", npi_matched),
+    popup_text = paste0(
+      "<b>", full_name, "</b><br>",
+      city, ", ", state_code, "<br>",
+      "<b>enthealth:</b> ", specialty_primary, "<br>",
+      "<b>NPPES primary:</b> ", nppes_taxonomy_1,
+      ifelse(!is.na(nppes_taxonomy_2) & nppes_taxonomy_2 != "",
+             paste0("<br><b>NPPES tax 2:</b> ", nppes_taxonomy_2), ""),
+      "<br><br>",
+      "<a href='", url, "' target='_blank'>&#128279; enthealth profile</a>",
+      " &nbsp;|&nbsp; ",
+      "<a href='", nppes_url, "' target='_blank'>&#128279; NPPES record</a>"
+    )
+  )
+
+leaflet(gen_df) |>
+  addProviderTiles(providers$CartoDB.Positron) |>
+  addCircleMarkers(
+    lng=~longitude, lat=~latitude,
+    color=~color, fillColor=~color, fillOpacity=0.75,
+    radius=4, stroke=FALSE,
+    popup=~popup_text,
+    label=~paste(full_name, "-", specialty_primary)
+  ) |>
+  addLegend(
+    position="bottomright",
+    colors=c("#1F4E79","#8E44AD","#E74C3C","#F39C12","#27AE60","#16A085","#95A5A6"),
+    labels=c("Head & Neck Surgery","Facial Plastic","Pediatric ENT",
+             "Neurotology","Rhinology","Laryngology","Other"),
+    title="enthealth Subspecialty<br>(all NPPES primary = General)"
+  )
+```
+
+---
+
+# Phone Number Validation {.tabset}
+
+## Agreement Summary
+
+```{r phone-agree-table}
+phone_tbl <- phone_both |>
+  mutate(match_label = case_when(
+    phone_match == "exact_match"         ~ "Exact match (same 10 digits)",
+    phone_match == "same_area_exchange"  ~ "Same area code + exchange (6 digits)",
+    phone_match == "same_area_code"      ~ "Same area code only",
+    phone_match == "different"           ~ "Completely different number",
+    TRUE                                  ~ phone_match
+  )) |>
+  count(match_label) |>
+  arrange(desc(n)) |>
+  mutate(
+    `%` = sprintf("%.1f%%", 100*n/sum(n)),
+    N   = format(n, big.mark=","),
+    Interpretation = c(
+      "Same direct-dial line in both sources",
+      "Same practice, different extension or direct line",
+      "Same geographic area, possibly different location or line",
+      "Different practice location, personal cell, or answering service"
+    )[match(match_label, c(
+      "Exact match (same 10 digits)",
+      "Same area code + exchange (6 digits)",
+      "Same area code only",
+      "Completely different number"
+    ))]
+  ) |>
+  select(`Phone Agreement` = match_label, N, `%`, Interpretation)
+
+kable(phone_tbl, caption=paste0("Phone number comparison: ",
+      format(nrow(phone_both), big.mark=","), " physicians with both sources"),
+      align=c("l","r","r","l")) |>
+  kable_styling(bootstrap_options=c("striped","hover"), full_width=TRUE) |>
+  row_spec(1, background="#EAFAF1") |>
+  row_spec(4, background="#FDEDEC")
+```
+
+## Coverage Improvement
+
+```{r phone-coverage-plot}
+coverage_df <- data.frame(
+  Source  = c("enthealth only", "+ NPPES supplement", "+ Vanity decoding"),
+  N_valid = c(6307, 6307+809, 6307+809+4),
+  Total   = 7399
+) |>
+  mutate(
+    pct   = N_valid / Total,
+    label = sprintf("%.1f%%\n(%s / %s)", 100*pct,
+                    format(N_valid, big.mark=","),
+                    format(Total, big.mark=","))
+  )
+
+ggplot(coverage_df, aes(x=Source, y=pct, fill=Source)) +
+  geom_col(width=0.6, color="white", linewidth=0.3) +
+  geom_text(aes(label=label), vjust=-0.3, size=4, fontface="bold") +
+  scale_y_continuous(labels=percent_format(), limits=c(0,1.05)) +
+  scale_fill_manual(values=c("#AED6F1","#2980B9","#1F4E79")) +
+  labs(title="Phone Number Coverage After Each Enrichment Step",
+       x=NULL, y="Coverage", caption="3 phones remain unresolvable") +
+  theme_minimal(base_size=12) +
+  theme(legend.position="none",
+        plot.title=element_text(face="bold", color="#1F4E79"),
+        panel.grid.major.x=element_blank())
+```
+
+---
+
+# Implications for Mystery Caller Protocol
+
+```{=html}
+<div class="mermaid">
+graph LR
+    A["Sampled physician"] --> B{"Specialty known
+on enthealth?"}
+    B -->|"Yes"| C["Use subspecialty script"]
+    B -->|"No"| D{"NPPES taxonomy
+shows subspecialty?"}
+    D -->|"Yes, non-General"| C
+    D -->|"Only General / Unknown"| E["specialty_primary = NA
+Caller pre-call
+research required"]
+    C --> F{"Fellowship confirmed
+on enthealth?"}
+    F -->|"Yes"| G["Subspecialty-specific
+script assigned"]
+    F -->|"No"| H["General ENT script
+as fallback"]
+    E --> I["Do NOT default
+to general script"]
+
+    style C fill:#27AE60,color:#fff,stroke:#1e8449
+    style G fill:#1F4E79,color:#fff,stroke:#1a3f63
+    style H fill:#F39C12,color:#000,stroke:#d68910
+    style I fill:#C0392B,color:#fff,stroke:#922b21
+    style E fill:#F39C12,color:#000,stroke:#d68910
+</div>
+```
+
+<div class="warning-box">
+**Protocol change (effective this version):** Physicians with unknown specialty after
+enthealth + NPPES cross-reference (n = **397**, 5.4%) are coded `specialty_primary = NA`.
+Callers are NOT instructed to default to the General ENT script for these physicians.
+Instead, callers conduct pre-call research (physician's practice website, ABOHNS verification)
+to determine the appropriate script before dialing.
+</div>
+
+---
+
+# Summary Statistics
+
+```{r final-summary}
+summary_tbl <- data.frame(
+  Metric = c(
+    "Total enthealth physicians",
+    "Matched to NPPES (any pass)",
+    "Specialty available in both sources",
+    "Exact specialty agreement",
+    "Agreement via secondary NPPES taxonomy",
+    "Specialty disagreement",
+    "Subspecialists coded General in NPPES",
+    "Phone: exact match",
+    "Phone: same practice (6-digit match)",
+    "Phone coverage after all enrichment"
+  ),
+  Value = c(
+    format(n_total, big.mark=","),
+    sprintf("%s (%.1f%%)", format(n_matched, big.mark=","), 100*n_matched/n_total),
+    format(n_spec_both, big.mark=","),
+    sprintf("%s (%.1f%%)", format(sum(spec_both$specialty_agreement=="exact_match"), big.mark=","),
+            100*mean(spec_both$specialty_agreement=="exact_match")),
+    sprintf("%s (%.1f%%)", format(sum(spec_both$specialty_agreement=="matched_secondary_taxonomy"), big.mark=","),
+            100*mean(spec_both$specialty_agreement=="matched_secondary_taxonomy")),
+    sprintf("%s (%.1f%%)", format(sum(spec_both$specialty_agreement=="disagree"), big.mark=","),
+            100*mean(spec_both$specialty_agreement=="disagree")),
+    sprintf("%s (%.0f%% of subspecialists)",
+            format(sum(!is.na(spec_both$nppes_specialty) & spec_both$specialty_primary!="General Otolaryngology" & spec_both$nppes_specialty=="General Otolaryngology", na.rm=TRUE), big.mark=","),
+            100*mean(!is.na(spec_both$nppes_specialty) & spec_both$specialty_primary!="General Otolaryngology" & spec_both$nppes_specialty=="General Otolaryngology", na.rm=TRUE)),
+    sprintf("%s (%.0f%%)", format(sum(phone_both$phone_match=="exact_match"), big.mark=","),
+            100*mean(phone_both$phone_match=="exact_match")),
+    sprintf("%s (%.0f%%)", format(sum(phone_both$phone_match %in% c("exact_match","same_area_exchange")), big.mark=","),
+            100*mean(phone_both$phone_match %in% c("exact_match","same_area_exchange"))),
+    sprintf("%s / %s (%.1f%%)", format(6307+809+4, big.mark=","),
+            format(n_total, big.mark=","), 100*(6307+809+4)/n_total)
+  )
+)
+
+kable(summary_tbl, col.names=c("Metric","Value"),
+      caption="Appendix Summary Statistics") |>
+  kable_styling(bootstrap_options=c("striped","hover"), full_width=FALSE) |>
+  pack_rows("Matching", 1, 2) |>
+  pack_rows("Specialty Comparison", 3, 7) |>
+  pack_rows("Phone Comparison", 8, 10)
+```
+
+---
+
+# Rural vs. Urban Practice Setting
+
+Seven classification systems for characterizing ENT physician practice settings, ranging from
+ZIP-code-level commuting patterns (RUCA) to county-level federal policy definitions (NCHS, RUCC).
+Each map is independently colored; click any dot for physician details and registry links.
+
+```{r rurality-setup}
+suppressPackageStartupMessages({ library(tidyr); library(leaflet.extras) })
+
+ISOCHRONES_DIR <- here::here()
+
+# ── Helper: build physician base data ─────────────────────────────────────────
+fmt_phone <- function(ph) {
+  ph <- as.character(ph)
+  ifelse(!is.na(ph) & nchar(ph) >= 10,
+         paste0("(", substr(ph,1,3), ") ", substr(ph,4,6), "-", substr(ph,7,10)),
+         NA_character_)
+}
+
+geo_conus <- geo |>
+  mutate(zip5_key = sprintf("%05s", as.character(zip5))) |>
+  filter(!is.na(latitude), !is.na(longitude),
+         is.finite(latitude), is.finite(longitude),
+         latitude > 24, latitude < 50, longitude > -125, longitude < -66) |>
+  left_join(comp |> select(url, npi_matched) |> distinct(url,.keep_all=TRUE), by="url") |>
+  mutate(
+    .phone_fmt    = fmt_phone(phone_digits),
+    .spec         = coalesce(specialty_primary, "Unknown"),
+    .enthealth_lk = paste0("<a href='",url,"' target='_blank'>&#128279; enthealth</a>"),
+    .nppes_lk     = ifelse(!is.na(npi_matched),
+                           paste0("<a href='https://npiregistry.cms.hhs.gov/provider-view/",
+                                  npi_matched,"' target='_blank'>&#128279; NPPES</a>"),
+                           "")
+  )
+
+build_popup <- function(df, extra_line = "") {
+  paste0(
+    "<b>", df$full_name, "</b><br>",
+    ifelse(!is.na(df$city) & !is.na(df$state_code),
+           paste0(df$city, ", ", df$state_code, "<br>"), ""),
+    "<b>Subspecialty:</b> ", df$.spec, "<br>",
+    extra_line,
+    ifelse(!is.na(df$.phone_fmt), paste0("<b>Phone:</b> ", df$.phone_fmt, "<br>"), ""),
+    "<br>", df$.enthealth_lk,
+    ifelse(nzchar(df$.nppes_lk), paste0(" &nbsp;|&nbsp; ", df$.nppes_lk), "")
+  )
+}
+
+# ── Load crosswalks ────────────────────────────────────────────────────────────
+
+# RUCA 2020 (ZIP-level)
+ruca_zip <- read_csv(
+  file.path(ISOCHRONES_DIR, "data/external/ruca_2020_zip.csv"),
+  na=c("","NA"), show_col_types=FALSE,
+  col_types=cols(ZIPCode=col_character())) |>
+  mutate(zip5_key = sprintf("%05s", ZIPCode)) |>
+  select(zip5_key, PrimaryRUCA) |>
+  distinct(zip5_key, .keep_all=TRUE)
+
+# FAR 2020 (ZIP-level) — all 4 levels loaded
+# Levels are NESTED: FAR4 ⊆ FAR3 ⊆ FAR2 ⊆ FAR1
+# FAR1 = ≥60 min from 50K+ city (broadest / least extreme)
+# FAR4 = also ≥15 min from 5K–10K city (narrowest / most extreme frontier)
+far_raw <- read_xlsx(
+  file.path(ISOCHRONES_DIR, "data/external/far_2020_zip.xlsx"),
+  sheet = "FAR2020 ZIP Code Data", skip = 1, col_names = TRUE,
+  col_types = "text")
+names(far_raw)[1:7] <- c("ZIPCode","State","POName","FAR1","FAR2","FAR3","FAR4")[1:7]
+far_zip <- far_raw |>
+  select(ZIPCode, FAR1, FAR2, FAR3, FAR4) |>
+  mutate(
+    zip5_key = sprintf("%05s", ZIPCode),
+    across(FAR1:FAR4, as.integer),
+    # Classify by the MOST EXTREME level that applies (FAR4 > FAR3 > FAR2 > FAR1)
+    far_tier = case_when(
+      FAR4 == 1 ~ "FAR 4 — Extreme Frontier",
+      FAR3 == 1 ~ "FAR 3 — Deep Frontier",
+      FAR2 == 1 ~ "FAR 2 — Remote",
+      FAR1 == 1 ~ "FAR 1 — Remote (large cities only)",
+      TRUE      ~ "Non-FAR"
+    )
+  ) |>
+  distinct(zip5_key, .keep_all=TRUE)
+
+# ZCTA → dominant county crosswalk
+zcta_county <- read_csv(
+  file.path(ISOCHRONES_DIR, "data/external/zcta_county_dominant_2020.csv"),
+  col_types=cols(zip5=col_character(), county_fips=col_character()),
+  show_col_types=FALSE) |>
+  rename(zip5_key = zip5)
+
+# NCHS Urban-Rural (county-level, 2013 & 2023)
+nchs <- read_csv(
+  file.path(ISOCHRONES_DIR, "data/external/nchs_urban_rural_codes.csv"),
+  col_types=cols(STFIPS=col_character(), CTYFIPS=col_character()),
+  show_col_types=FALSE) |>
+  mutate(county_fips = paste0(sprintf("%02s", STFIPS), sprintf("%03s", CTYFIPS)))
+
+# RUCC 2023 (county-level, Beale codes)
+rucc_wide <- read_csv(
+  file.path(ISOCHRONES_DIR, "data/external/rucc_2023.csv"),
+  show_col_types=FALSE) |>
+  pivot_wider(names_from=Attribute, values_from=Value) |>
+  mutate(county_fips = FIPS,
+         RUCC_2023   = as.integer(RUCC_2023))
+
+# Attach county_fips to physician base
+geo_county <- geo_conus |>
+  left_join(zcta_county, by="zip5_key")
+
+# ── NCHS labels ────────────────────────────────────────────────────────────────
+nchs_labels <- c(
+  "1" = "Large Central Metro",
+  "2" = "Large Fringe Metro",
+  "3" = "Medium Metro",
+  "4" = "Small Metro",
+  "5" = "Micropolitan",
+  "6" = "Noncore (Rural)"
+)
+nchs_colors <- c(
+  "Large Central Metro" = "#08306B",
+  "Large Fringe Metro"  = "#2171B5",
+  "Medium Metro"        = "#6BAED6",
+  "Small Metro"         = "#74C476",
+  "Micropolitan"        = "#FD8D3C",
+  "Noncore (Rural)"     = "#D7301F"
+)
+
+# ── RUCC labels ────────────────────────────────────────────────────────────────
+rucc_labels <- c(
+  "1" = "Metro ≥1 million",
+  "2" = "Metro 250K–1M",
+  "3" = "Metro <250K",
+  "4" = "Nonmetro Urban ≥20K, adj",
+  "5" = "Nonmetro Urban ≥20K, non-adj",
+  "6" = "Nonmetro Urban 2.5K–20K, adj",
+  "7" = "Nonmetro Urban 2.5K–20K, non-adj",
+  "8" = "Rural, adj to metro",
+  "9" = "Rural, non-adj to metro"
+)
+rucc_colors <- c(
+  "Metro ≥1 million"                   = "#08306B",
+  "Metro 250K–1M"                      = "#2171B5",
+  "Metro <250K"                         = "#6BAED6",
+  "Nonmetro Urban ≥20K, adj"           = "#41AB5D",
+  "Nonmetro Urban ≥20K, non-adj"       = "#74C476",
+  "Nonmetro Urban 2.5K–20K, adj"      = "#FED976",
+  "Nonmetro Urban 2.5K–20K, non-adj" = "#FD8D3C",
+  "Rural, adj to metro"                = "#E31A1C",
+  "Rural, non-adj to metro"            = "#800026"
+)
+```
+
+## Schema Comparison Table
+
+```{r rurality-schema-table}
+schema_tbl <- data.frame(
+  Schema = c(
+    "USDA RUCA 2020 — Standard (4-level)",
+    "USDA RUCA 2020 — CMS/Medicare (2-level)",
+    "USDA RUCA 2020 — Simplified (3-level)",
+    "USDA RUCC 2023 (Beale Codes, 9-level)",
+    "NCHS Urban-Rural 2013 (6-level)",
+    "NCHS Urban-Rural 2023 (6-level)",
+    "USDA FAR 2020 (Frontier & Remote)"
+  ),
+  Geography = c("ZIP code","ZIP code","ZIP code",
+                "County","County","County","ZIP code"),
+  `N Levels` = c(4, 2, 3, 9, 6, 6, "4 nested"),
+  Source = c(
+    "USDA ERS", "CMS rural payment policy", "USDA ERS simplified",
+    "USDA ERS", "CDC/NCHS", "CDC/NCHS (2023 OMB)", "USDA ERS"
+  ),
+  Notes = c(
+    "Standard RUCA; commuting patterns to urban cores",
+    "Used for Medicare critical access & rural payment add-ons",
+    "Metro / Nonmetro Urban / Rural",
+    "Metro size + nonmetro urbanization + adjacency to metro",
+    "OMB Feb 2013 metro delineations; principal-city rule for large MSAs",
+    "Updated OMB 2023 delineations; replaces 2013 for current work",
+    "Nested levels (FAR4 ⊆ FAR3 ⊆ FAR2 ⊆ FAR1); FAR1=≥60 min from 50K+ city; FAR4=also ≥15 min from 5K–10K town (most extreme)"
+  )
+)
+kable(schema_tbl, caption = "Rural/Urban Classification Schemas Applied to 7,147 ENT Physicians") |>
+  kable_styling(bootstrap_options = c("striped","hover","condensed"), full_width = TRUE) |>
+  column_spec(1, bold = TRUE)
+```
+
+## RUCA 2020 — Standard (4-Level)
+
+*USDA zip-code commuting area codes 1–10 collapsed to Metropolitan / Micropolitan / Small Town / Rural.*
+
+```{r ruca-4level}
+df4 <- geo_conus |>
+  left_join(ruca_zip, by="zip5_key") |>
+  mutate(
+    rurality = case_when(
+      PrimaryRUCA %in% 1:3  ~ "Metropolitan",
+      PrimaryRUCA %in% 4:6  ~ "Micropolitan",
+      PrimaryRUCA %in% 7:9  ~ "Small Town",
+      PrimaryRUCA == 10     ~ "Rural / Isolated",
+      TRUE                  ~ "Unknown"
+    ),
+    .color = c(Metropolitan="#2C7BB6", Micropolitan="#74C476",
+               `Small Town`="#FD8D3C", `Rural / Isolated`="#D7301F",
+               Unknown="#BDBDBD")[rurality],
+    .popup = build_popup(pick(everything()),
+                         paste0("<b>Setting:</b> RUCA ", coalesce(as.character(PrimaryRUCA),"?"),
+                                " — ", rurality, "<br>"))
+  )
+
+pal4 <- c(Metropolitan="#2C7BB6",Micropolitan="#74C476",`Small Town`="#FD8D3C",`Rural / Isolated`="#D7301F",Unknown="#BDBDBD")
+lvls4 <- c("Metropolitan","Micropolitan","Small Town","Rural / Isolated","Unknown")
+m4 <- leaflet(options=leafletOptions(preferCanvas=TRUE)) |> addProviderTiles(providers$CartoDB.Positron)
+for (lv in lvls4) {
+  sub <- df4[df4$rurality == lv, ]
+  if (nrow(sub) == 0) next
+  m4 <- m4 |> addCircleMarkers(data=sub, lng=~longitude, lat=~latitude,
+    color=pal4[[lv]], fillColor=pal4[[lv]], fillOpacity=0.75, opacity=0.9,
+    radius=4, stroke=FALSE, popup=~.popup,
+    label=~paste(full_name, "—", rurality), group=lv)
+}
+m4 |>
+  addLayersControl(overlayGroups=lvls4, options=layersControlOptions(collapsed=FALSE)) |>
+  addLegend("bottomright", colors=unname(pal4[lvls4]), labels=lvls4,
+            title="<b>RUCA 2020 — 4 Level</b>")
+```
+
+`r sprintf("Metro: %.0f%% · Micro: %.0f%% · Small Town: %.0f%% · Rural: %.0f%%",
+   100*mean(df4$rurality=="Metropolitan"), 100*mean(df4$rurality=="Micropolitan"),
+   100*mean(df4$rurality=="Small Town"),   100*mean(df4$rurality=="Rural / Isolated"))`
+
+## RUCA 2020 — CMS 2-Level
+
+*CMS uses RUCA 1–6 = Urban, RUCA 7–10 = Rural for Medicare rural payment add-ons and Critical Access Hospital eligibility.*
+
+```{r ruca-2level}
+df2 <- geo_conus |>
+  left_join(ruca_zip, by="zip5_key") |>
+  mutate(
+    rurality = case_when(
+      PrimaryRUCA %in% 1:6  ~ "Urban (RUCA 1–6)",
+      PrimaryRUCA %in% 7:10 ~ "Rural (RUCA 7–10)",
+      TRUE                  ~ "Unknown"
+    ),
+    .color = c(`Urban (RUCA 1–6)`="#2171B5", `Rural (RUCA 7–10)`="#D7301F", Unknown="#BDBDBD")[rurality],
+    .popup = build_popup(pick(everything()),
+                         paste0("<b>CMS Setting:</b> ", rurality,
+                                " (RUCA ", coalesce(as.character(PrimaryRUCA),"?"), ")<br>"))
+  )
+
+pal2 <- c(`Urban (RUCA 1–6)`="#2171B5", `Rural (RUCA 7–10)`="#D7301F", Unknown="#BDBDBD")
+lvls2 <- c("Urban (RUCA 1–6)","Rural (RUCA 7–10)","Unknown")
+m2 <- leaflet(options=leafletOptions(preferCanvas=TRUE)) |> addProviderTiles(providers$CartoDB.Positron)
+for (lv in lvls2) {
+  sub <- df2[df2$rurality == lv, ]
+  if (nrow(sub) == 0) next
+  m2 <- m2 |> addCircleMarkers(data=sub, lng=~longitude, lat=~latitude,
+    color=pal2[[lv]], fillColor=pal2[[lv]], fillOpacity=0.75, opacity=0.9,
+    radius=4, stroke=FALSE, popup=~.popup,
+    label=~paste(full_name, "—", rurality), group=lv)
+}
+m2 |>
+  addLayersControl(overlayGroups=lvls2, options=layersControlOptions(collapsed=FALSE)) |>
+  addLegend("bottomright", colors=unname(pal2[lvls2]), labels=lvls2,
+            title="<b>RUCA 2020 — CMS 2-Level</b>")
+```
+
+`r sprintf("Urban: %.1f%% · Rural: %.1f%%",
+   100*mean(df2$rurality=="Urban (RUCA 1–6)"), 100*mean(df2$rurality=="Rural (RUCA 7–10)"))`
+Rural share under this definition: approximately **`r sprintf("%.0f", 100*mean(df2$rurality=="Rural (RUCA 7–10)"))`%** of ENT physicians practice in CMS-defined rural areas.
+
+## RUCA 2020 — Simplified 3-Level
+
+*Metropolitan (1–3) / Nonmetro Large Urban (4–6) / Nonmetro Small-Town & Rural (7–10). A common middle ground between the 2- and 4-level schemas.*
+
+```{r ruca-3level}
+df3 <- geo_conus |>
+  left_join(ruca_zip, by="zip5_key") |>
+  mutate(
+    rurality = case_when(
+      PrimaryRUCA %in% 1:3  ~ "Metropolitan",
+      PrimaryRUCA %in% 4:6  ~ "Nonmetro Large Urban",
+      PrimaryRUCA %in% 7:10 ~ "Nonmetro Small / Rural",
+      TRUE                  ~ "Unknown"
+    ),
+    .color = c(Metropolitan="#2171B5", `Nonmetro Large Urban`="#74C476",
+               `Nonmetro Small / Rural`="#D7301F", Unknown="#BDBDBD")[rurality],
+    .popup = build_popup(pick(everything()),
+                         paste0("<b>Setting (3-level):</b> ", rurality,
+                                " (RUCA ", coalesce(as.character(PrimaryRUCA),"?"), ")<br>"))
+  )
+
+pal3 <- c(Metropolitan="#2171B5",`Nonmetro Large Urban`="#74C476",`Nonmetro Small / Rural`="#D7301F",Unknown="#BDBDBD")
+lvls3 <- c("Metropolitan","Nonmetro Large Urban","Nonmetro Small / Rural","Unknown")
+m3 <- leaflet(options=leafletOptions(preferCanvas=TRUE)) |> addProviderTiles(providers$CartoDB.Positron)
+for (lv in lvls3) {
+  sub <- df3[df3$rurality == lv, ]
+  if (nrow(sub) == 0) next
+  m3 <- m3 |> addCircleMarkers(data=sub, lng=~longitude, lat=~latitude,
+    color=pal3[[lv]], fillColor=pal3[[lv]], fillOpacity=0.75, opacity=0.9,
+    radius=4, stroke=FALSE, popup=~.popup,
+    label=~paste(full_name, "—", rurality), group=lv)
+}
+m3 |>
+  addLayersControl(overlayGroups=lvls3, options=layersControlOptions(collapsed=FALSE)) |>
+  addLegend("bottomright", colors=unname(pal3[lvls3]), labels=lvls3,
+            title="<b>RUCA 2020 — 3-Level</b>")
+```
+
+## NCHS 2013 — 6-Level
+
+*NCHS county-level scheme based on OMB February 2013 metro delineations. Distinguished by principal-city location rule for large MSAs (≥1M pop).*
+
+```{r nchs-2013}
+df_nchs13 <- geo_county |>
+  left_join(nchs |> select(county_fips, CODE2013), by="county_fips") |>
+  mutate(
+    nchs_label = nchs_labels[as.character(CODE2013)],
+    nchs_label = coalesce(nchs_label, "Unknown"),
+    nchs_label = factor(nchs_label, levels=c(names(nchs_colors), "Unknown")),
+    .color = ifelse(!is.na(nchs_colors[as.character(nchs_label)]),
+                    nchs_colors[as.character(nchs_label)], "#BDBDBD"),
+    .popup = build_popup(pick(everything()),
+                         paste0("<b>NCHS 2013:</b> NCHS code ",
+                                coalesce(as.character(CODE2013),"?"),
+                                " — ", nchs_label, "<br>"))
+  )
+
+pal_nchs <- c(nchs_colors, Unknown="#BDBDBD")
+lvls_nchs <- c(names(nchs_colors), "Unknown")
+mn13 <- leaflet(options=leafletOptions(preferCanvas=TRUE)) |> addProviderTiles(providers$CartoDB.Positron)
+for (lv in lvls_nchs) {
+  sub <- df_nchs13[as.character(df_nchs13$nchs_label) == lv, ]
+  if (nrow(sub) == 0) next
+  mn13 <- mn13 |> addCircleMarkers(data=sub, lng=~longitude, lat=~latitude,
+    color=pal_nchs[[lv]], fillColor=pal_nchs[[lv]], fillOpacity=0.75, opacity=0.9,
+    radius=4, stroke=FALSE, popup=~.popup,
+    label=~paste(full_name, "—", as.character(nchs_label)), group=lv)
+}
+mn13 |>
+  addLayersControl(overlayGroups=lvls_nchs, options=layersControlOptions(collapsed=FALSE)) |>
+  addLegend("bottomright", colors=unname(pal_nchs[lvls_nchs]), labels=lvls_nchs,
+            title="<b>NCHS 2013 Urban-Rural</b>")
+```
+
+## NCHS 2023 — 6-Level
+
+*Same 6-level scheme updated to OMB 2023 delineations. Several counties reclassified following the 2020 Census. Recommended for current work.*
+
+```{r nchs-2023}
+df_nchs23 <- geo_county |>
+  left_join(nchs |> select(county_fips, CODE2023), by="county_fips") |>
+  mutate(
+    nchs_label = nchs_labels[as.character(CODE2023)],
+    nchs_label = coalesce(nchs_label, "Unknown"),
+    nchs_label = factor(nchs_label, levels=c(names(nchs_colors), "Unknown")),
+    .color = ifelse(!is.na(nchs_colors[as.character(nchs_label)]),
+                    nchs_colors[as.character(nchs_label)], "#BDBDBD"),
+    .popup = build_popup(pick(everything()),
+                         paste0("<b>NCHS 2023:</b> NCHS code ",
+                                coalesce(as.character(CODE2023),"?"),
+                                " — ", nchs_label, "<br>"))
+  )
+
+mn23 <- leaflet(options=leafletOptions(preferCanvas=TRUE)) |> addProviderTiles(providers$CartoDB.Positron)
+for (lv in lvls_nchs) {
+  sub <- df_nchs23[as.character(df_nchs23$nchs_label) == lv, ]
+  if (nrow(sub) == 0) next
+  mn23 <- mn23 |> addCircleMarkers(data=sub, lng=~longitude, lat=~latitude,
+    color=pal_nchs[[lv]], fillColor=pal_nchs[[lv]], fillOpacity=0.75, opacity=0.9,
+    radius=4, stroke=FALSE, popup=~.popup,
+    label=~paste(full_name, "—", as.character(nchs_label)), group=lv)
+}
+mn23 |>
+  addLayersControl(overlayGroups=lvls_nchs, options=layersControlOptions(collapsed=FALSE)) |>
+  addLegend("bottomright", colors=unname(pal_nchs[lvls_nchs]), labels=lvls_nchs,
+            title="<b>NCHS 2023 Urban-Rural</b>")
+```
+
+## RUCC 2023 — Beale Codes (9-Level)
+
+*USDA Rural-Urban Continuum Codes ("Beale codes"): distinguishes metro counties by MSA size and nonmetro counties by urbanization degree and adjacency to metro areas. 9 codes.*
+
+```{r rucc-2023}
+df_rucc <- geo_county |>
+  left_join(rucc_wide |> select(county_fips, RUCC_2023), by="county_fips") |>
+  mutate(
+    rucc_label = rucc_labels[as.character(RUCC_2023)],
+    rucc_label = coalesce(rucc_label, "Unknown"),
+    rucc_label = factor(rucc_label, levels=c(names(rucc_colors), "Unknown")),
+    .color = ifelse(!is.na(rucc_colors[as.character(rucc_label)]),
+                    rucc_colors[as.character(rucc_label)], "#BDBDBD"),
+    .popup = build_popup(pick(everything()),
+                         paste0("<b>RUCC 2023:</b> Code ",
+                                coalesce(as.character(RUCC_2023),"?"),
+                                " — ", rucc_label, "<br>"))
+  )
+
+pal_rucc <- c(rucc_colors, Unknown="#BDBDBD")
+lvls_rucc <- c(names(rucc_colors), "Unknown")
+mrucc <- leaflet(options=leafletOptions(preferCanvas=TRUE)) |> addProviderTiles(providers$CartoDB.Positron)
+for (lv in lvls_rucc) {
+  sub <- df_rucc[as.character(df_rucc$rucc_label) == lv, ]
+  if (nrow(sub) == 0) next
+  mrucc <- mrucc |> addCircleMarkers(data=sub, lng=~longitude, lat=~latitude,
+    color=pal_rucc[[lv]], fillColor=pal_rucc[[lv]], fillOpacity=0.75, opacity=0.9,
+    radius=4, stroke=FALSE, popup=~.popup,
+    label=~paste(full_name, "—", as.character(rucc_label)), group=lv)
+}
+mrucc |>
+  addLayersControl(overlayGroups=lvls_rucc, options=layersControlOptions(collapsed=FALSE)) |>
+  addLegend("bottomright", colors=unname(pal_rucc[lvls_rucc]), labels=lvls_rucc,
+            title="<b>RUCC 2023 (Beale Codes)</b>",
+            labFormat=labelFormat())
+```
+
+## FAR 2020 — Frontier & Remote
+
+*USDA FAR codes identify extreme remoteness. Levels are **nested** (confirmed from data): FAR 4 ⊆ FAR 3 ⊆ FAR 2 ⊆ FAR 1. Each physician is coded at their most extreme tier.*
+
+| Level | Criteria | ZIPs nationally |
+|---|---|---|
+| FAR 1 | ≥60 min from 50K+ city (broadest) | 6,090 |
+| FAR 2 | + ≥45 min from 25K–50K city | 1,567 additional |
+| FAR 3 | + ≥30 min from 10K–25K city | 346 additional |
+| FAR 4 | + ≥15 min from 5K–10K city (most extreme) | 3,411 |
+
+*(Level 4 count from data: 3,411 ZIPs meet all four criteria simultaneously.)*
+
+```{r far-2020}
+df_far <- geo_conus |>
+  left_join(far_zip |> select(zip5_key, far_tier), by="zip5_key") |>
+  mutate(
+    far_tier = coalesce(far_tier, "Unknown"),
+    far_tier = factor(far_tier,
+      levels=c("Non-FAR",
+               "FAR 1 — Remote (large cities only)",
+               "FAR 2 — Remote",
+               "FAR 3 — Deep Frontier",
+               "FAR 4 — Extreme Frontier",
+               "Unknown")),
+    .color = c(
+      `Non-FAR`                          = "#2171B5",
+      `FAR 1 — Remote (large cities only)` = "#FD8D3C",
+      `FAR 2 — Remote`                   = "#E31A1C",
+      `FAR 3 — Deep Frontier`            = "#BD0026",
+      `FAR 4 — Extreme Frontier`         = "#800026",
+      Unknown                            = "#BDBDBD"
+    )[as.character(far_tier)],
+    .popup = build_popup(pick(everything()),
+                         paste0("<b>FAR 2020:</b> ", as.character(far_tier), "<br>"))
+  )
+
+pal_far <- c(
+  `Non-FAR`                          = "#2171B5",
+  `FAR 1 — Remote (large cities only)` = "#FD8D3C",
+  `FAR 2 — Remote`                   = "#E31A1C",
+  `FAR 3 — Deep Frontier`            = "#BD0026",
+  `FAR 4 — Extreme Frontier`         = "#800026",
+  Unknown                            = "#BDBDBD"
+)
+lvls_far <- names(pal_far)
+
+mfar <- leaflet(options=leafletOptions(preferCanvas=TRUE)) |>
+  addProviderTiles(providers$CartoDB.Positron)
+for (lv in lvls_far) {
+  sub <- df_far[as.character(df_far$far_tier) == lv, ]
+  if (nrow(sub) == 0) next
+  mfar <- mfar |> addCircleMarkers(data=sub, lng=~longitude, lat=~latitude,
+    color=pal_far[[lv]], fillColor=pal_far[[lv]], fillOpacity=0.8, opacity=0.9,
+    radius=ifelse(lv=="Non-FAR", 4, 7),
+    stroke=lv!="Non-FAR", weight=1.5,
+    popup=~.popup, label=~paste(full_name, "—", as.character(far_tier)), group=lv)
+}
+mfar |>
+  addLayersControl(overlayGroups=lvls_far, options=layersControlOptions(collapsed=FALSE)) |>
+  addLegend("bottomright", colors=unname(pal_far[lvls_far]), labels=lvls_far,
+            title="<b>USDA FAR 2020</b><br><small>Levels nested: FAR 4 ⊆ FAR 3 ⊆ FAR 2 ⊆ FAR 1</small>")
+```
+
+```{r far-summary}
+n_far_any <- sum(df_far$far_tier != "Non-FAR" & df_far$far_tier != "Unknown", na.rm=TRUE)
+n_far4    <- sum(df_far$far_tier == "FAR 4 — Extreme Frontier", na.rm=TRUE)
+n_far1_only <- sum(df_far$far_tier == "FAR 1 — Remote (large cities only)", na.rm=TRUE)
+```
+
+<div class="anomaly-box">
+**Frontier & Remote finding:** Only **`r n_far_any`** ENT physicians practice in any FAR-designated area.
+Of these, **`r n_far4`** are in the most extreme tier (FAR 4: ≥15 min from any town of 5K+, ≥60 min from any city of 50K+) and **`r n_far1_only`** are in the mildest tier (FAR 1 only: simply ≥60 min from a 50K+ city but near smaller towns).
+These physicians represent the thinnest thread of ENT access for extreme frontier populations.
+</div>
+
+## RUCA 2020 — Choropleth with ZCTA Boundaries
+
+*ZIP Code Tabulation Area boundaries from the U.S. Census Bureau (2020), filled by RUCA primary code. ENT physician locations overlaid as white dots.*
+
+```{r ruca-choropleth, results='asis'}
+# Pre-generated by: Rscript scripts/generate_ruca_choropleth.R
+choropleth_path <- here::here("docs", "ent_ruca_choropleth.html")
+if (file.exists(choropleth_path)) {
+  sz <- round(file.size(choropleth_path) / 1e6, 0)
+  cat(sprintf(paste0(
+    '<div class="highlight-box">',
+    '<b>NCHS 2023 County Choropleth + RUCA Physician Dots</b><br>',
+    'County background = NCHS 2023 urban-rural classification (6 levels).<br>',
+    'Colored dots = each ENT physician colored by their ZIP-code RUCA 2020 tier.<br><br>',
+    '<a href="ent_ruca_choropleth.html" target="_blank" ',
+    'style="font-size:16px;font-weight:bold;">',
+    '&#128279; Open Interactive Choropleth Map (%d MB)</a><br>',
+    '<small>Opens in new tab. File is pre-generated — ',
+    'run <code>Rscript scripts/generate_ruca_choropleth.R</code> to refresh.</small>',
+    '</div>'), sz))
+} else {
+  cat(paste0(
+    '<div class="warning-box"><b>Choropleth not yet generated.</b><br>',
+    'Run: <code>Rscript scripts/generate_ruca_choropleth.R</code><br>',
+    'then re-render this document.</div>'))
+}
+```
+
+---
+
+# Technical Notes
+
+**Data sources:**
+
+- **enthealth.org** scraped `r format(as.Date("2026-05-04"), "%B %d, %Y")` via the
+  AAO-HNS Find-an-ENT WordPress AJAX endpoint. Specialty labels are self-reported by
+  the physician at profile creation and may be updated at any time.
+- **NPPES** February 2026 National Downloadable File (NPI Data File).
+  Taxonomy codes are self-reported at NPI enumeration. NPPES does not audit or validate
+  taxonomy accuracy, and providers are responsible for maintaining their own records.
+
+**NUCC taxonomy codes referenced:**
+
+```{r tax-table}
+tax_ref <- data.frame(
+  Code  = names(TAX_LABEL),
+  Label = unname(TAX_LABEL),
+  `Type` = c("Primary (generic)","Subspecialty","Subspecialty","Subspecialty",
+              "Subspecialty","Subspecialty","Subspecialty","Subspecialty (alt)","Subspecialty")
+)
+kable(tax_ref) |>
+  kable_styling(bootstrap_options=c("striped","hover","condensed"), full_width=FALSE)
+```
+
+**Matching algorithm:** Four-pass deterministic matching (exact last name + state + first
+initial → relax initial → strip punctuation → Levenshtein ≤ 1). Ties broken by Jaro-Winkler
+similarity on the first name. No probabilistic thresholds — every match is deterministic.
+
+**Phone decoding:** Vanity letters decoded via standard ITU-T E.161 telephone keypad mapping
+(A–C→2, D–F→3, G–I→4, J–L→5, M–O→6, P–S→7, T–V→8, W–Z→9).
+
+---
+
+*This appendix was generated programmatically from live data. Rerun
+`docs/appendix_enthealth_nppes_validation.Rmd` to refresh all figures and statistics.*

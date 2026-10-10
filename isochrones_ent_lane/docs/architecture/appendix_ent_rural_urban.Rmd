@@ -1,0 +1,1073 @@
+---
+title: "Appendix: Rural vs. Urban ENT Physician Practice Settings"
+subtitle: "Mystery Caller Study — Geographic Access Analysis"
+author: "Tyler Muffly MD · Generated `r format(Sys.Date(), '%B %d, %Y')`"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    toc_depth: 3
+    number_sections: true
+    df_print: paged
+    code_folding: hide
+    self_contained: true
+---
+
+```{css, echo=FALSE}
+body { font-family: "Source Sans Pro", sans-serif; font-size: 15px; }
+h1, h2, h3 { color: #1F4E79; }
+.highlight-box {
+  background: #EBF5FB; border-left: 4px solid #1F4E79;
+  padding: 12px 16px; margin: 14px 0; border-radius: 4px;
+}
+.warning-box {
+  background: #FEF9E7; border-left: 4px solid #F39C12;
+  padding: 12px 16px; margin: 14px 0; border-radius: 4px;
+}
+.anomaly-box {
+  background: #FDEDEC; border-left: 4px solid #C0392B;
+  padding: 12px 16px; margin: 14px 0; border-radius: 4px;
+}
+.good-box {
+  background: #EAFAF1; border-left: 4px solid #27AE60;
+  padding: 12px 16px; margin: 14px 0; border-radius: 4px;
+}
+table { font-size: 13px; }
+.dataTables_wrapper { font-size: 13px; }
+.leaflet { margin-bottom: 12px; }
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE,
+                      fig.width=11, fig.height=6, dpi=150)
+
+suppressPackageStartupMessages({
+  library(dplyr); library(readr); library(readxl); library(tidyr)
+  library(ggplot2); library(scales); library(plotly)
+  library(leaflet); library(leaflet.extras)
+  library(DT); library(knitr); library(kableExtra)
+  library(stringr); library(here)
+})
+
+DROPBOX    <- file.path(path.expand("~"), "Dropbox (Personal)",
+                        "mystery_shopper", "Corbi study", "ENT", "Data")
+ISOCHRONES <- here::here()
+EXT        <- file.path(ISOCHRONES, "data/external")
+
+# ── Load physician data ───────────────────────────────────────────────────────
+geo <- read_csv(file.path(DROPBOX, "results_geocoded.csv"),
+                na=c("","NA"), show_col_types=FALSE) |>
+  mutate(zip5 = sprintf("%05s", as.character(zip5)))
+
+geo_conus <- geo |>
+  filter(!is.na(latitude), !is.na(longitude),
+         is.finite(latitude), is.finite(longitude),
+         latitude > 24, latitude < 50,
+         longitude > -125, longitude < -66)
+
+# NPI lookup from comparison file
+npi_lookup <- tryCatch(
+  read_xlsx(file.path(DROPBOX, "enthealth_nppes_comparison.xlsx"),
+            sheet="Comparison", na=c("","NA")) |>
+    select(url, npi_matched) |>
+    filter(!is.na(npi_matched)) |>
+    distinct(url, .keep_all=TRUE),
+  error = function(e) tibble(url=character(), npi_matched=character())
+)
+geo_conus <- left_join(geo_conus, npi_lookup, by="url")
+
+# ── Load crosswalks ───────────────────────────────────────────────────────────
+ruca_zip <- read_csv(file.path(EXT, "ruca_2020_zip.csv"),
+                     col_types=cols(ZIPCode=col_character()),
+                     na=c("","NA"), show_col_types=FALSE) |>
+  mutate(zip5=sprintf("%05s", ZIPCode)) |>
+  select(zip5, PrimaryRUCA) |>
+  distinct(zip5, .keep_all=TRUE)
+
+far_raw <- read_xlsx(file.path(EXT, "far_2020_zip.xlsx"),
+                     sheet="FAR2020 ZIP Code Data", skip=1,
+                     col_names=TRUE, col_types="text")
+names(far_raw)[1:7] <- c("ZIPCode","State","POName","FAR1","FAR2","FAR3","FAR4")[1:7]
+far_zip <- far_raw |>
+  select(ZIPCode, FAR1:FAR4) |>
+  mutate(zip5=sprintf("%05s", ZIPCode),
+         across(FAR1:FAR4, as.integer),
+         far_tier = case_when(
+           FAR4==1 ~ "FAR 4 — Extreme Frontier",
+           FAR3==1 ~ "FAR 3 — Deep Frontier",
+           FAR2==1 ~ "FAR 2 — Remote",
+           FAR1==1 ~ "FAR 1 — Remote (large cities only)",
+           TRUE    ~ "Non-FAR"
+         )) |>
+  distinct(zip5, .keep_all=TRUE)
+
+zcta_county <- read_csv(file.path(EXT, "zcta_county_dominant_2020.csv"),
+                        col_types=cols(zip5=col_character(),
+                                       county_fips=col_character()),
+                        show_col_types=FALSE)
+
+nchs <- read_csv(file.path(EXT, "nchs_urban_rural_codes.csv"),
+                 col_types=cols(STFIPS=col_character(),
+                                CTYFIPS=col_character()),
+                 show_col_types=FALSE) |>
+  mutate(county_fips=paste0(sprintf("%02s", STFIPS),
+                             sprintf("%03s", CTYFIPS)))
+
+rucc_wide <- read_csv(file.path(EXT, "rucc_2023.csv"),
+                      show_col_types=FALSE) |>
+  pivot_wider(names_from=Attribute, values_from=Value) |>
+  mutate(county_fips=FIPS, RUCC_2023=as.integer(RUCC_2023))
+
+# ── Label maps ───────────────────────────────────────────────────────────────
+nchs_labels <- c(
+  "1"="Large Central Metro","2"="Large Fringe Metro",
+  "3"="Medium Metro","4"="Small Metro",
+  "5"="Micropolitan","6"="Noncore (Rural)"
+)
+nchs_colors <- c(
+  "Large Central Metro"="#08306B","Large Fringe Metro"="#2171B5",
+  "Medium Metro"="#6BAED6","Small Metro"="#74C476",
+  "Micropolitan"="#FD8D3C","Noncore (Rural)"="#D7301F",
+  "Unknown"="#E0E0E0"
+)
+rucc_labels <- c(
+  "1"="Metro ≥1M","2"="Metro 250K–1M","3"="Metro <250K",
+  "4"="Nonmetro Urban ≥20K adj","5"="Nonmetro Urban ≥20K non-adj",
+  "6"="Nonmetro Urban 2.5K–20K adj","7"="Nonmetro Urban 2.5K–20K non-adj",
+  "8"="Rural adj to metro","9"="Rural non-adj to metro"
+)
+rucc_colors <- c(
+  "Metro ≥1M"="#08306B","Metro 250K–1M"="#2171B5","Metro <250K"="#6BAED6",
+  "Nonmetro Urban ≥20K adj"="#41AB5D","Nonmetro Urban ≥20K non-adj"="#74C476",
+  "Nonmetro Urban 2.5K–20K adj"="#FED976","Nonmetro Urban 2.5K–20K non-adj"="#FD8D3C",
+  "Rural adj to metro"="#E31A1C","Rural non-adj to metro"="#800026"
+)
+
+# ── Join all schemas to physician data ───────────────────────────────────────
+df <- geo_conus |>
+  left_join(ruca_zip,    by="zip5") |>
+  left_join(far_zip |> select(zip5, far_tier, FAR1:FAR4), by="zip5") |>
+  left_join(zcta_county, by="zip5") |>
+  left_join(nchs |> select(county_fips, CODE2013, CODE2023), by="county_fips") |>
+  left_join(rucc_wide |> select(county_fips, RUCC_2023), by="county_fips") |>
+  mutate(
+    # RUCA classifications
+    ruca4 = case_when(
+      PrimaryRUCA %in% 1:3  ~ "Metropolitan",
+      PrimaryRUCA %in% 4:6  ~ "Micropolitan",
+      PrimaryRUCA %in% 7:9  ~ "Small Town",
+      PrimaryRUCA == 10     ~ "Rural / Isolated",
+      TRUE                  ~ "Unknown"
+    ),
+    ruca2 = case_when(
+      PrimaryRUCA %in% 1:6  ~ "Urban (RUCA 1–6)",
+      PrimaryRUCA %in% 7:10 ~ "Rural (RUCA 7–10)",
+      TRUE                  ~ "Unknown"
+    ),
+    ruca3 = case_when(
+      PrimaryRUCA %in% 1:3  ~ "Metropolitan",
+      PrimaryRUCA %in% 4:6  ~ "Nonmetro Large Urban",
+      PrimaryRUCA %in% 7:10 ~ "Nonmetro Small / Rural",
+      TRUE                  ~ "Unknown"
+    ),
+    # NCHS
+    nchs2013_label = coalesce(nchs_labels[as.character(CODE2013)], "Unknown"),
+    nchs2023_label = coalesce(nchs_labels[as.character(CODE2023)], "Unknown"),
+    # RUCC
+    rucc_label = coalesce(rucc_labels[as.character(RUCC_2023)], "Unknown"),
+    # FAR
+    far_tier = coalesce(far_tier, "Unknown"),
+    # Specialty display
+    .spec = coalesce(specialty_primary, "Unknown/General"),
+    # Popup links
+    .enthealth_lk = paste0("<a href='",url,"' target='_blank'>&#128279; enthealth</a>"),
+    .nppes_lk = ifelse(!is.na(npi_matched),
+      paste0("<a href='https://npiregistry.cms.hhs.gov/provider-view/",
+             npi_matched,"' target='_blank'>&#128279; NPPES</a>"), "")
+  )
+
+# Phone formatter
+fmt_phone <- function(ph) {
+  ph <- as.character(ph)
+  ifelse(!is.na(ph) & nchar(ph)>=10,
+         paste0("(", substr(ph,1,3), ") ", substr(ph,4,6), "-", substr(ph,7,10)),
+         NA_character_)
+}
+
+build_popup <- function(df, setting_line) {
+  paste0(
+    "<b>", df$full_name, "</b><br>",
+    ifelse(!is.na(df$city) & !is.na(df$state_code),
+           paste0(df$city, ", ", df$state_code, "<br>"), ""),
+    "<b>Subspecialty:</b> ", df$.spec, "<br>",
+    setting_line, "<br>",
+    df$.enthealth_lk,
+    ifelse(nzchar(df$.nppes_lk),
+           paste0(" &nbsp;|&nbsp; ", df$.nppes_lk), "")
+  )
+}
+
+n_total <- nrow(df)
+```
+
+---
+
+# Overview
+
+<div class="highlight-box">
+**Bottom line across all seven schemas:** ENT physicians are overwhelmingly concentrated
+in metropolitan areas. Between **93–94%** practice in metro settings under every classification
+system. Fewer than **1%** practice in frontier or rural-isolated areas — regardless of which
+federal definition is applied.
+</div>
+
+This appendix applies seven distinct federal rural/urban classification systems to
+`r format(n_total, big.mark=",")` ENT physicians geocoded from enthealth.org (CONUS only).
+Each schema uses different geographic units (ZIP code vs. county) and different definitional
+logic, yet they converge on the same picture: ENT is an overwhelmingly urban specialty.
+
+---
+
+# Schema Comparison
+
+```{=html}
+<p style="color:#555;margin-bottom:14px;">Click any schema name to expand its full definition, classification levels, and policy context.</p>
+
+<div class="panel-group" id="schema-accordion" role="tablist" aria-multiselectable="true">
+
+<!-- ── Schema 1: RUCA 4-level ─────────────────────────────────────────────── -->
+<div class="panel panel-default">
+  <div class="panel-heading" role="tab" id="h1">
+    <h4 class="panel-title">
+      <a role="button" data-toggle="collapse" data-parent="#schema-accordion"
+         href="#s1" aria-expanded="false" aria-controls="s1"
+         style="text-decoration:none;color:#1F4E79;font-weight:600;">
+        &#9654; &nbsp;USDA RUCA 2020 — Standard (4-level)
+        <span class="badge" style="background:#6BAED6;margin-left:8px;">ZIP code</span>
+        <span class="badge" style="background:#41AB5D;margin-left:4px;">4 levels</span>
+      </a>
+    </h4>
+  </div>
+  <div id="s1" class="panel-collapse collapse" role="tabpanel">
+    <div class="panel-body">
+      <p><strong>What it measures:</strong> Rural-Urban Commuting Area codes classify ZIP codes based on the share of residents who commute to an urbanized area core. Higher codes = more rural commuting patterns.</p>
+      <table class="table table-condensed table-bordered" style="margin-top:10px;font-size:13px;">
+        <thead><tr><th>RUCA Codes</th><th>Category</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr style="background:#EBF5FB;"><td>1–3</td><td><strong>Metropolitan</strong></td><td>Urbanized area ≥50,000; high commuting to metro core</td></tr>
+          <tr style="background:#EBF5FB;"><td>4–6</td><td><strong>Micropolitan</strong></td><td>Urban cluster 10,000–49,999; commuting to micro core</td></tr>
+          <tr style="background:#FEF9E7;"><td>7–9</td><td><strong>Small Town</strong></td><td>Urban cluster 2,500–9,999; small-town commuting</td></tr>
+          <tr style="background:#FDEDEC;"><td>10</td><td><strong>Rural / Isolated</strong></td><td>No meaningful commuting to any urban area</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:8px;"><strong>Policy use:</strong> Standard schema for health services research. Most commonly cited in rural health literature.</p>
+      <div style="background:#EAFAF1;border-left:4px solid #27AE60;padding:10px 14px;margin:10px 0;border-radius:4px;">
+        <strong>&#10003; When to use this schema:</strong> Use RUCA 4-level when you want results directly comparable to existing rural health literature, when your unit of analysis is the physician's ZIP code, or when you need to distinguish micropolitan centers (small cities with some specialty access) from completely rural areas. This is the default schema for most peer-reviewed health services research studies.
+      </div>
+      <p><strong>Source:</strong> <a href="https://www.ers.usda.gov/data-products/rural-urban-commuting-area-codes/" target="_blank">USDA Economic Research Service</a> — 2020 RUCA data, updated with 2020 Census.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── Schema 2: RUCA 2-level (CMS) ──────────────────────────────────────── -->
+<div class="panel panel-default">
+  <div class="panel-heading" role="tab" id="h2">
+    <h4 class="panel-title">
+      <a role="button" data-toggle="collapse" data-parent="#schema-accordion"
+         href="#s2" aria-expanded="false" aria-controls="s2"
+         style="text-decoration:none;color:#1F4E79;font-weight:600;">
+        &#9654; &nbsp;USDA RUCA 2020 — CMS/Medicare (2-level)
+        <span class="badge" style="background:#6BAED6;margin-left:8px;">ZIP code</span>
+        <span class="badge" style="background:#41AB5D;margin-left:4px;">2 levels</span>
+      </a>
+    </h4>
+  </div>
+  <div id="s2" class="panel-collapse collapse" role="tabpanel">
+    <div class="panel-body">
+      <p><strong>What it measures:</strong> A simplified dichotomy derived from RUCA codes used by CMS for Medicare payment adjustments and Health Professional Shortage Area (HPSA) designations.</p>
+      <table class="table table-condensed table-bordered" style="margin-top:10px;font-size:13px;">
+        <thead><tr><th>RUCA Codes</th><th>Category</th><th>Medicare Implication</th></tr></thead>
+        <tbody>
+          <tr style="background:#EBF5FB;"><td>1–6</td><td><strong>Urban</strong></td><td>Standard Medicare payment rates; not eligible for rural add-on payments</td></tr>
+          <tr style="background:#FDEDEC;"><td>7–10</td><td><strong>Rural</strong></td><td>Eligible for Medicare rural add-on payments; rural HPSA scoring boost</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:8px;"><strong>Policy use:</strong> This threshold (RUCA 7+) is the operative definition for many federal rural healthcare programs, Medicare Advantage rural bonuses, and loan forgiveness eligibility.</p>
+      <div style="background:#EAFAF1;border-left:4px solid #27AE60;padding:10px 14px;margin:10px 0;border-radius:4px;">
+        <strong>&#10003; When to use this schema:</strong> Use the CMS 2-level schema when your question is specifically about <em>regulatory eligibility</em> — whether a physician qualifies for Medicare rural add-on payments, rural HPSA bonus payments, or NHSC/HRSA loan forgiveness programs. Also use this when communicating with policymakers who need a simple binary: "is this provider in a rural area for payment purposes?"
+      </div>
+      <p><strong>Source:</strong> CMS Rural Health policy, codified in 42 CFR § 412.64.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── Schema 3: RUCA 3-level ─────────────────────────────────────────────── -->
+<div class="panel panel-default">
+  <div class="panel-heading" role="tab" id="h3">
+    <h4 class="panel-title">
+      <a role="button" data-toggle="collapse" data-parent="#schema-accordion"
+         href="#s3" aria-expanded="false" aria-controls="s3"
+         style="text-decoration:none;color:#1F4E79;font-weight:600;">
+        &#9654; &nbsp;USDA RUCA 2020 — Simplified (3-level)
+        <span class="badge" style="background:#6BAED6;margin-left:8px;">ZIP code</span>
+        <span class="badge" style="background:#41AB5D;margin-left:4px;">3 levels</span>
+      </a>
+    </h4>
+  </div>
+  <div id="s3" class="panel-collapse collapse" role="tabpanel">
+    <div class="panel-body">
+      <p><strong>What it measures:</strong> A three-tier collapse of RUCA codes that separates metropolitan areas from two distinct nonmetro tiers, preserving the distinction between micropolitan centers and truly rural areas.</p>
+      <table class="table table-condensed table-bordered" style="margin-top:10px;font-size:13px;">
+        <thead><tr><th>RUCA Codes</th><th>Category</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr style="background:#EBF5FB;"><td>1–3</td><td><strong>Metropolitan</strong></td><td>Urban core commuting areas ≥50,000 population</td></tr>
+          <tr style="background:#FEF9E7;"><td>4–6</td><td><strong>Nonmetro Large Urban</strong></td><td>Micropolitan clusters 10,000–49,999</td></tr>
+          <tr style="background:#FDEDEC;"><td>7–10</td><td><strong>Nonmetro Small / Rural</strong></td><td>Small towns and rural areas; very limited urban commuting</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:8px;"><strong>Policy use:</strong> Used when researchers want to distinguish micropolitan communities (which have hospitals and some specialty care) from truly rural areas.</p>
+      <div style="background:#EAFAF1;border-left:4px solid #27AE60;padding:10px 14px;margin:10px 0;border-radius:4px;">
+        <strong>&#10003; When to use this schema:</strong> Use the 3-level schema when you're studying <em>access gradients</em> and want to separate micropolitan areas (small cities that often have general ENT but rarely subspecialists) from completely rural areas. Particularly useful when your hypothesis is that the critical shortage is in rural areas <em>other than</em> micropolitan centers — a common finding in surgical subspecialty access research.
+      </div>
+      <p><strong>Source:</strong> Derived from <a href="https://www.ers.usda.gov/data-products/rural-urban-commuting-area-codes/" target="_blank">USDA ERS RUCA 2020</a>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── Schema 4: RUCC 2023 ────────────────────────────────────────────────── -->
+<div class="panel panel-default">
+  <div class="panel-heading" role="tab" id="h4">
+    <h4 class="panel-title">
+      <a role="button" data-toggle="collapse" data-parent="#schema-accordion"
+         href="#s4" aria-expanded="false" aria-controls="s4"
+         style="text-decoration:none;color:#1F4E79;font-weight:600;">
+        &#9654; &nbsp;USDA RUCC 2023 — Beale Codes (9-level)
+        <span class="badge" style="background:#E8D5B0;margin-left:8px;color:#333;">County</span>
+        <span class="badge" style="background:#41AB5D;margin-left:4px;">9 levels</span>
+      </a>
+    </h4>
+  </div>
+  <div id="s4" class="panel-collapse collapse" role="tabpanel">
+    <div class="panel-body">
+      <p><strong>What it measures:</strong> Rural-Urban Continuum Codes (Beale codes) classify <em>counties</em> on a 9-point scale based on MSA population size (metro counties) or urbanization level plus adjacency to a metro area (nonmetro counties). Updated to 2020 Census and 2023 OMB delineations.</p>
+      <table class="table table-condensed table-bordered" style="margin-top:10px;font-size:13px;">
+        <thead><tr><th>Code</th><th>Category</th><th>Definition</th></tr></thead>
+        <tbody>
+          <tr style="background:#EBF5FB;"><td>1</td><td><strong>Metro ≥1M</strong></td><td>Counties in metro areas of ≥1 million population</td></tr>
+          <tr style="background:#EBF5FB;"><td>2</td><td><strong>Metro 250K–1M</strong></td><td>Counties in metro areas of 250,000–999,999</td></tr>
+          <tr style="background:#EBF5FB;"><td>3</td><td><strong>Metro &lt;250K</strong></td><td>Counties in metro areas of &lt;250,000</td></tr>
+          <tr style="background:#F0FFF0;"><td>4</td><td><strong>Nonmetro ≥20K adj</strong></td><td>Urban population ≥20,000; adjacent to metro</td></tr>
+          <tr style="background:#F0FFF0;"><td>5</td><td><strong>Nonmetro ≥20K non-adj</strong></td><td>Urban population ≥20,000; not adjacent to metro</td></tr>
+          <tr style="background:#FEF9E7;"><td>6</td><td><strong>Nonmetro 2.5K–20K adj</strong></td><td>Urban population 2,500–19,999; adjacent to metro</td></tr>
+          <tr style="background:#FEF9E7;"><td>7</td><td><strong>Nonmetro 2.5K–20K non-adj</strong></td><td>Urban population 2,500–19,999; not adjacent to metro</td></tr>
+          <tr style="background:#FDEDEC;"><td>8</td><td><strong>Rural adj to metro</strong></td><td>Completely rural or &lt;2,500 urban; adjacent to metro</td></tr>
+          <tr style="background:#FDEDEC;"><td>9</td><td><strong>Rural non-adj to metro</strong></td><td>Completely rural or &lt;2,500 urban; not adjacent to metro</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:8px;"><strong>Policy use:</strong> Used by USDA for rural development programs. "Adjacency" matters because counties near metro areas have different economic dynamics than isolated rural counties.</p>
+      <div style="background:#EAFAF1;border-left:4px solid #27AE60;padding:10px 14px;margin:10px 0;border-radius:4px;">
+        <strong>&#10003; When to use this schema:</strong> Use RUCC when your data or outcomes are <em>county-level</em> (e.g., hospital discharge rates, county health rankings, Medicare county-level utilization). Also use when the distinction between adjacent and non-adjacent rural counties matters — physicians in rural counties near metros may be easier to recruit and may serve patients who can drive to metro hospitals, unlike physicians in truly isolated nonmetro counties (codes 5, 7, 9). Preferred for USDA Rural Development grant applications.
+      </div>
+      <p><strong>Source:</strong> <a href="https://www.ers.usda.gov/data-products/rural-urban-continuum-codes/" target="_blank">USDA ERS Rural-Urban Continuum Codes 2023</a>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── Schema 5: NCHS 2013 ────────────────────────────────────────────────── -->
+<div class="panel panel-default">
+  <div class="panel-heading" role="tab" id="h5">
+    <h4 class="panel-title">
+      <a role="button" data-toggle="collapse" data-parent="#schema-accordion"
+         href="#s5" aria-expanded="false" aria-controls="s5"
+         style="text-decoration:none;color:#1F4E79;font-weight:600;">
+        &#9654; &nbsp;NCHS Urban-Rural Classification 2013 (6-level)
+        <span class="badge" style="background:#E8D5B0;margin-left:8px;color:#333;">County</span>
+        <span class="badge" style="background:#41AB5D;margin-left:4px;">6 levels</span>
+      </a>
+    </h4>
+  </div>
+  <div id="s5" class="panel-collapse collapse" role="tabpanel">
+    <div class="panel-body">
+      <p><strong>What it measures:</strong> The National Center for Health Statistics scheme classifies <em>counties</em> using OMB MSA delineations plus an additional rule distinguishing "large central" metros (those containing the principal city) from "large fringe" metros (suburbs of large metros). Based on February 2013 OMB MSA delineations.</p>
+      <table class="table table-condensed table-bordered" style="margin-top:10px;font-size:13px;">
+        <thead><tr><th>Code</th><th>Category</th><th>Definition</th></tr></thead>
+        <tbody>
+          <tr style="background:#EBF5FB;"><td>1</td><td><strong>Large Central Metro</strong></td><td>MSA ≥1M; county IS or contains the largest principal city</td></tr>
+          <tr style="background:#EBF5FB;"><td>2</td><td><strong>Large Fringe Metro</strong></td><td>MSA ≥1M; suburban county (not the principal city county)</td></tr>
+          <tr style="background:#EBF5FB;"><td>3</td><td><strong>Medium Metro</strong></td><td>MSA 250,000–999,999 population</td></tr>
+          <tr style="background:#EBF5FB;"><td>4</td><td><strong>Small Metro</strong></td><td>MSA &lt;250,000 population</td></tr>
+          <tr style="background:#FEF9E7;"><td>5</td><td><strong>Micropolitan</strong></td><td>Micropolitan Statistical Area (urban cluster 10K–49,999)</td></tr>
+          <tr style="background:#FDEDEC;"><td>6</td><td><strong>Noncore (Rural)</strong></td><td>Not in any MSA or Micropolitan area</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:8px;"><strong>Policy use:</strong> Standard for CDC vital statistics, health disparity research, and CDC WONDER mortality analyses. Widely used in epidemiology to separate urban cores from suburban rings.</p>
+      <div style="background:#EAFAF1;border-left:4px solid #27AE60;padding:10px 14px;margin:10px 0;border-radius:4px;">
+        <strong>&#10003; When to use this schema:</strong> Use NCHS 2013 when <em>replicating prior literature</em> that used NCHS codes (most studies published 2014–2022 used 2013 delineations), or when linking to CDC WONDER data coded under 2013 boundaries. Also use when your research question specifically involves the Large Central Metro / Large Fringe Metro distinction — this schema uniquely distinguishes downtown urban cores from their suburban rings, which is important for studying urban health disparities and physician distribution between city centers and suburbs.
+      </div>
+      <p><strong>Source:</strong> <a href="https://www.cdc.gov/nchs/data_access/urban_rural.htm" target="_blank">CDC/NCHS Urban-Rural Classification Scheme for Counties</a>, 2013 edition.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── Schema 6: NCHS 2023 ────────────────────────────────────────────────── -->
+<div class="panel panel-default">
+  <div class="panel-heading" role="tab" id="h6">
+    <h4 class="panel-title">
+      <a role="button" data-toggle="collapse" data-parent="#schema-accordion"
+         href="#s6" aria-expanded="false" aria-controls="s6"
+         style="text-decoration:none;color:#1F4E79;font-weight:600;">
+        &#9654; &nbsp;NCHS Urban-Rural Classification 2023 (6-level)
+        <span class="badge" style="background:#E8D5B0;margin-left:8px;color:#333;">County</span>
+        <span class="badge" style="background:#41AB5D;margin-left:4px;">6 levels</span>
+      </a>
+    </h4>
+  </div>
+  <div id="s6" class="panel-collapse collapse" role="tabpanel">
+    <div class="panel-body">
+      <p><strong>What it measures:</strong> Same 6-level structure as the 2013 scheme, updated to 2020 Census population counts and July 2023 OMB MSA delineations. Contains several geographic boundary changes relative to 2013.</p>
+      <table class="table table-condensed table-bordered" style="margin-top:10px;font-size:13px;">
+        <thead><tr><th>Code</th><th>Category</th><th>Definition</th></tr></thead>
+        <tbody>
+          <tr style="background:#EBF5FB;"><td>1</td><td><strong>Large Central Metro</strong></td><td>MSA ≥1M; county containing the principal city</td></tr>
+          <tr style="background:#EBF5FB;"><td>2</td><td><strong>Large Fringe Metro</strong></td><td>MSA ≥1M; suburban counties</td></tr>
+          <tr style="background:#EBF5FB;"><td>3</td><td><strong>Medium Metro</strong></td><td>MSA 250,000–999,999</td></tr>
+          <tr style="background:#EBF5FB;"><td>4</td><td><strong>Small Metro</strong></td><td>MSA &lt;250,000</td></tr>
+          <tr style="background:#FEF9E7;"><td>5</td><td><strong>Micropolitan</strong></td><td>Micropolitan Statistical Area</td></tr>
+          <tr style="background:#FDEDEC;"><td>6</td><td><strong>Noncore (Rural)</strong></td><td>Not in any MSA or Micropolitan area</td></tr>
+        </tbody>
+      </table>
+      <div class="warning-box" style="margin-top:10px;">
+        <strong>⚠ Key 2013→2023 boundary changes:</strong>
+        <ul style="margin:6px 0 0 0;padding-left:18px;">
+          <li><strong>Connecticut (2022):</strong> 8 legacy counties dissolved; replaced by 9 planning regions — affects NCHS county-level assignment for all CT physicians</li>
+          <li><strong>Alaska:</strong> Valdez-Cordova Census Area split into two new areas (Chugach + Copper River)</li>
+          <li><strong>Virginia:</strong> Bedford city merged into Bedford County</li>
+        </ul>
+      </div>
+      <div style="background:#EAFAF1;border-left:4px solid #27AE60;padding:10px 14px;margin:10px 0;border-radius:4px;">
+        <strong>&#10003; When to use this schema:</strong> Use NCHS 2023 for <em>new research</em> that doesn't need to replicate prior literature, or when your data reflects post-2020 Census geography. Prefer 2023 over 2013 for any work submitted after 2024, as reviewers may flag use of outdated delineations. Note: if your study area includes Connecticut, be aware that 8 counties no longer exist as census-recognized entities — you may need to recode CT physicians to planning regions.
+      </div>
+      <p><strong>Source:</strong> <a href="https://www.cdc.gov/nchs/data_access/urban_rural.htm" target="_blank">CDC/NCHS Urban-Rural Classification Scheme for Counties</a>, 2023 edition.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── Schema 7: FAR 2020 ─────────────────────────────────────────────────── -->
+<div class="panel panel-default">
+  <div class="panel-heading" role="tab" id="h7">
+    <h4 class="panel-title">
+      <a role="button" data-toggle="collapse" data-parent="#schema-accordion"
+         href="#s7" aria-expanded="false" aria-controls="s7"
+         style="text-decoration:none;color:#1F4E79;font-weight:600;">
+        &#9654; &nbsp;USDA FAR 2020 — Frontier &amp; Remote Areas
+        <span class="badge" style="background:#6BAED6;margin-left:8px;">ZIP code</span>
+        <span class="badge" style="background:#D7301F;margin-left:4px;color:white;">4 nested levels</span>
+      </a>
+    </h4>
+  </div>
+  <div id="s7" class="panel-collapse collapse" role="tabpanel">
+    <div class="panel-body">
+      <p><strong>What it measures:</strong> Frontier and Remote (FAR) codes identify ZIP codes that are geographically isolated by travel time from urban services. Unlike RUCA and RUCC which focus on commuting and adjacency, FAR focuses purely on drive-time distance from towns of varying sizes. The four levels are <em>strictly nested</em>: every FAR4 ZIP is also FAR3, FAR2, and FAR1.</p>
+      <table class="table table-condensed table-bordered" style="margin-top:10px;font-size:13px;">
+        <thead><tr><th>Level</th><th>Criteria</th><th>Interpretation</th></tr></thead>
+        <tbody>
+          <tr style="background:#FEE0D2;"><td><strong>FAR 1</strong><br><small>(broadest)</small></td><td>≥60 min drive to nearest city of 50,000+</td><td>Far from any large city; still may have access to mid-size towns</td></tr>
+          <tr style="background:#FC8D59;color:white;"><td><strong>FAR 2</strong></td><td>FAR 1 <em>plus</em> ≥45 min to nearest city of 25,000+</td><td>Far from large and mid-size cities</td></tr>
+          <tr style="background:#D7301F;color:white;"><td><strong>FAR 3</strong></td><td>FAR 2 <em>plus</em> ≥30 min to nearest town of 10,000+</td><td>Far from large cities, mid-size cities, and most towns</td></tr>
+          <tr style="background:#67000D;color:white;"><td><strong>FAR 4</strong><br><small>(most extreme)</small></td><td>FAR 3 <em>plus</em> ≥15 min to nearest community of 5,000+</td><td>Extreme frontier: no meaningful urban access within a reasonable drive</td></tr>
+        </tbody>
+      </table>
+      <div class="highlight-box" style="margin-top:10px;">
+        <strong>Important — nesting rule:</strong> FAR4 ⊆ FAR3 ⊆ FAR2 ⊆ FAR1. If a ZIP is FAR4, it is automatically FAR1, FAR2, and FAR3 as well. The levels are coded as binary flags (0/1) in the raw data file, not mutually exclusive categories. Only 5 combinations exist in the data: <code>0000</code>, <code>1000</code>, <code>1100</code>, <code>1110</code>, <code>1111</code>.
+      </div>
+      <p><strong>Coverage note:</strong> FAR uses ESRI ZIP code boundaries (not USPS delivery areas), so ~5–6% of ZIP codes in physician data will not match. This is documented in the FAR codebook.</p>
+      <div style="background:#EAFAF1;border-left:4px solid #27AE60;padding:10px 14px;margin:10px 0;border-radius:4px;">
+        <strong>&#10003; When to use this schema:</strong> Use FAR when your question is about <em>extreme geographic isolation</em> — not just "rural" but truly frontier. Relevant for: Indian Health Service planning, HRSA Frontier Community Health Integration Project grants, emergency medical services response planning, and telemedicine need assessments. FAR physicians are so distant from urban services that standard RUCA "Rural/Isolated" (code 10) may actually understate their isolation. Use FAR 4 to find the hardest-to-serve communities where a single physician's presence or absence has outsized population impact.
+      </div>
+      <p><strong>Source:</strong> <a href="https://www.ers.usda.gov/data-products/frontier-and-remote-area-codes/" target="_blank">USDA ERS Frontier and Remote Area Codes 2020</a>.</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- end panel-group -->
+```
+
+---
+
+# Cross-Schema Summary Statistics
+
+```{r cross-schema-stats}
+# Compute "rural/nonmetro" share for each schema
+ruca4_rural   <- mean(df$ruca4 %in% c("Small Town","Rural / Isolated"), na.rm=TRUE)
+ruca4_metro   <- mean(df$ruca4 == "Metropolitan", na.rm=TRUE)
+ruca2_rural   <- mean(df$ruca2 == "Rural (RUCA 7–10)", na.rm=TRUE)
+ruca3_nonmetro <- mean(df$ruca3 == "Nonmetro Small / Rural", na.rm=TRUE)
+nchs13_noncore <- mean(df$nchs2013_label %in% c("Micropolitan","Noncore (Rural)"), na.rm=TRUE)
+nchs23_noncore <- mean(df$nchs2023_label %in% c("Micropolitan","Noncore (Rural)"), na.rm=TRUE)
+rucc_nonmetro  <- mean(df$RUCC_2023 >= 4, na.rm=TRUE)
+far_any        <- mean(df$far_tier != "Non-FAR" & df$far_tier != "Unknown", na.rm=TRUE)
+
+summary_tbl <- data.frame(
+  Schema = c(
+    "RUCA 4-level","RUCA 2-level (CMS)","RUCA 3-level",
+    "RUCC 2023","NCHS 2013","NCHS 2023","FAR 2020"
+  ),
+  Metropolitan_pct = c(
+    sprintf("%.1f%%", 100*ruca4_metro),
+    sprintf("%.1f%%", 100*mean(df$ruca2=="Urban (RUCA 1–6)", na.rm=TRUE)),
+    sprintf("%.1f%%", 100*mean(df$ruca3=="Metropolitan", na.rm=TRUE)),
+    sprintf("%.1f%%", 100*mean(df$RUCC_2023 %in% 1:3, na.rm=TRUE)),
+    sprintf("%.1f%%", 100*mean(df$nchs2013_label %in% c("Large Central Metro","Large Fringe Metro","Medium Metro","Small Metro"), na.rm=TRUE)),
+    sprintf("%.1f%%", 100*mean(df$nchs2023_label %in% c("Large Central Metro","Large Fringe Metro","Medium Metro","Small Metro"), na.rm=TRUE)),
+    sprintf("%.1f%%", 100*mean(df$far_tier=="Non-FAR", na.rm=TRUE))
+  ),
+  Rural_Nonmetro_pct = c(
+    sprintf("%.1f%%", 100*ruca4_rural),
+    sprintf("%.1f%%", 100*ruca2_rural),
+    sprintf("%.1f%%", 100*ruca3_nonmetro),
+    sprintf("%.1f%%", 100*rucc_nonmetro),
+    sprintf("%.1f%%", 100*nchs13_noncore),
+    sprintf("%.1f%%", 100*nchs23_noncore),
+    sprintf("%.1f%%", 100*far_any)
+  ),
+  N_Rural_Nonmetro = c(
+    sum(df$ruca4 %in% c("Small Town","Rural / Isolated"), na.rm=TRUE),
+    sum(df$ruca2 == "Rural (RUCA 7–10)", na.rm=TRUE),
+    sum(df$ruca3 == "Nonmetro Small / Rural", na.rm=TRUE),
+    sum(df$RUCC_2023 >= 4, na.rm=TRUE),
+    sum(df$nchs2013_label %in% c("Micropolitan","Noncore (Rural)"), na.rm=TRUE),
+    sum(df$nchs2023_label %in% c("Micropolitan","Noncore (Rural)"), na.rm=TRUE),
+    sum(df$far_tier != "Non-FAR" & df$far_tier != "Unknown", na.rm=TRUE)
+  )
+)
+
+kable(summary_tbl,
+      col.names=c("Schema","Metro / Urban %","Rural / Nonmetro %","N Rural/Nonmetro"),
+      caption=sprintf("Rural/Nonmetro share of %s CONUS ENT physicians by schema",
+                      format(n_total, big.mark=","))) |>
+  kable_styling(bootstrap_options=c("striped","hover"), full_width=FALSE) |>
+  column_spec(3, bold=TRUE, color="white",
+              background=spec_color(c(ruca4_rural,ruca2_rural,ruca3_nonmetro,
+                                      rucc_nonmetro,nchs13_noncore,nchs23_noncore,
+                                      far_any)*100,
+                                    palette="Reds", begin=0.2))
+```
+
+```{r cross-schema-bar, fig.height=4}
+bar_df <- data.frame(
+  schema  = c("RUCA 4-level","RUCA CMS\n2-level","RUCA\n3-level",
+               "RUCC 2023","NCHS 2013","NCHS 2023","FAR 2020"),
+  rural   = 100*c(ruca4_rural,ruca2_rural,ruca3_nonmetro,
+                  rucc_nonmetro,nchs13_noncore,nchs23_noncore,far_any),
+  metro   = 100*c(ruca4_metro,
+                  mean(df$ruca2=="Urban (RUCA 1–6)",na.rm=TRUE),
+                  mean(df$ruca3=="Metropolitan",na.rm=TRUE),
+                  mean(df$RUCC_2023 %in% 1:3,na.rm=TRUE),
+                  mean(df$nchs2013_label %in% c("Large Central Metro","Large Fringe Metro","Medium Metro","Small Metro"),na.rm=TRUE),
+                  mean(df$nchs2023_label %in% c("Large Central Metro","Large Fringe Metro","Medium Metro","Small Metro"),na.rm=TRUE),
+                  mean(df$far_tier=="Non-FAR",na.rm=TRUE))
+)
+
+bar_df |>
+  pivot_longer(c(metro, rural), names_to="setting", values_to="pct") |>
+  mutate(setting=ifelse(setting=="metro","Metro / Urban","Rural / Nonmetro"),
+         schema=factor(schema, levels=bar_df$schema)) |>
+  ggplot(aes(x=schema, y=pct, fill=setting)) +
+  geom_col(position="stack", width=0.6) +
+  geom_text(aes(label=ifelse(pct>2, sprintf("%.1f%%",pct), "")),
+            position=position_stack(vjust=0.5),
+            color="white", fontface="bold", size=3.5) +
+  scale_fill_manual(values=c("Metro / Urban"="#2171B5","Rural / Nonmetro"="#D7301F")) +
+  scale_y_continuous(labels=percent_format(scale=1), limits=c(0,105)) +
+  labs(title="Metro vs. Rural/Nonmetro ENT Physician Share by Schema",
+       x=NULL, y="% of physicians", fill=NULL) +
+  theme_minimal(base_size=12) +
+  theme(legend.position="top",
+        plot.title=element_text(face="bold", color="#1F4E79"),
+        panel.grid.major.x=element_blank())
+```
+
+---
+
+# Subspecialty by Rurality
+
+Which ENT subspecialties are more or less likely to be in rural/nonmetro settings?
+
+```{r subspec-rural, fig.height=6}
+subspec_rural <- df |>
+  filter(!is.na(specialty_primary), specialty_primary != "Unknown/General",
+         ruca2 != "Unknown") |>
+  group_by(specialty_primary) |>
+  summarise(
+    n_total   = n(),
+    n_rural   = sum(ruca2 == "Rural (RUCA 7–10)"),
+    pct_rural = n_rural / n_total,
+    .groups   = "drop"
+  ) |>
+  filter(n_total >= 20) |>
+  arrange(desc(pct_rural))
+
+ggplot(subspec_rural,
+       aes(x=reorder(specialty_primary, pct_rural), y=pct_rural)) +
+  geom_col(fill="#D7301F", width=0.65, alpha=0.85) +
+  geom_text(aes(label=sprintf("%.1f%%  (n=%d)", 100*pct_rural, n_total)),
+            hjust=-0.05, size=3.5, color="#333") +
+  scale_y_continuous(labels=percent_format(), limits=c(0, 0.18),
+                     expand=expansion(mult=c(0,0.15))) +
+  coord_flip() +
+  labs(title="% of ENT Physicians in Rural Setting (RUCA 7–10) by Subspecialty",
+       subtitle="CMS 2-level definition; subspecialties with n ≥ 20 shown",
+       x=NULL, y="% Rural (RUCA 7–10)") +
+  theme_minimal(base_size=12) +
+  theme(plot.title=element_text(face="bold", color="#1F4E79"),
+        panel.grid.major.y=element_blank())
+```
+
+---
+
+# State-Level Analysis
+
+## States With Highest Rural ENT Share
+
+```{r state-rural-table}
+state_rural <- df |>
+  filter(!is.na(state_code), ruca2 != "Unknown") |>
+  group_by(state_code) |>
+  summarise(
+    n_total   = n(),
+    n_rural   = sum(ruca2 == "Rural (RUCA 7–10)"),
+    pct_rural = n_rural / n_total,
+    .groups   = "drop"
+  ) |>
+  filter(n_total >= 10) |>
+  arrange(desc(pct_rural))
+
+DT::datatable(
+  state_rural |>
+    mutate(pct_rural = sprintf("%.1f%%", 100*pct_rural)) |>
+    rename(State=state_code, `Total ENTs`=n_total,
+           `Rural ENTs`=n_rural, `% Rural`=pct_rural),
+  caption  = "Rural ENT Share by State (RUCA 7–10 definition, states with ≥10 ENTs)",
+  rownames = FALSE,
+  options  = list(pageLength=15, scrollX=TRUE),
+  class    = "compact stripe hover"
+)
+```
+
+## States With No Rural ENT Physicians
+
+```{r no-rural-states}
+no_rural <- df |>
+  filter(!is.na(state_code), ruca2 != "Unknown") |>
+  group_by(state_code) |>
+  summarise(n_rural=sum(ruca2=="Rural (RUCA 7–10)"),
+            n_total=n(), .groups="drop") |>
+  filter(n_rural==0, n_total>=5) |>
+  arrange(state_code)
+
+if (nrow(no_rural) > 0) {
+  kable(no_rural, col.names=c("State","Rural ENTs","Total ENTs"),
+        caption="States with zero rural ENT physicians (n≥5 total)") |>
+    kable_styling(bootstrap_options=c("striped","hover"), full_width=FALSE)
+} else {
+  cat("Every state with ≥5 ENT physicians has at least one in a rural setting.")
+}
+```
+
+---
+
+# Frontier & Remote Physicians (FAR 2020)
+
+The USDA Frontier and Remote codes identify the most isolated practice locations.
+FAR levels are nested (FAR4 ⊆ FAR3 ⊆ FAR2 ⊆ FAR1); a physician is classified
+at their most extreme tier.
+
+```{r far-summary-stats}
+far_tbl <- df |>
+  filter(far_tier != "Unknown") |>
+  count(far_tier) |>
+  mutate(
+    pct   = sprintf("%.2f%%", 100*n/sum(n)),
+    Order = c("FAR 4 — Extreme Frontier"=1, "FAR 3 — Deep Frontier"=2,
+              "FAR 2 — Remote"=3, "FAR 1 — Remote (large cities only)"=4,
+              "Non-FAR"=5)[far_tier]
+  ) |>
+  arrange(Order) |>
+  select(far_tier, n, pct)
+
+kable(far_tbl, col.names=c("FAR Tier","N Physicians","% of Total"),
+      caption="ENT Physicians by USDA FAR 2020 Tier") |>
+  kable_styling(bootstrap_options=c("striped","hover"), full_width=FALSE) |>
+  column_spec(1, bold=TRUE)
+```
+
+```{r far-physicians-table}
+far_docs <- df |>
+  filter(far_tier != "Non-FAR", far_tier != "Unknown") |>
+  arrange(far_tier, state_code, full_name) |>
+  select(
+    `Name`          = full_name,
+    `State`         = state_code,
+    `City`          = city,
+    `ZIP`           = zip5,
+    `FAR Tier`      = far_tier,
+    `Subspecialty`  = .spec,
+    `RUCA`          = PrimaryRUCA
+  )
+
+DT::datatable(
+  far_docs,
+  caption  = "All ENT Physicians in USDA Frontier & Remote Areas",
+  rownames = FALSE,
+  options  = list(pageLength=20, scrollX=TRUE),
+  class    = "compact stripe hover"
+)
+```
+
+<div class="anomaly-box">
+**`r nrow(far_docs)` ENT physicians** practice in USDA-designated Frontier & Remote areas.
+These represent the thinnest thread of ENT access for the most isolated rural populations.
+A mystery-caller study should flag these physicians — they may have longer wait times,
+limited subspecialty scope, or be the sole ENT serving a large geographic area.
+</div>
+
+---
+
+# Maps
+
+## RUCA 2020 — Standard 4-Level
+
+```{r map-ruca4}
+pal4 <- c(Metropolitan="#2C7BB6", Micropolitan="#74C476",
+          `Small Town`="#FD8D3C", `Rural / Isolated`="#D7301F",
+          Unknown="#BDBDBD")
+lvls4 <- c("Metropolitan","Micropolitan","Small Town","Rural / Isolated","Unknown")
+df4 <- df |>
+  mutate(.color=pal4[ruca4],
+         .popup=build_popup(pick(everything()),
+           paste0("<b>RUCA:</b> ", PrimaryRUCA, " — ", ruca4)))
+
+m <- leaflet(options=leafletOptions(preferCanvas=TRUE)) |>
+  addProviderTiles(providers$CartoDB.Positron)
+for (lv in lvls4) {
+  sub <- df4[df4$ruca4==lv,]
+  if (nrow(sub)==0) next
+  m <- m |> addCircleMarkers(data=sub, lng=~longitude, lat=~latitude,
+    color=pal4[[lv]], fillColor=pal4[[lv]], fillOpacity=0.75, opacity=0.9,
+    radius=4, stroke=FALSE, popup=~.popup,
+    label=~paste(full_name,"—",ruca4), group=lv)
+}
+m |>
+  addLayersControl(overlayGroups=lvls4,
+                   options=layersControlOptions(collapsed=FALSE)) |>
+  addLegend("bottomright", colors=unname(pal4[lvls4]), labels=lvls4,
+            title="<b>RUCA 2020 — 4 Level</b>")
+```
+
+## RUCA 2020 — CMS 2-Level
+
+```{r map-ruca2}
+pal2 <- c(`Urban (RUCA 1–6)`="#2171B5", `Rural (RUCA 7–10)`="#D7301F",
+          Unknown="#BDBDBD")
+lvls2 <- names(pal2)
+df2 <- df |>
+  mutate(.color=pal2[ruca2],
+         .popup=build_popup(pick(everything()),
+           paste0("<b>CMS Setting:</b> ", ruca2,
+                  " (RUCA ", coalesce(as.character(PrimaryRUCA),"?"), ")")))
+
+m2 <- leaflet(options=leafletOptions(preferCanvas=TRUE)) |>
+  addProviderTiles(providers$CartoDB.Positron)
+for (lv in lvls2) {
+  sub <- df2[df2$ruca2==lv,]
+  if (nrow(sub)==0) next
+  m2 <- m2 |> addCircleMarkers(data=sub, lng=~longitude, lat=~latitude,
+    color=pal2[[lv]], fillColor=pal2[[lv]], fillOpacity=0.75, opacity=0.9,
+    radius=4, stroke=FALSE, popup=~.popup,
+    label=~paste(full_name,"—",ruca2), group=lv)
+}
+m2 |>
+  addLayersControl(overlayGroups=lvls2,
+                   options=layersControlOptions(collapsed=FALSE)) |>
+  addLegend("bottomright", colors=unname(pal2[lvls2]), labels=lvls2,
+            title="<b>RUCA 2020 — CMS 2-Level</b>")
+```
+
+## RUCA 2020 — Simplified 3-Level
+
+```{r map-ruca3}
+pal3 <- c(Metropolitan="#2171B5", `Nonmetro Large Urban`="#74C476",
+          `Nonmetro Small / Rural`="#D7301F", Unknown="#BDBDBD")
+lvls3 <- names(pal3)
+df3 <- df |>
+  mutate(.color=pal3[ruca3],
+         .popup=build_popup(pick(everything()),
+           paste0("<b>3-Level:</b> ", ruca3,
+                  " (RUCA ", coalesce(as.character(PrimaryRUCA),"?"), ")")))
+
+m3 <- leaflet(options=leafletOptions(preferCanvas=TRUE)) |>
+  addProviderTiles(providers$CartoDB.Positron)
+for (lv in lvls3) {
+  sub <- df3[df3$ruca3==lv,]
+  if (nrow(sub)==0) next
+  m3 <- m3 |> addCircleMarkers(data=sub, lng=~longitude, lat=~latitude,
+    color=pal3[[lv]], fillColor=pal3[[lv]], fillOpacity=0.75, opacity=0.9,
+    radius=4, stroke=FALSE, popup=~.popup,
+    label=~paste(full_name,"—",ruca3), group=lv)
+}
+m3 |>
+  addLayersControl(overlayGroups=lvls3,
+                   options=layersControlOptions(collapsed=FALSE)) |>
+  addLegend("bottomright", colors=unname(pal3[lvls3]), labels=lvls3,
+            title="<b>RUCA 2020 — 3-Level</b>")
+```
+
+## NCHS 2013 — 6-Level
+
+```{r map-nchs2013}
+pal_nchs <- c(nchs_colors, Unknown="#BDBDBD")
+lvls_nchs <- c(names(nchs_colors), "Unknown")
+dfn13 <- df |>
+  mutate(.color=coalesce(pal_nchs[nchs2013_label], "#BDBDBD"),
+         .popup=build_popup(pick(everything()),
+           paste0("<b>NCHS 2013:</b> Code ",
+                  coalesce(as.character(CODE2013),"?"),
+                  " — ", nchs2013_label)))
+
+mn13 <- leaflet(options=leafletOptions(preferCanvas=TRUE)) |>
+  addProviderTiles(providers$CartoDB.Positron)
+for (lv in lvls_nchs) {
+  sub <- dfn13[dfn13$nchs2013_label==lv,]
+  if (nrow(sub)==0) next
+  col <- pal_nchs[[lv]]
+  mn13 <- mn13 |> addCircleMarkers(data=sub, lng=~longitude, lat=~latitude,
+    color=col, fillColor=col, fillOpacity=0.75, opacity=0.9,
+    radius=4, stroke=FALSE, popup=~.popup,
+    label=~paste(full_name,"—",nchs2013_label), group=lv)
+}
+mn13 |>
+  addLayersControl(overlayGroups=lvls_nchs,
+                   options=layersControlOptions(collapsed=FALSE)) |>
+  addLegend("bottomright", colors=unname(pal_nchs[lvls_nchs]),
+            labels=lvls_nchs, title="<b>NCHS 2013</b>")
+```
+
+## NCHS 2023 — 6-Level
+
+```{r map-nchs2023}
+dfn23 <- df |>
+  mutate(.color=coalesce(pal_nchs[nchs2023_label], "#BDBDBD"),
+         .popup=build_popup(pick(everything()),
+           paste0("<b>NCHS 2023:</b> Code ",
+                  coalesce(as.character(CODE2023),"?"),
+                  " — ", nchs2023_label)))
+
+mn23 <- leaflet(options=leafletOptions(preferCanvas=TRUE)) |>
+  addProviderTiles(providers$CartoDB.Positron)
+for (lv in lvls_nchs) {
+  sub <- dfn23[dfn23$nchs2023_label==lv,]
+  if (nrow(sub)==0) next
+  col <- pal_nchs[[lv]]
+  mn23 <- mn23 |> addCircleMarkers(data=sub, lng=~longitude, lat=~latitude,
+    color=col, fillColor=col, fillOpacity=0.75, opacity=0.9,
+    radius=4, stroke=FALSE, popup=~.popup,
+    label=~paste(full_name,"—",nchs2023_label), group=lv)
+}
+mn23 |>
+  addLayersControl(overlayGroups=lvls_nchs,
+                   options=layersControlOptions(collapsed=FALSE)) |>
+  addLegend("bottomright", colors=unname(pal_nchs[lvls_nchs]),
+            labels=lvls_nchs, title="<b>NCHS 2023</b>")
+```
+
+## RUCC 2023 — Beale Codes (9-Level)
+
+```{r map-rucc}
+pal_rucc <- c(rucc_colors, Unknown="#BDBDBD")
+lvls_rucc <- c(names(rucc_colors), "Unknown")
+dfrucc <- df |>
+  mutate(.color=coalesce(pal_rucc[rucc_label], "#BDBDBD"),
+         .popup=build_popup(pick(everything()),
+           paste0("<b>RUCC 2023:</b> Code ",
+                  coalesce(as.character(RUCC_2023),"?"),
+                  " — ", rucc_label)))
+
+mrucc <- leaflet(options=leafletOptions(preferCanvas=TRUE)) |>
+  addProviderTiles(providers$CartoDB.Positron)
+for (lv in lvls_rucc) {
+  sub <- dfrucc[dfrucc$rucc_label==lv,]
+  if (nrow(sub)==0) next
+  col <- pal_rucc[[lv]]
+  mrucc <- mrucc |> addCircleMarkers(data=sub, lng=~longitude, lat=~latitude,
+    color=col, fillColor=col, fillOpacity=0.75, opacity=0.9,
+    radius=4, stroke=FALSE, popup=~.popup,
+    label=~paste(full_name,"—",rucc_label), group=lv)
+}
+mrucc |>
+  addLayersControl(overlayGroups=lvls_rucc,
+                   options=layersControlOptions(collapsed=FALSE)) |>
+  addLegend("bottomright", colors=unname(pal_rucc[lvls_rucc]),
+            labels=lvls_rucc, title="<b>RUCC 2023 (Beale)</b>")
+```
+
+## FAR 2020 — Frontier & Remote
+
+```{r map-far}
+pal_far <- c(
+  `Non-FAR`                            = "#2171B5",
+  `FAR 1 — Remote (large cities only)` = "#FD8D3C",
+  `FAR 2 — Remote`                     = "#E31A1C",
+  `FAR 3 — Deep Frontier`              = "#BD0026",
+  `FAR 4 — Extreme Frontier`           = "#800026",
+  Unknown                              = "#BDBDBD"
+)
+lvls_far <- names(pal_far)
+dffar <- df |>
+  mutate(.color=coalesce(pal_far[far_tier], "#BDBDBD"),
+         .popup=build_popup(pick(everything()),
+           paste0("<b>FAR 2020:</b> ", far_tier)))
+
+mfar <- leaflet(options=leafletOptions(preferCanvas=TRUE)) |>
+  addProviderTiles(providers$CartoDB.Positron)
+for (lv in lvls_far) {
+  sub <- dffar[dffar$far_tier==lv,]
+  if (nrow(sub)==0) next
+  col <- pal_far[[lv]]
+  mfar <- mfar |> addCircleMarkers(data=sub, lng=~longitude, lat=~latitude,
+    color=col, fillColor=col, fillOpacity=0.8, opacity=0.9,
+    radius=ifelse(lv=="Non-FAR", 4, 7),
+    stroke=lv!="Non-FAR", weight=1.5,
+    popup=~.popup, label=~paste(full_name,"—",far_tier), group=lv)
+}
+mfar |>
+  addLayersControl(overlayGroups=lvls_far,
+                   options=layersControlOptions(collapsed=FALSE)) |>
+  addLegend("bottomright", colors=unname(pal_far[lvls_far]),
+            labels=lvls_far,
+            title="<b>FAR 2020</b><br><small>FAR4 ⊆ FAR3 ⊆ FAR2 ⊆ FAR1</small>")
+```
+
+## NCHS County Choropleth + RUCA Dots
+
+```{r map-choropleth, results='asis'}
+choro_path <- here::here("docs", "ent_ruca_choropleth.html")
+if (file.exists(choro_path)) {
+  sz <- round(file.size(choro_path)/1e6, 0)
+  cat(sprintf(paste0(
+    '<div class="highlight-box">',
+    'County background = NCHS 2023 urban-rural classification.<br>',
+    'Colored dots = each ENT physician by RUCA 2020 tier.<br><br>',
+    '<a href="ent_ruca_choropleth.html" target="_blank" ',
+    'style="font-size:15px;font-weight:bold;">',
+    '&#128279; Open Interactive Choropleth (%d MB)</a>',
+    '</div>'), sz))
+} else {
+  cat('<div class="warning-box">Run <code>Rscript scripts/generate_ruca_choropleth.R</code> to generate.</div>')
+}
+```
+
+## ZCTA RUCA Map (Census TIGER Shapefiles)
+
+**Source shapefiles:** [Census TIGER/Line 2020 ZCTA5](https://www2.census.gov/geo/tiger/TIGER2020/ZCTA5/tl_2020_us_zcta510.zip) — 33,144 ZIP Code Tabulation Areas, filtered to 32,657 CONUS ZCTAs, then joined to USDA RUCA 2020 codes. Geometry simplified to 0.008° (~800 m) for web rendering.
+
+```{r map-zcta-ruca, results='asis'}
+zcta_map_path <- here::here("docs", "ent_zcta_ruca_map.html")
+if (file.exists(zcta_map_path)) {
+  sz <- round(file.size(zcta_map_path)/1e6, 0)
+  cat(sprintf(paste0(
+    '<div class="highlight-box">',
+    'Every ZCTA polygon is colored by its USDA RUCA 2020 primary code.<br>',
+    'ENT physician dots are layered on top, also colored by RUCA tier.<br>',
+    'Click any dot or polygon for ZIP-level detail.<br><br>',
+    '<a href="ent_zcta_ruca_map.html" target="_blank" ',
+    'style="font-size:15px;font-weight:bold;">',
+    '&#128279; Open ZCTA RUCA Interactive Map (%d MB)</a>',
+    '</div>'), sz))
+} else {
+  cat('<div class="warning-box">Run the ZCTA RUCA build script to generate this map.</div>')
+}
+```
+
+
+# Key Findings
+
+<div class="highlight-box">
+**Convergence across all schemas:** Every classification system places 93–95% of ENT
+physicians in metropolitan or urban settings. The rural share is 5–7% depending on
+the definition used.
+</div>
+
+<div class="warning-box">
+**Subspecialty desert:** Certain subspecialties (Pediatric Otolaryngology, Neurotology,
+Facial Plastic Surgery) are even more concentrated in urban academic centers than General
+ENT. Rural patients requiring subspecialty ENT care face compounded access barriers.
+</div>
+
+<div class="anomaly-box">
+**FAR physicians are critical access points:** The `r nrow(far_docs)` ENT physicians
+in USDA Frontier & Remote areas each likely serve enormous geographic catchment areas.
+A mystery-caller study should track whether these physicians are reachable, their
+appointment wait times, and whether they accept new patients — these data points are
+especially policy-relevant.
+</div>
+
+---
+
+# Technical Notes
+
+**Data sources:**
+
+- **enthealth.org** scraped May 2026; `r format(nrow(geo), big.mark=",")` total physicians,
+  `r format(n_total, big.mark=",")` with valid CONUS coordinates.
+- **USDA RUCA 2020** ZIP-code file (ERS, released March 2026).
+- **USDA FAR 2020** ZIP-code file (ERS, released March 2026). Levels confirmed as nested
+  from data: zero cases of FAR4=1 with FAR1=0.
+- **CDC/NCHS Urban-Rural 2013 & 2023** county file.
+- **USDA RUCC 2023** county file (Beale codes).
+- **Census ZCTA-to-county** 2020 relationship file; dominant-county rule applied for
+  ZCTAs spanning multiple counties.
+
+**FAR level structure (confirmed empirically):**
+FAR levels are nested — FAR4 ⊆ FAR3 ⊆ FAR2 ⊆ FAR1. Each physician is assigned
+their most extreme tier. FAR4 = most extreme (≥15 min from 5K–10K town AND
+≥60 min from 50K+ city). FAR1 = broadest (only requirement: ≥60 min from 50K+ city).
+
+*Rerun `docs/appendix_ent_rural_urban.Rmd` to refresh all figures and statistics.*
+
+## Data Pipeline
+
+```
+enthealth.org
+  │
+  │  Web scraper (Selenium/rvest)
+  │  ├─ Profile URL list   → data/cache_urls.rds
+  │  └─ Profile fields     → results.csv / results.xlsx
+  │       (name, credentials, address, school, residency,
+  │        fellowship, board certs, specialty)
+  │
+  ▼
+results_cleaned.csv  (address normalization, credential parsing)
+  │
+  │  Geocoding (Census + Google fallback)
+  ▼
+results_geocoded.csv  ←── PRIMARY SOURCE (7,462 rows, 57 cols)
+  │
+  ├──── RUCA join (USDA 2020 ZIP → ruca4 / ruca2)
+  ├──── NCHS join (2013/2023 county codes)
+  ├──── RUCC join (USDA 2023 county codes)
+  ├──── FAR join  (USDA 2020 frontier codes)
+  ├──── NPPES join (NPI, gender, taxonomy)
+  │
+  ▼
+docs/appendix_ent_rural_urban.Rmd  (knitr render)
+  │
+  └──── Table 1 (physician characteristics)
+         ├─ N, %, missing for each variable
+         ├─ Stratified by RUCA tier
+         └─ Coverage stats per variable
+```

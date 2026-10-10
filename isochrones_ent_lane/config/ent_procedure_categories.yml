@@ -1,0 +1,303 @@
+---
+# ==============================================================================
+# ENT PROCEDURE CATEGORIES — anchor-code map for specialty verification
+# ==============================================================================
+# Purpose: Group CPT/HCPCS codes into clinically meaningful procedure categories,
+#          each anchored by a single "inclusive representative code" that stands
+#          in for the whole category in summary tables, claim-volume rollups,
+#          and downstream specialty-verification logic.
+#
+# Use case: Verifying that a physician's Medicare Part B billing pattern is
+#           consistent with otolaryngology practice. Joining an NPI's claim
+#           CPT codes against this file yields:
+#             - the procedure_category for each claim
+#             - the procedure_group it rolls up into
+#             - the inclusive_representative_code that anchors the group
+#
+# Schema (loaded by R/ent_procedure_categories.R into a tibble that matches
+# the original ent_procedure_cpt_codes tribble field-for-field):
+#   procedure_category            -> top-level clinical category
+#   cpt_code                      -> individual CPT
+#   procedure_group               -> rollup label (= procedure_category in v1)
+#   inclusive_representative_code -> single anchor CPT for the whole group
+#   description (optional)        -> human-readable CPT description
+#
+# Date: 2026-05-15
+# Version: 1.0.0
+# Board: American Board of Otolaryngology (ABOto)
+# Sources:
+#   - User-supplied tribble (2026-05-15 conversation, Tyler Muffly)
+#   - CPT descriptions cross-referenced with config/phase3_procedure_map_ent.yml
+# ==============================================================================
+
+metadata:
+  component: ent_procedure_categories
+  version: 1.0.0
+  created: "2026-05-15"
+  specialty: "ent"
+  board: "ABOto"
+  description: >-
+    Procedure-category map for ENT specialty verification.  Each category
+    enumerates the CPT codes that fall under it and identifies one
+    "inclusive representative code" that anchors the group in summaries.
+
+  total_categories: 11
+  total_codes: 71
+
+  notes:
+    - "Anchor CPTs were selected for clinical centrality, not billing volume."
+    - "Categories are intentionally narrow: a category is a single procedure
+       type (e.g., 'Sinus surgery' covers FESS variations; FESS is a category,
+       not a subspecialty)."
+    - "For SUBSPECIALTY-level mapping (Rhinology vs Head & Neck Oncology vs
+       Otology / etc.), see config/phase3_procedure_map_ent.yml."
+    - "v1.1 (2026-05-15) added three diagnostic / office-procedure categories
+       (ENT diagnostic procedures, Otolaryngic allergy, Vestibular evaluation)
+       to raise empirical match rate from 36% to ~90% of the Triple Match
+       cohort (4,578 NPIs). Empirical data: scripts/discover_ent_billed_codes.R,
+       run 2026-05-15."
+    - "Codes were chosen by frequency of billing among Triple Match NPIs AND
+       specificity to ENT practice. Generic E&M codes (99202-99215, 99211)
+       are intentionally EXCLUDED — they are billed by every specialty and
+       would destroy specificity."
+
+# ==============================================================================
+# PROCEDURE CATEGORIES
+# ==============================================================================
+
+categories:
+
+  # ----------------------------------------------------------------------------
+  - name: "Sinus surgery"
+    inclusive_representative_code: "31256"
+    representative_description: "Nasal/sinus endoscopy, surgical; with maxillary antrostomy"
+    procedure_group: "Sinus surgery"
+    codes:
+      - code: "31237"
+        description: "Nasal/sinus endoscopy, surgical; with biopsy, polypectomy or debridement"
+      - code: "31253"
+        description: "Nasal/sinus endoscopy, surgical; total ethmoidectomy"
+      - code: "31254"
+        description: "Nasal/sinus endoscopy, surgical; partial ethmoidectomy"
+      - code: "31255"
+        description: "Nasal/sinus endoscopy, surgical; total (anterior and posterior) ethmoidectomy"
+      - code: "31256"
+        description: "Nasal/sinus endoscopy, surgical; with maxillary antrostomy"
+      - code: "31259"
+        description: "Nasal/sinus endoscopy, surgical; with sphenoidotomy and tissue removal"
+      - code: "31267"
+        description: "Nasal/sinus endoscopy, surgical; with removal of tissue from maxillary sinus"
+      - code: "31276"
+        description: "Nasal/sinus endoscopy, surgical; with frontal sinus exploration"
+      - code: "31287"
+        description: "Nasal/sinus endoscopy, surgical; with sphenoid sinusotomy"
+      - code: "31288"
+        description: "Nasal/sinus endoscopy, surgical; with sphenoid sinusotomy and tissue removal"
+      - code: "31295"
+        description: "Nasal/sinus endoscopy, surgical; with balloon dilation of maxillary sinus ostium"
+      - code: "31296"
+        description: "Nasal/sinus endoscopy, surgical; with balloon dilation of frontal sinus ostium"
+      - code: "31297"
+        description: "Nasal/sinus endoscopy, surgical; with balloon dilation of sphenoid sinus ostium"
+
+  # ----------------------------------------------------------------------------
+  - name: "Septoplasty"
+    inclusive_representative_code: "30520"
+    representative_description: "Septoplasty or submucous resection, with or without cartilage scoring"
+    procedure_group: "Septoplasty"
+    codes:
+      - code: "30520"
+        description: "Septoplasty or submucous resection, with or without cartilage scoring"
+
+  # ----------------------------------------------------------------------------
+  - name: "Direct laryngoscopy with biopsy"
+    inclusive_representative_code: "31535"
+    representative_description: "Laryngoscopy, direct, operative, with biopsy"
+    procedure_group: "Direct laryngoscopy with biopsy"
+    codes:
+      - code: "31535"
+        description: "Laryngoscopy, direct, operative, with biopsy"
+
+  # ----------------------------------------------------------------------------
+  - name: "Esophageal dilation"
+    inclusive_representative_code: "43450"
+    representative_description: "Dilation of esophagus, by unguided sound or bougie, single or multiple passes"
+    procedure_group: "Esophageal dilation"
+    codes:
+      - code: "43220"
+        description: "Esophagoscopy, flexible, transoral; with transendoscopic balloon dilation"
+      - code: "43226"
+        description: "Esophagoscopy, flexible, transoral; with insertion of guide wire followed by dilation"
+      - code: "43249"
+        description: "Esophagogastroduodenoscopy, flexible, transoral; with transendoscopic balloon dilation"
+      - code: "43450"
+        description: "Dilation of esophagus, by unguided sound or bougie, single or multiple passes"
+      - code: "43453"
+        description: "Dilation of esophagus, over guide wire"
+
+  # ----------------------------------------------------------------------------
+  - name: "Cochlear implant"
+    inclusive_representative_code: "69930"
+    representative_description: "Cochlear device implantation, with or without mastoidectomy"
+    procedure_group: "Cochlear implant"
+    codes:
+      - code: "69930"
+        description: "Cochlear device implantation, with or without mastoidectomy"
+
+  # ----------------------------------------------------------------------------
+  - name: "Mastoidectomy"
+    inclusive_representative_code: "69501"
+    representative_description: "Transmastoid antrotomy (simple mastoidectomy)"
+    procedure_group: "Mastoidectomy"
+    codes:
+      - code: "69501"
+        description: "Transmastoid antrotomy (simple mastoidectomy)"
+      - code: "69502"
+        description: "Mastoidectomy; complete"
+      - code: "69505"
+        description: "Mastoidectomy; modified radical"
+      - code: "69511"
+        description: "Mastoidectomy; radical"
+      - code: "69530"
+        description: "Petrous apicectomy, including radical mastoidectomy"
+      - code: "69603"
+        description: "Tympanoplasty with mastoidectomy; with antrotomy or atticotomy"
+      - code: "69641"
+        description: "Tympanoplasty with mastoidectomy (including canalplasty, atticotomy, middle ear surgery, and/or tympanic membrane repair); without ossicular chain reconstruction"
+      - code: "69642"
+        description: "Tympanoplasty with mastoidectomy; with ossicular chain reconstruction"
+      - code: "69643"
+        description: "Tympanoplasty with mastoidectomy; with intact or reconstructed wall, without ossicular chain reconstruction"
+      - code: "69644"
+        description: "Tympanoplasty with mastoidectomy; with intact or reconstructed wall, with ossicular chain reconstruction"
+      - code: "69645"
+        description: "Tympanoplasty with mastoidectomy; radical or complete, without ossicular chain reconstruction"
+      - code: "69646"
+        description: "Tympanoplasty with mastoidectomy; radical or complete, with ossicular chain reconstruction"
+
+  # ----------------------------------------------------------------------------
+  - name: "Thyroidectomy"
+    inclusive_representative_code: "60240"
+    representative_description: "Thyroidectomy, total or complete"
+    procedure_group: "Thyroidectomy"
+    codes:
+      - code: "60210"
+        description: "Partial thyroid lobectomy, unilateral; with or without isthmusectomy"
+      - code: "60212"
+        description: "Partial thyroid lobectomy, unilateral; with contralateral subtotal lobectomy, including isthmusectomy"
+      - code: "60220"
+        description: "Total thyroid lobectomy, unilateral; with or without isthmusectomy"
+      - code: "60225"
+        description: "Total thyroid lobectomy, unilateral; with contralateral subtotal lobectomy, including isthmusectomy"
+      - code: "60240"
+        description: "Thyroidectomy, total or complete"
+      - code: "60252"
+        description: "Thyroidectomy, total or subtotal for malignancy; with limited neck dissection"
+      - code: "60254"
+        description: "Thyroidectomy, total or subtotal for malignancy; with radical neck dissection"
+      - code: "60260"
+        description: "Thyroidectomy, removal of all remaining thyroid tissue following previous removal of a portion of thyroid"
+      - code: "60270"
+        description: "Thyroidectomy, including substernal thyroid; sternal split or transthoracic approach"
+      - code: "60271"
+        description: "Thyroidectomy, including substernal thyroid; cervical approach"
+
+  # ----------------------------------------------------------------------------
+  - name: "Neck dissection"
+    inclusive_representative_code: "38724"
+    representative_description: "Cervical lymphadenectomy, modified radical (modified neck dissection)"
+    procedure_group: "Neck dissection"
+    codes:
+      - code: "38700"
+        description: "Suprahyoid lymphadenectomy"
+      - code: "38720"
+        description: "Cervical lymphadenectomy, complete (radical neck dissection)"
+      - code: "38724"
+        description: "Cervical lymphadenectomy, modified radical (modified neck dissection)"
+
+  # ----------------------------------------------------------------------------
+  # ENT diagnostic procedures (office endoscopy, audiology, cerumen, etc.)
+  # Empirical (2026-05-15): 31575 + 31231 + 69210 cover ~85% of the Triple
+  # Match cohort. This category captures the *non-operative* day-to-day work
+  # of an ENT physician, which the operative categories above miss.
+  # ----------------------------------------------------------------------------
+  - name: "ENT diagnostic procedures"
+    inclusive_representative_code: "31575"
+    representative_description: "Laryngoscopy, flexible; diagnostic"
+    procedure_group: "ENT diagnostic procedures"
+    codes:
+      - code: "31575"
+        description: "Laryngoscopy, flexible; diagnostic"
+      - code: "31231"
+        description: "Nasal endoscopy, diagnostic, unilateral or bilateral (separate procedure)"
+      - code: "31579"
+        description: "Laryngoscopy, flexible or rigid telescopic, with stroboscopy"
+      - code: "31238"
+        description: "Nasal/sinus endoscopy, surgical; with control of nasal hemorrhage"
+      - code: "92511"
+        description: "Nasopharyngoscopy with endoscope (separate procedure)"
+      - code: "69210"
+        description: "Removal impacted cerumen requiring instrumentation, unilateral"
+      - code: "69220"
+        description: "Debridement, mastoidectomy cavity, simple"
+      - code: "69200"
+        description: "Removal foreign body from external auditory canal; without general anesthesia"
+      - code: "G0268"
+        description: "Removal of impacted cerumen by physician, same day as audiologic function testing"
+      - code: "92557"
+        description: "Comprehensive audiometry threshold evaluation and speech recognition"
+      - code: "92567"
+        description: "Tympanometry (impedance testing)"
+      - code: "92504"
+        description: "Binocular microscopy (separate diagnostic procedure)"
+      - code: "92550"
+        description: "Tympanometry and reflex threshold measurements"
+      - code: "69433"
+        description: "Tympanostomy (requiring insertion of ventilating tube), local or topical anesthesia"
+      - code: "30901"
+        description: "Control nasal hemorrhage, anterior, simple (limited cautery and/or packing)"
+      - code: "30903"
+        description: "Control nasal hemorrhage, anterior, complex (extensive cautery and/or packing)"
+      - code: "30140"
+        description: "Submucous resection inferior turbinate, partial or complete, any method"
+
+  # ----------------------------------------------------------------------------
+  # Otolaryngic allergy (skin testing, immunotherapy)
+  # Empirical (2026-05-15): ~20% of Triple Match cohort bills these codes.
+  # Otolaryngic allergy is a recognized ENT practice area (fellowship, not an
+  # ABOto subspecialty cert) — these codes identify ENTs practicing as
+  # allergists.
+  # ----------------------------------------------------------------------------
+  - name: "Otolaryngic allergy"
+    inclusive_representative_code: "95165"
+    representative_description: "Preparation of antigens for allergen immunotherapy (per dose)"
+    procedure_group: "Otolaryngic allergy"
+    codes:
+      - code: "95115"
+        description: "Professional services for allergen immunotherapy; single injection"
+      - code: "95117"
+        description: "Professional services for allergen immunotherapy; 2 or more injections"
+      - code: "95165"
+        description: "Professional services for preparation of antigens for allergen immunotherapy (single or multiple antigens, per dose)"
+      - code: "95004"
+        description: "Percutaneous (scratch) allergy skin tests, with allergenic extracts (per test)"
+      - code: "95024"
+        description: "Intracutaneous (intradermal) allergy tests with allergenic extracts, immediate reaction (per test)"
+
+  # ----------------------------------------------------------------------------
+  # Vestibular evaluation (vertigo workup and treatment)
+  # Empirical (2026-05-15): ~15% of Triple Match cohort bills these codes.
+  # Anchored by 95992 (canalith repositioning / Epley maneuver) — the
+  # signature outpatient treatment for benign paroxysmal positional vertigo.
+  # ----------------------------------------------------------------------------
+  - name: "Vestibular evaluation"
+    inclusive_representative_code: "95992"
+    representative_description: "Canalith repositioning procedure(s) (e.g., Epley maneuver), per day"
+    procedure_group: "Vestibular evaluation"
+    codes:
+      - code: "95992"
+        description: "Canalith repositioning procedure(s) (e.g., Epley maneuver, Semont maneuver), per day"
+      - code: "92540"
+        description: "Basic vestibular evaluation: oculomotor evaluation + positional nystagmus test + caloric stimulation"
+      - code: "92537"
+        description: "Caloric vestibular test with recording, bilateral; bithermal"
