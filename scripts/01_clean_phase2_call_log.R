@@ -108,12 +108,24 @@ phase2 <- phase2 |>
 # -----------------------------------------------------------------------------
 message("Correcting known appointment date errors ...")
 
-# Record 470 (Chiles, NY): appointment_date entered as 2029 instead of 2026
-typo_rows <- which(lubridate::year(phase2$appointment_date) == 2029)
-phase2$appointment_date[typo_rows] <- lubridate::`year<-`(phase2$appointment_date[typo_rows], 2026)
-message(sprintf("  Fixed %d record(s) with appointment year 2029 -> 2026 (record_id: %s)",
-                length(typo_rows),
-                paste(phase2$record_id[typo_rows], collapse = ", ")))
+# Record 470 (Chiles, NY): appointment_date entered as 2029-07-28 against a
+# 2026-06-23 call. fix_data_errors.R documents the study's decision: the true
+# date is UNVERIFIED, so no corrected year may be substituted -- fabricating
+# 2026-07-28 would put plausible-looking invented data into the timeliness
+# analysis. The date is left as recorded (transparently wrong, and needed by
+# 02_redcap_correction_report.R); instead the wait is excluded everywhere by
+# the implausible-gap rule below. The appointment itself was genuinely offered
+# and the record stays in the access analysis. The rule generalises the error
+# class: any appointment more than a year after the call is implausible for a
+# new-patient ENT appointment (longest legitimate wait in the data: 160
+# business days) and almost certainly a year typo.
+implausible_wait <- !is.na(phase2$appointment_date) & !is.na(phase2$call_date) &
+  as.numeric(phase2$appointment_date - phase2$call_date) > 366
+if (any(implausible_wait)) {
+  message(sprintf("  %d record(s) with appointment >1yr after call excluded from timeliness (record_id: %s)",
+                  sum(implausible_wait),
+                  paste(phase2$record_id[implausible_wait], collapse = ", ")))
+}
 
 # -----------------------------------------------------------------------------
 # 4. Validate NPIs
@@ -266,7 +278,8 @@ cal <- mysterycall_us_federal_calendar()
 phase2 <- phase2 |>
   mutate(
     wait_days_business = if_else(
-      !is.na(call_date) & !is.na(appointment_date) & appointment_date >= call_date,
+      !is.na(call_date) & !is.na(appointment_date) & appointment_date >= call_date &
+        !implausible_wait,
       mysterycall_count_business_days(call_date, appointment_date, calendar = cal),
       NA_real_
     )
