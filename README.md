@@ -105,7 +105,15 @@ is also expressed through the [`mysteryroster`](https://github.com/mufflyt/myste
 package in `scripts/05b_validity_mysteryroster.R`; `tests/testthat/test-mysteryroster-parity.R`
 proves it reproduces the committed `output/tables/*.csv` exactly (445/138/169/208 statuses,
 the 583/752 denominators, the per-zone cascade, weights 6748/498 and 4573/462).
-Install it with `remotes::install_github("mufflyt/mysteryroster")`.
+Install the companion packages with:
+
+```r
+remotes::install_github(c(
+  "mufflyt/mysterynpi",
+  "mufflyt/mysteryroster",
+  "mufflyt/mysterycall"
+))
+```
 
 
 Run scripts in order from the project root (set by `here::here()`):

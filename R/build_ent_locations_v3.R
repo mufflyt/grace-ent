@@ -30,35 +30,11 @@ nber_duckdb_path <- "/Volumes/MufflySamsung/DuckDB/nber_my_duckdb.duckdb"
 # Helper Functions
 # ============================================================================
 
-# Use canonical safe_duckdb() from duckdb_safe.R
-source(here::here("R", "duckdb_safe.R"))
-
-#' Extract 5-digit ZIP code from ZIP+4 or other formats
-#'
-#' @description
-#' Standardizes ZIP code data by extracting only the first 5 digits, removing
-#' ZIP+4 extensions and handling various input formats.
-#'
-#' @details
-#' - **Pipeline step:** Utility (address normalization)
-#' - **Inputs:** ZIP code strings (5-digit, ZIP+4, or malformed)
-#' - **Algorithm:** 1. Coerce to character, 2. Extract first 5 digits via
-#'   regex pattern "^[0-9]{5}"
-#' - **Performance:** O(n) where n = string length; instant for single ZIP
-#' - **Reproducibility:** Deterministic
-#'
-#' @param zip [character|numeric]: ZIP code in any format (12345, 12345-6789,
-#'   etc.).
-#' @return Character. 5-digit ZIP code, or NA if no 5-digit prefix found.
-#' @examples
-#' \dontrun{
-#'   clean_zip("12345-6789")  # Returns "12345"
-#'   clean_zip(12345)         # Returns "12345"
-#' }
-#' @keywords internal
-clean_zip <- function(zip) {
-  zip <- as.character(zip)
-  stringr::str_extract(zip, "^[0-9]{5}")
+safe_duckdb <- function(path) {
+  if (!file.exists(path)) {
+    stop("DuckDB database not found: ", path, call. = FALSE)
+  }
+  DBI::dbConnect(duckdb::duckdb(), dbdir = path, read_only = TRUE)
 }
 
 # ============================================================================
@@ -232,7 +208,7 @@ cat("========================================\n\n")
 # Clean and standardize
 all_locations <- all_locations %>%
   mutate(
-    zip_5 = clean_zip(zip),
+    zip_5 = mysterycall::mysterycall_clean_zip(zip),
     city_clean = toupper(trimws(city)),
     state_clean = toupper(trimws(state))
   ) %>%
