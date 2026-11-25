@@ -21,15 +21,47 @@ validity_from_call_log <- function(path = tail(sort(list.files(here("data", "pro
                                    pop_N = c("NPPES+ABOto" = 6748L, "NPPES+ABOto+ENTHealth" = 4573L)) {
   calls <- read_csv(path, show_col_types = FALSE) |> mutate(npi = as.character(npi))
   # Section 2 of the legacy script: the REDCap `datasets` label -> overlap stratum.
+  # Fail closed on label drift: both historical spellings are mapped, and any
+  # new variant stops the pipeline instead of silently dropping the row's weight.
+  known_datasets <- c("ABO, NPI but not ENT Health", "ABO, NPI but no ENTHealth", "ABO, NPI, ENT Health")
+  unmapped_datasets <- setdiff(unique(calls$datasets[!is.na(calls$datasets)]), known_datasets)
+  if (length(unmapped_datasets)) {
+    stop("05b: unrecognised `datasets` label(s), update the stratum mapping: ",
+         paste(unmapped_datasets, collapse = "; "), call. = FALSE)
+  }
+  # Phone-validity decisions, recorded explicitly:
+  #   invalid_format          -> FALSE: a malformed number is evidence against the listing.
+  #   missing                 -> NA: no number was transcribed, so validity is unknown;
+  #                            an untranscribed field is not evidence against the listing.
+  #   valid                   -> TRUE.
+  #   area_code_state_mismatch -> TRUE: area codes are portable (mobile numbers move
+  #                            across state lines), so a mismatch is a QC flag,
+  #                            not evidence of a wrong number.
+  # The legacy `phone_validity_flag != "invalid_format"` construction was fail-open:
+  # any new flag mysterycall adds (a future "disconnected", say) would silently
+  # count as valid. Unrecognised flags now stop the pipeline instead.
+  known_flags <- c("valid", "invalid_format", "missing", "area_code_state_mismatch")
+  unmapped_flags <- setdiff(unique(calls$phone_validity_flag[!is.na(calls$phone_validity_flag)]), known_flags)
+  if (length(unmapped_flags)) {
+    stop("05b: unrecognised phone_validity_flag value(s), update the mapping: ",
+         paste(unmapped_flags, collapse = "; "), call. = FALSE)
+  }
   calls <- calls |> mutate(
     stratum = case_when(
       datasets %in% c("ABO, NPI but not ENT Health", "ABO, NPI but no ENTHealth") ~ "NPPES+ABOto",
       datasets == "ABO, NPI, ENT Health"                                         ~ "NPPES+ABOto+ENTHealth",
       TRUE                                                                        ~ NA_character_),
-    phone_valid = phone_validity_flag != "invalid_format")
+    phone_valid = case_when(
+      phone_validity_flag == "invalid_format"                            ~ FALSE,
+      phone_validity_flag %in% "missing" | is.na(phone_validity_flag)    ~ NA,
+      TRUE                                                               ~ TRUE))
   # Section 3: statuses from dispositions, through the package's ENT codebook.
+  # phone_valid_na = "valid" is the decision recorded above: unknown validity
+  # is not evidence against the listing, so missing values are treated as valid
+  # numbers -- explicitly, rather than by the package's warning default.
   calls <- classify_listing_status(calls, disposition = "taking_new_patients", reached = "office_answered",
-                                   phone_valid = "phone_valid", map = ent_disposition_map())
+                                   phone_valid = "phone_valid", map = ent_disposition_map(),
+                                   phone_valid_na = "valid")
   # Section 4: design weights = N / n per stratum (legacy: pop_N / n_sampled).
   calls <- listing_weights(calls, pop_N = pop_N, stratum = "stratum")
   # Section 8: bounds.
