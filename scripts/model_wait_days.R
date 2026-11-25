@@ -55,9 +55,14 @@ ct <- table(d$caller); small <- names(ct)[ct < 15]
 d$caller_f <- ifelse(d$caller %in% small, "Other", d$caller)
 d$caller_f <- relevel(factor(d$caller_f), ref = names(sort(ct, decreasing = TRUE))[1])
 
-clust <- d$cbsa_code
-clust[is.na(clust) | clust == ""] <- d$county_fips[is.na(clust) | clust == ""]
-clust[is.na(clust) | clust == ""] <- paste0("solo_", which(is.na(clust) | clust == ""))
+# Prefix the source coding system: CBSA codes and county FIPS are both 5-digit
+# numeric strings drawn from DIFFERENT codebooks, so an unprefixed merge could
+# silently collapse a metro cluster and a rural county into one random-effect
+# group if a county FIPS ever equals a CBSA code.
+clust <- ifelse(is.na(d$cbsa_code) | d$cbsa_code == "", "", paste0("cbsa_", d$cbsa_code))
+nf <- is.na(d$county_fips) | d$county_fips == ""
+clust[clust == "" & !nf] <- paste0("cty_", d$county_fips[clust == "" & !nf])
+clust[clust == ""] <- paste0("solo_", which(clust == ""))
 d$cluster <- clust
 
 predictors <- c("ent_type","ent_per_100k_z","medicaid_fee_index_z",

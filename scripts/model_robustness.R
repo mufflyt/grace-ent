@@ -31,8 +31,14 @@ d$ent_type <- relevel(factor(d$ent_type), ref = "General")
 d$rural    <- relevel(factor(d$ruca_category), ref = "Urban")
 ct <- table(d$caller); d$caller_f <- ifelse(d$caller %in% names(ct)[ct<15], "Other", d$caller)
 d$caller_f <- relevel(factor(d$caller_f), ref = names(sort(ct, decreasing=TRUE))[1])
-clust <- d$cbsa_code; clust[!nzchar(clust)] <- d$county_fips[!nzchar(clust)]
-clust[!nzchar(clust)] <- paste0("solo_", which(!nzchar(clust))); d$cluster <- clust
+# Prefix the source coding system: CBSA codes and county FIPS are both 5-digit
+# numeric strings drawn from DIFFERENT codebooks, so an unprefixed merge could
+# silently collapse a metro cluster and a rural county into one random-effect
+# group. (nzchar(NA) is TRUE, so missing values need explicit handling too.)
+clust <- ifelse(is.na(d$cbsa_code) | !nzchar(d$cbsa_code), "", paste0("cbsa_", d$cbsa_code))
+nf <- is.na(d$county_fips) | !nzchar(d$county_fips)
+clust[clust == "" & !nf] <- paste0("cty_", d$county_fips[clust == "" & !nf])
+clust[clust == ""] <- paste0("solo_", which(clust == "")); d$cluster <- clust
 
 rhs <- "ent_type + ent_per_100k_z + medicaid_fee_index_z + svi_overall_z + dual_pct_z + rural + caller_f"
 d1 <- d[!is.na(d$offered), ]
