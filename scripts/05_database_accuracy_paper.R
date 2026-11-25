@@ -74,8 +74,24 @@ calls <- calls |>
     )
   )
 
+# Fail closed on dataset-label drift: an unmapped label must never silently
+# lose its stratum and fall through to the weight-1 fallback below.
+unmapped_zone <- calls |>
+  filter(is.na(overlap_zone) & !is.na(datasets) & nzchar(trimws(datasets)))
+if (nrow(unmapped_zone) > 0) {
+  stop(sprintf(
+    "%d record(s) have unrecognised datasets values: %s. Extend the overlap_zone mapping deliberately rather than letting rows silently lose their stratum.",
+    nrow(unmapped_zone),
+    paste(unique(unmapped_zone$datasets), collapse = "; ")
+  ), call. = FALSE)
+}
+
+# Rows with a blank npi (ENTHealth-only listings without an NPI) can never
+# match a call record - and left unrepaired they would multiply any
+# blank-keyed call row by their count. Drop them, then enforce key uniqueness.
+euler <- euler |> filter(!is.na(npi) & nzchar(trimws(npi)))
 df <- calls |>
-  left_join(
+  mysterycall_safe_left_join(
     euler |> select(npi, zone, in_nppes, in_board, in_ent,
                     credential_class, billed_any_part_b, billed_any_ent_proc,
                     nppes_enum_year, years_since_enum, bog_region),
