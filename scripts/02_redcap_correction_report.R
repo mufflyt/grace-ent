@@ -38,14 +38,19 @@ issue <- function(data, flag, priority, description, action) {
 # -----------------------------------------------------------------------------
 # Issue 1 — Impossible wait time (year typo)
 # -----------------------------------------------------------------------------
+# Detection must use the DATE evidence, not wait_days_business: cleaning
+# (01_clean_phase2_call_log.R) deliberately blanks the wait for implausible
+# gaps because the true date is unverified, so filtering on the wait would
+# silently miss exactly the rows that need correction in REDCap.
 i1 <- df |>
-  filter(!is.na(wait_days_business) & wait_days_business > 365) |>
+  filter(!is.na(appointment_date) & !is.na(call_date) &
+         as.numeric(appointment_date - call_date) > 366) |>
   select(record_id, caller, last_name, state, call_date, appointment_date, wait_days_business) |>
   issue(
     flag        = "IMPOSSIBLE_WAIT_TIME",
     priority    = "CRITICAL",
     description = "Appointment date >1 year after call — likely year typo",
-    action      = "Correct appointment_date in REDCap (probable year error: 2029 -> 2026)"
+    action      = "Correct appointment_date in REDCap (true date unverified; blank it pending caller confirmation)"
   )
 
 # -----------------------------------------------------------------------------
