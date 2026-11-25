@@ -21,8 +21,12 @@ df <- read_csv(f, show_col_types = FALSE) |>
     ruca_category      = factor(ruca_category, levels = c("Urban", "Suburban", "Rural")),
     ruca_binary        = factor(ruca_binary, levels = c("Non-Rural", "Rural")),
     new_patient_status = factor(new_patient_status),
-    ent_type           = factor(ent_type),
-    appointment_with_md = appointment_with_physician == "With sampled physician"
+    ent_type           = factor(ent_type)
+    # appointment_with_md arrives correct from 01 (derived from the cleaned
+    # appointment_outcome factor). It must NOT be recomputed here against the
+    # raw appointment_with_physician column: REDCap's raw values are
+    # "Yes"/"No-but..."/etc, so `== "With sampled physician"` is never TRUE and
+    # silently zeroes the column -- 370 TRUE outcomes became 749 FALSE.
   )
 
 message(sprintf("  %d complete records loaded\n", nrow(df)))
