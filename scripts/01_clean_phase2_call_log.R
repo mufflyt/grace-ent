@@ -201,14 +201,23 @@ print(table(phase2$ruca_binary, useNA = "ifany"))
 # -----------------------------------------------------------------------------
 message("Standardising categorical variables ...")
 
+# Trim REDCap's categorical strings before any exact matching: manual edits
+# leave trailing spaces, and exact `==` comparisons (or tolower() without
+# trimws) silently turn that drift into NA -- which downstream reads as
+# "not attempted" or "unknown", a silent misclassification.
+cat_cols <- c("office_answered", "website_found", "rural_satellite_office",
+              "taking_new_patients", "appointment_with_physician", "sees_chief_complaint",
+              "ent_type", "complete")
+phase2 <- phase2 |>
+  mutate(across(any_of(cat_cols), \(x) if (is.character(x)) trimws(x) else x))
+
 phase2 <- phase2 |>
   mutate(
-    # Binary: office answered
-    office_answered = case_when(
-      tolower(office_answered) == "yes" ~ TRUE,
-      tolower(office_answered) == "no"  ~ FALSE,
-      TRUE ~ NA
-    ),
+    # Binary: office answered. coerce_logical_flag trims whitespace and fails
+    # closed on unrecognised values; the previous tolower() == "yes" parsing
+    # silently mapped drift (a trailing space, a stray capitalisation variant)
+    # to NA.
+    office_answered = mysteryroster::coerce_logical_flag(office_answered),
 
     # New patient acceptance — consolidate into a clean factor
     new_patient_status = case_when(
@@ -241,18 +250,10 @@ phase2 <- phase2 |>
     complete = factor(complete, levels = c("Complete", "Incomplete", "Unverified")),
 
     # Boolean: was a website found?
-    website_found = case_when(
-      tolower(website_found) == "yes" ~ TRUE,
-      tolower(website_found) == "no"  ~ FALSE,
-      TRUE ~ NA
-    ),
+    website_found = mysteryroster::coerce_logical_flag(website_found),
 
     # Boolean: rural satellite office
-    rural_satellite_office = case_when(
-      tolower(rural_satellite_office) == "yes" ~ TRUE,
-      tolower(rural_satellite_office) == "no"  ~ FALSE,
-      TRUE ~ NA
-    )
+    rural_satellite_office = mysteryroster::coerce_logical_flag(rural_satellite_office)
   )
 
 # -----------------------------------------------------------------------------
