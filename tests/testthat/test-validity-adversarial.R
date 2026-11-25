@@ -85,18 +85,20 @@ test_that("staff confirmation outranks a bad-number flag when both exist", {
 })
 
 test_that("disposition whitespace drift cannot silently misclassify at either layer", {
-  # Two independent defences, both pinned here:
-  #   1. the CSV roundtrip trims whitespace (readr's trim_ws default), so the
-  #      drifted string classifies exactly like the clean one;
-  #   2. if a drifted value ever reaches classify_listing_status() directly
-  #      (a future xlsx ingestion path, say), it stops the call rather than
-  #      guessing.
+  # Three independent defences, all pinned here:
+  #   1. the CSV roundtrip trims whitespace (readr's trim_ws default);
+  #   2. mysteryroster >= 0.4.1 trims both data and map before matching, so
+  #      even a direct (non-CSV) ingestion path classifies drifted values
+  #      exactly like the clean ones;
+  #   3. drift beyond whitespace still stops the call rather than guessing.
   log <- base_log()
   log$taking_new_patients[2] <- "No-changed practices "   # trailing space from a REDCap edit
   res <- validity_from_call_log(write_log(log))
   expect_equal(as.character(res$calls$listing_status[2]), "confirmed_invalid")   # same as the clean string
-  direct <- data.frame(disposition = "No-changed practices ", reached = TRUE)
-  expect_error(mysteryroster::classify_listing_status(direct), "not in the map")
+  direct <- data.frame(disposition = c("No-changed practices ", "No-changed practices!"), reached = TRUE)
+  expect_equal(as.character(mysteryroster::classify_listing_status(direct[1, , drop = FALSE])$listing_status),
+               "confirmed_invalid")
+  expect_error(mysteryroster::classify_listing_status(direct[2, , drop = FALSE]), "not in the map")
 })
 
 test_that("the four statuses still partition every row under mixed adversarial input", {
