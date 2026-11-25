@@ -13,7 +13,7 @@
 # Output: model_output/strobe_flow_mysterycall.png (+ .tiff)
 # =============================================================================
 
-suppressMessages(devtools::load_all("~/mysterycall", quiet = TRUE))
+suppressPackageStartupMessages(library(mysterycall))
 dir.create("model_output", showWarnings = FALSE)
 
 mysterycall_strobe_flow(

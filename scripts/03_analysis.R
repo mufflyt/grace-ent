@@ -202,7 +202,7 @@ cat("\n", strrep("=", 70), "\n")
 cat("7. MARGINAL EFFECTS — RUCA (Rural vs Non-Rural) ON WAIT DAYS\n")
 cat(strrep("=", 70), "\n")
 
-me <- mysterycall:::mysterycall_marginal_effects(
+me <- mysterycall_marginal_effects(
   model = poisson_fit,
   term  = "ruca_binary",
   data  = df_model,

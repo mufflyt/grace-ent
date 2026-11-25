@@ -49,7 +49,7 @@ message("Loading RUCA 2020 zip-code crosswalk ...")
 ruca <- read_csv(RUCA_FILE, show_col_types = FALSE) |>
   rename_with(tolower) |>
   mutate(
-    zip5      = str_pad(as.character(zipcode), 5, "left", "0"),
+    zip5      = mysterycall::mysterycall_clean_zip(zipcode),
     ruca_code = as.numeric(primaryruca)
   ) |>
   select(zip5, ruca_code) |>
@@ -60,20 +60,26 @@ ruca <- read_csv(RUCA_FILE, show_col_types = FALSE) |>
 # -----------------------------------------------------------------------------
 message("Joining RUCA codes and classifying rurality ...")
 nppes_only <- nppes_only |>
-  mutate(zip5 = str_pad(substr(as.character(zip), 1, 5), 5, "left", "0")) |>
-  left_join(ruca, by = "zip5") |>
+  mutate(zip5 = mysterycall::mysterycall_clean_zip(zip))
+
+nppes_only <- mysterycall::mysterycall_safe_left_join(
+  nppes_only,
+  ruca,
+  by = "zip5",
+  label_left = "NPPES-only cohort",
+  label_right = "RUCA crosswalk",
+  min_coverage = 0
+) |>
   mutate(
-    ruca_category = case_when(
-      is.na(ruca_code) ~ NA_character_,
-      ruca_code <= 3   ~ "Urban",
-      ruca_code <= 6   ~ "Suburban",
-      TRUE             ~ "Rural"
+    ruca_category = mysterycall::mysterycall_classify_ruca(
+      ruca_code,
+      na_label = NA_character_
     ),
     ruca_binary = factor(
-      case_when(
-        is.na(ruca_code) ~ NA_character_,
-        ruca_code >= 7   ~ "Rural",
-        TRUE             ~ "Non-Rural"
+      mysterycall::mysterycall_classify_ruca(
+        ruca_code,
+        labels = c("Non-Rural", "Non-Rural", "Rural"),
+        na_label = NA_character_
       ),
       levels = c("Non-Rural", "Rural")
     )

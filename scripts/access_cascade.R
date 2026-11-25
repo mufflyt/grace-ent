@@ -24,21 +24,33 @@ N <- nrow(d)
 pct <- function(x) sprintf("%.1f", 100 * x)
 
 # ---- access-cascade measures (proportion of the analytic sample) ------------
-reach   <- sum(d$office_answered == "TRUE", na.rm = TRUE)
-accept  <- sum(d$new_patient_status == "Accepting", na.rm = TRUE)
-sees    <- sum(d$sees_chief_complaint == "Yes", na.rm = TRUE)
-offered <- sum(d$appointment_offered == "TRUE", na.rm = TRUE)
-w_samp  <- sum(d$appointment_outcome == "With sampled physician", na.rm = TRUE)
+cascade_group <- "Access cascade (% of analytic sample)"
+cascade_result <- mysterycall::mysterycall_access_cascade(
+  d,
+  stages = list(
+    list(label = "Reached a live office (office answered)",
+         column = "office_answered", success = "TRUE", group = cascade_group),
+    list(label = "Practice accepting new patients",
+         column = "new_patient_status", success = "Accepting", group = cascade_group),
+    list(label = "Practice sees the presented complaint",
+         column = "sees_chief_complaint", success = "Yes", group = cascade_group),
+    list(label = "New-patient appointment offered",
+         column = "appointment_offered", success = "TRUE", group = cascade_group),
+    list(label = "Appointment with the sampled physician",
+         column = "appointment_outcome", success = "With sampled physician", group = cascade_group)
+  ),
+  plot = TRUE,
+  title = "New-patient access measures across the call pathway",
+  subtitle = sprintf("Share of the %d analytic calls; overlapping measures, not a strictly nested funnel", N)
+)
 
 cascade <- data.frame(
-  group = "Access cascade (% of analytic sample)",
-  measure = c("Reached a live office (office answered)",
-              "Practice accepting new patients",
-              "Practice sees the presented complaint",
-              "New-patient appointment offered",
-              "Appointment with the sampled physician"),
-  n = c(reach, accept, sees, offered, w_samp),
-  denom = N, stringsAsFactors = FALSE)
+  group = cascade_result$table$group,
+  measure = cascade_result$table$measure,
+  n = cascade_result$table$n,
+  denom = cascade_result$table$denominator,
+  stringsAsFactors = FALSE)
+offered <- cascade$n[cascade$measure == "New-patient appointment offered"]
 
 # ---- reasons a practice was not accepting new patients ----------------------
 reasons <- table(factor(d$new_patient_status))
@@ -74,32 +86,6 @@ write.csv(tab, file.path(SUPP, "S10_access_cascade.csv"), row.names = FALSE)
 cat("Wrote S10_access_cascade.csv\n"); print(tab, row.names = FALSE)
 
 # ---- funnel figure ----------------------------------------------------------
-fig <- cascade
-fig$measure <- factor(fig$measure, levels = rev(fig$measure))
-fig$p <- 100 * fig$n / fig$denom
-g <- ggplot(fig, aes(p, measure, fill = p)) +
-  # faint full-width track behind each bar for a funnel feel
-  geom_col(aes(x = 100), fill = "grey93", width = 0.66) +
-  geom_col(width = 0.66) +
-  geom_text(aes(label = sprintf("%d  (%.0f%%)", n, p)), hjust = -0.12,
-            size = 3.5, fontface = "bold", colour = "grey20") +
-  scale_fill_viridis_c(option = "D", direction = -1, begin = 0.15, end = 0.85,
-                       guide = "none") +
-  scale_x_continuous(limits = c(0, 100), breaks = seq(0, 100, 25),
-                     labels = function(x) paste0(x, "%"),
-                     expand = expansion(mult = c(0, 0.14))) +
-  labs(x = NULL, y = NULL,
-       title = "New-patient access measures across the call pathway",
-       subtitle = sprintf("Share of the %d analytic calls; overlapping measures, not a strictly nested funnel", N)) +
-  theme_minimal(base_size = 12) +
-  theme(
-    panel.grid.major.y = element_blank(),
-    panel.grid.minor   = element_blank(),
-    panel.grid.major.x = element_line(colour = "grey92"),
-    axis.text.y  = element_text(colour = "grey15"),
-    plot.title    = element_text(face = "bold", size = 14),
-    plot.subtitle = element_text(colour = "grey40", size = 10,
-                                 margin = margin(t = 2, b = 8)),
-    plot.margin   = margin(8, 12, 8, 8))
-ggsave(file.path(SUPP, "figS6_access_cascade.png"), g, width = 8.6, height = 3.9, dpi = 200)
+ggsave(file.path(SUPP, "figS6_access_cascade.png"), cascade_result$plot,
+       width = 8.6, height = 3.9, dpi = 200)
 cat("Wrote figS6_access_cascade.png\n")

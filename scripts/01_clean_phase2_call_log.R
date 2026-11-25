@@ -100,7 +100,7 @@ phase2 <- phase2 |>
     ruca_code        = as.numeric(ruca_code),
     call_date        = as_date(call_date),        # POSIXct -> Date
     appointment_date = as_date(appointment_date), # POSIXct -> Date
-    zip              = stringr::str_pad(as.character(zip), width = 5, side = "left", pad = "0")
+    zip              = mysterycall_clean_zip(zip)
   )
 
 # -----------------------------------------------------------------------------
@@ -119,19 +119,18 @@ message(sprintf("  Fixed %d record(s) with appointment year 2029 -> 2026 (record
 # 4. Validate NPIs
 # -----------------------------------------------------------------------------
 message("Validating NPIs ...")
-npi_validated <- mysterycall_validate_npi(phase2)
+if (!requireNamespace("mysterynpi", quietly = TRUE)) {
+  stop("Package 'mysterynpi' is required for NPI checksum validation.", call. = FALSE)
+}
 
-# mysterycall_validate_npi() drops rows with blank/NA NPIs and adds npi_is_valid
-# join result back so we keep all 960 rows
 phase2 <- phase2 |>
-  left_join(
-    npi_validated |> select(npi, npi_is_valid) |> distinct(npi, .keep_all = TRUE),
-    by = "npi"
+  mutate(
+    npi_is_valid = mysterynpi::npi_luhn_ok(gsub("[^0-9]", "", npi))
   )
 
-n_invalid_npi <- sum(!phase2$npi_is_valid, na.rm = TRUE)
+n_invalid_npi <- sum(is.na(phase2$npi_is_valid) | !phase2$npi_is_valid)
 if (n_invalid_npi > 0) {
-  message(sprintf("  WARNING: %d record(s) have invalid NPIs.", n_invalid_npi))
+  message(sprintf("  WARNING: %d record(s) have missing or invalid NPIs.", n_invalid_npi))
 } else {
   message("  All NPIs passed validation.")
 }
@@ -159,7 +158,7 @@ message(sprintf("  Auto-fixed 3 phone entries (ext stripped / first number taken
 message("  Records 605 (Nesemeier, IL) and 651 (Gibbons, TX) have only area codes — require manual lookup.")
 
 message("Validating phone numbers ...")
-phone_result <- mysterycall_validate_phone(phase2$phone)
+phone_result <- mysterycall_validate_phone(phase2$phone, practice_state = phase2$state)
 phase2 <- bind_cols(phase2, phone_result)
 message(sprintf("  Valid: %d | Invalid format: %d | Missing: %d",
                 sum(phase2$phone_validity_flag == "valid",          na.rm = TRUE),
@@ -175,17 +174,19 @@ message("Classifying RUCA codes (binary urban 1-3 / rural 4-10) ...")
 phase2 <- phase2 |>
   mutate(
     ruca_category = factor(
-      dplyr::case_when(
-        is.na(suppressWarnings(as.numeric(ruca_code)))        ~ NA_character_,
-        suppressWarnings(as.numeric(ruca_code)) <= 3          ~ "Urban",
-        TRUE                                                  ~ "Rural"),
-      levels = c("Urban", "Rural"))
-  )
-
-phase2 <- phase2 |>
-  mutate(
+      mysterycall_classify_ruca(
+        ruca_code,
+        labels = c("Urban", "Rural", "Rural"),
+        na_label = NA_character_
+      ),
+      levels = c("Urban", "Rural")
+    ),
     ruca_binary = factor(
-      if_else(ruca_code >= 7, "Rural", "Non-Rural"),
+      mysterycall_classify_ruca(
+        ruca_code,
+        labels = c("Non-Rural", "Non-Rural", "Rural"),
+        na_label = NA_character_
+      ),
       levels = c("Non-Rural", "Rural")
     )
   )

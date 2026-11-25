@@ -31,10 +31,7 @@ validity_from_call_log <- function(path = tail(sort(list.files(here("data", "pro
   calls <- classify_listing_status(calls, disposition = "taking_new_patients", reached = "office_answered",
                                    phone_valid = "phone_valid", map = ent_disposition_map())
   # Section 4: design weights = N / n per stratum (legacy: pop_N / n_sampled).
-  n_sampled <- table(calls$stratum)
-  calls$pop_N     <- unname(pop_N[calls$stratum])
-  calls$n_sampled <- as.integer(n_sampled[calls$stratum])
-  calls$weight    <- calls$pop_N / calls$n_sampled
+  calls <- listing_weights(calls, pop_N = pop_N, stratum = "stratum")
   # Section 8: bounds.
   bounds <- validity_sensitivity_bounds(calls)
   list(calls = calls, bounds = bounds,
