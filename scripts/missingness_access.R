@@ -28,7 +28,9 @@ d$wait_obs   <- !is.na(num(d$wait_days_business))
 sink(file.path(outdir, "missingness_access_summary.txt"))
 
 cat("################ 1. ATTRITION WATERFALL ################\n\n")
-comp <- d[d$complete_f & d$ent_type != "", ]
+# Explicit NA guard: an NA ent_type would make the index expression NA, and
+# indexing a data frame with NA injects phantom all-NA rows into comp.
+comp <- d[d$complete_f & !is.na(d$ent_type) & d$ent_type != "", ]
 cat(sprintf("  Total calls placed .................... %4d\n", nrow(d)))
 cat(sprintf("  Complete (data collection succeeded).. %4d (%.1f%%)\n",
             sum(d$complete_f), 100*mean(d$complete_f)))

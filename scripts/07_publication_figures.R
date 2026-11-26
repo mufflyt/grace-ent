@@ -90,9 +90,24 @@ calls <- calls |>
     attempted       = listing_status != "not_attempted"
   )
 
+# Fail closed on dataset-label drift: unmapped rows must never silently lose
+# their stratum and fall through to the weight-1 fallback in the weights below.
+unmapped_zone <- calls |>
+  filter(is.na(overlap_zone) & !is.na(datasets) & nzchar(trimws(datasets)))
+if (nrow(unmapped_zone) > 0) {
+  stop(sprintf(
+    "%d record(s) have unrecognised datasets values: %s. Extend the overlap_zone mapping deliberately rather than letting rows silently lose their stratum.",
+    nrow(unmapped_zone),
+    paste(unique(unmapped_zone$datasets), collapse = "; ")
+  ), call. = FALSE)
+}
+
 # Join Euler demographics: years_since_enum is our best proxy for record age
+# Drop blank-keyed rows (ENTHealth-only listings without an NPI): they can
+# never match a call and would multiply any blank-keyed call row.
+euler <- euler |> filter(!is.na(npi) & nzchar(trimws(npi)))
 listing_tbl <- calls |>
-  left_join(
+  mysterycall::mysterycall_safe_left_join(
     euler |> select(npi, zone, years_since_enum, bog_region,
                     billed_any_part_b, credential_class),
     by = "npi"
@@ -124,6 +139,22 @@ population_tbl <- tibble::tibble(
                    "Triple match"),
   population_n = c(2756L, 6748L, 711L, 4573L)
 )
+
+# The population counts above are hardcoded from the Euler zone file. Fail
+# loud if the file ever regenerates with different counts - silently stale
+# population denominators would corrupt every weighted figure.
+euler_zone_counts <- euler |> count(zone)
+expected_zones <- c("1_nppes_only" = 2756L, "2_nppes_board" = 6748L,
+                    "3_nppes_ent" = 711L, "8_triple_match" = 4573L)
+for (z in names(expected_zones)) {
+  actual <- euler_zone_counts$n[euler_zone_counts$zone == z]
+  if (length(actual) == 0 || actual != expected_zones[[z]]) {
+    stop(sprintf(
+      "Euler zone '%s' count is %s but population_tbl hardcodes %d. Update population_tbl and the sampling_weight numerators deliberately.",
+      z, ifelse(length(actual) == 0, "missing", as.character(actual)), expected_zones[[z]]
+    ), call. = FALSE)
+  }
+}
 
 # =============================================================================
 # 4. GENERATE ALL SEVEN FIGURES

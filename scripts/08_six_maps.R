@@ -168,7 +168,7 @@ audit_tbl <- calls |>
   left_join(state_centroids_tbl, by = c("state" = "STUSPS")) |>
   # Join Euler flags for database-level incorrect-listing indicators
   left_join(
-    euler |> select(npi, in_board, in_ent),
+    euler |> filter(!is.na(npi) & nzchar(trimws(npi))) |> select(npi, in_board, in_ent),
     by = "npi"
   ) |>
   mutate(

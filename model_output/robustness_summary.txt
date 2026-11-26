@@ -1,53 +1,53 @@
 ################ 1. SUBSPECIALTY PAIRWISE CONTRASTS ################
 
 --- ACCESS: odds ratios between subspecialties (Tukey-adjusted) ---
- contrast                                odds.ratio        SE  df null z.ratio p.value
- (Otology/neurotology) / Pediatrics        0.241730 0.1280012 Inf    1  -2.682  0.1281
- General / Pediatrics                      0.425342 0.1635394 Inf    1  -2.223  0.3375
- (Otology/neurotology) / Rhinology         0.251014 0.1684381 Inf    1  -2.060  0.4413
- Facial Plastics / Pediatrics              0.425393 0.1887047 Inf    1  -1.927  0.5322
- Head and Neck Cancer / Pediatrics         0.347737 0.1921261 Inf    1  -1.912  0.5426
- (Otology/neurotology) / Sleep             0.325426 0.2264562 Inf    1  -1.613  0.7425
- Laryngology / (Otology/neurotology)       3.231683 2.4089758 Inf    1   1.574  0.7663
- Head and Neck Cancer / Rhinology          0.361092 0.2479372 Inf    1  -1.484  0.8166
- General / Rhinology                       0.441677 0.2476198 Inf    1  -1.458  0.8299
- General / (Otology/neurotology)           1.759573 0.7064066 Inf    1   1.408  0.8542
- Facial Plastics / Rhinology               0.441730 0.2670763 Inf    1  -1.351  0.8789
- Facial Plastics / (Otology/neurotology)   1.759784 0.8005066 Inf    1   1.242  0.9192
+ contrast                                odds.ratio     SE  df null z.ratio p.value
+ (Otology/neurotology) / Pediatrics           0.242 0.1280 Inf    1  -2.682  0.1281
+ General / Pediatrics                         0.425 0.1635 Inf    1  -2.223  0.3375
+ (Otology/neurotology) / Rhinology            0.251 0.1684 Inf    1  -2.060  0.4413
+ Facial Plastics / Pediatrics                 0.425 0.1887 Inf    1  -1.927  0.5322
+ Head and Neck Cancer / Pediatrics            0.348 0.1921 Inf    1  -1.912  0.5426
+ (Otology/neurotology) / Sleep                0.325 0.2265 Inf    1  -1.613  0.7425
+ Laryngology / (Otology/neurotology)          3.232 2.4090 Inf    1   1.574  0.7663
+ Head and Neck Cancer / Rhinology             0.361 0.2479 Inf    1  -1.484  0.8166
+ General / Rhinology                          0.442 0.2476 Inf    1  -1.458  0.8299
+ General / (Otology/neurotology)              1.760 0.7064 Inf    1   1.408  0.8542
+ Facial Plastics / Rhinology                  0.442 0.2671 Inf    1  -1.351  0.8789
+ Facial Plastics / (Otology/neurotology)      1.760 0.8005 Inf    1   1.242  0.9192
 
 Results are averaged over the levels of: rural, caller_f 
 P value adjustment: tukey method for comparing a family of 8 estimates 
 Tests are performed on the log odds ratio scale 
 
 --- TIMELINESS: wait-day rate ratios between subspecialties (Tukey) ---
- contrast                                ratio        SE  df null z.ratio p.value
- General / Pediatrics                0.6155189 0.1201568 Inf    1  -2.486  0.2013
- General / Laryngology               0.4473163 0.1548530 Inf    1  -2.324  0.2804
- Facial Plastics / Laryngology       0.4750422 0.1754143 Inf    1  -2.016  0.4710
- Facial Plastics / Pediatrics        0.6536706 0.1536471 Inf    1  -1.809  0.6141
- General / Rhinology                 0.6424632 0.1779198 Inf    1  -1.598  0.7520
- Head and Neck Cancer / Laryngology  0.5776615 0.2417054 Inf    1  -1.312  0.8949
- Laryngology / Sleep                 1.8416310 0.8581438 Inf    1   1.310  0.8952
- Facial Plastics / Rhinology         0.6822850 0.2091935 Inf    1  -1.247  0.9178
- Laryngology / (Otology/neurotology) 1.7015846 0.7654238 Inf    1   1.182  0.9373
- General / Head and Neck Cancer      0.7743571 0.2203698 Inf    1  -0.899  0.9863
- General / (Otology/neurotology)     0.7611465 0.2352891 Inf    1  -0.883  0.9876
- Laryngology / Rhinology             1.4362617 0.6001271 Inf    1   0.866  0.9889
+ contrast                             ratio     SE  df null z.ratio p.value
+ General / Pediatrics                0.6155 0.1202 Inf    1  -2.486  0.2013
+ General / Laryngology               0.4473 0.1549 Inf    1  -2.324  0.2804
+ Facial Plastics / Laryngology       0.4750 0.1754 Inf    1  -2.016  0.4710
+ Facial Plastics / Pediatrics        0.6537 0.1536 Inf    1  -1.809  0.6141
+ General / Rhinology                 0.6425 0.1779 Inf    1  -1.598  0.7520
+ Head and Neck Cancer / Laryngology  0.5777 0.2417 Inf    1  -1.312  0.8949
+ Laryngology / Sleep                 1.8416 0.8581 Inf    1   1.310  0.8952
+ Facial Plastics / Rhinology         0.6823 0.2092 Inf    1  -1.247  0.9178
+ Laryngology / (Otology/neurotology) 1.7016 0.7654 Inf    1   1.182  0.9373
+ General / Head and Neck Cancer      0.7744 0.2204 Inf    1  -0.899  0.9863
+ General / (Otology/neurotology)     0.7611 0.2353 Inf    1  -0.883  0.9876
+ Laryngology / Rhinology             1.4363 0.6001 Inf    1   0.867  0.9889
 
 Results are averaged over the levels of: rural, caller_f 
 P value adjustment: tukey method for comparing a family of 8 estimates 
 Tests are performed on the log scale 
 
 --- estimated marginal wait days per subspecialty ---
- ent_type             response        SE  df asymp.LCL asymp.UCL
- General              17.44397  1.792412 Inf  14.26206  21.33578
- Facial Plastics      18.52520  3.386236 Inf  12.94706  26.50664
- Head and Neck Cancer 22.52704  6.177775 Inf  13.16049  38.55992
- Laryngology          38.99695 13.538663 Inf  19.74772  77.00950
- Otology/neurotology  22.91802  7.127101 Inf  12.45858  42.15856
- Pediatrics           28.34027  5.541906 Inf  19.31757  41.57721
- Rhinology            27.15170  7.602510 Inf  15.68410  47.00397
- Sleep                21.17522  7.002435 Inf  11.07501  40.48665
+ ent_type             response     SE  df asymp.LCL asymp.UCL
+ General                 17.44  1.792 Inf     14.26     21.34
+ Facial Plastics         18.53  3.386 Inf     12.95     26.51
+ Head and Neck Cancer    22.53  6.178 Inf     13.16     38.56
+ Laryngology             39.00 13.539 Inf     19.75     77.01
+ Otology/neurotology     22.92  7.127 Inf     12.46     42.16
+ Pediatrics              28.34  5.542 Inf     19.32     41.58
+ Rhinology               27.15  7.603 Inf     15.68     47.00
+ Sleep                   21.18  7.002 Inf     11.07     40.49
 
 Results are averaged over the levels of: rural, caller_f 
 Confidence level used: 0.95 
