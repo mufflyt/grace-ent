@@ -39,7 +39,7 @@ jobs:
           # the GitHub API (api.github.com), which is rate-limited on shared CI
           # runners. With mysterynpi already installed at a satisfying version,
           # the dependency check is skipped and no API call is made.
-          Rscript -e 'remotes::install_url("https://github.com/mufflyt/mysterynpi/archive/refs/heads/main.tar.gz", upgrade = "never")'
+          Rscript -e 'remotes::install_url("https://github.com/mufflyt/mysterynpi/archive/refs/heads/master.tar.gz", upgrade = "never")'
           Rscript -e 'remotes::install_url("https://github.com/mufflyt/mysteryroster/archive/refs/heads/main.tar.gz", upgrade = "never")'
           Rscript -e 'cat("mysteryroster", as.character(packageVersion("mysteryroster")), "\n")'
 
