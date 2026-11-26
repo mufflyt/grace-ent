@@ -8,7 +8,7 @@
 # Output: model_output/prose_mysterycall.md
 # =============================================================================
 
-suppressMessages(devtools::load_all("~/mysterycall", quiet = TRUE))
+suppressMessages(library(mysterycall))
 suppressPackageStartupMessages({library(dplyr)})
 options(stringsAsFactors = FALSE, width = 100)
 outdir <- "model_output"; dir.create(outdir, showWarnings = FALSE)

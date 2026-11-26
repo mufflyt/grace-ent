@@ -126,3 +126,57 @@ test_that("latest committed call-log intermediate has the columns 05 requires", 
                 info = paste("latest intermediate missing column:", col))
   }
 })
+
+test_that("no script depends on a machine-specific load_all path", {
+  # strobe_flow.R was fixed earlier for exactly this; six more scripts still
+  # loaded dev checkouts via devtools::load_all("~/...") which fails on any
+  # other machine and silently uses a different package version than installed.
+  for (f in list.files(test_path("../../scripts"), pattern = "\\.R$", full.names = TRUE)) {
+    src <- paste(readLines(f, warn = FALSE), collapse = "\n")
+    expect_false(grepl('load_all\\("~/', src),
+                 info = paste(basename(f), "must not load_all a home-dir checkout"))
+  }
+})
+
+test_that("cluster construction is prefixed in every model script", {
+  for (f in c("sensitivity_analyses.R", "reanalyze_ruca_binary.R")) {
+    src <- paste(readLines(test_path(paste0("../../scripts/", f)), warn = FALSE), collapse = "\n")
+    expect_true(grepl("cbsa_", src), info = paste(f, "must prefix cbsa cluster ids"))
+    expect_true(grepl("cty_", src), info = paste(f, "must prefix county cluster ids"))
+  }
+})
+
+test_that("reanalyze cluster fallback handles NA codes (nzchar(NA) is TRUE)", {
+  src <- paste(readLines(test_path("../../scripts/reanalyze_ruca_binary.R"), warn = FALSE), collapse = "\n")
+  expect_true(grepl("is.na\\(d\\$cbsa_code\\)", src),
+              info = "nzchar(NA)==TRUE means !nzchar() never falls back for NA codes")
+})
+
+test_that("two-sample power formula uses the correct noncentrality", {
+  # For groups r and u with effective n = 1/(1/r + 1/u), the z-statistic's
+  # noncentrality under a true difference delta/sd is delta*sqrt(ne)/sd.
+  # The old code used sqrt(ne/2) - understating power and inflating the MDE
+  # by sqrt(2). Pin the correct formula on a worked example.
+  r <- 200; u <- 226; ne <- 1/(1/r + 1/u)
+  sdv <- 30; delta <- 8; za <- qnorm(.975)
+  correct_power <- pnorm(sqrt(ne) * (delta/sdv) - za)
+  buggy_power   <- pnorm(sqrt(ne/2) * (delta/sdv) - za)
+  expect_gt(correct_power, buggy_power) # the bug understated power
+  # The correction is material: the buggy formula loses ~12 points here.
+  expect_lt(buggy_power, correct_power - 0.05)
+})
+
+test_that("reanalyze_ruca_binary.R source uses the corrected power formulas", {
+  src <- paste(readLines(test_path("../../scripts/reanalyze_ruca_binary.R"), warn = FALSE), collapse = "\n")
+  expect_true(grepl("sqrt\\(ne\\)\\*d0", src))
+  expect_false(grepl("sqrt\\(ne/2\\)", src), info = "sqrt(ne/2) understates power by sqrt(2)")
+  expect_true(grepl("\\(za\\+zb\\)/sqrt\\(ne\\)", src))
+})
+
+test_that("analytic-sample filters across scripts guard NA complete", {
+  for (f in c("sensitivity_analyses.R", "reanalyze_ruca_binary.R", "table1_by_subspecialty.R")) {
+    src <- paste(readLines(test_path(paste0("../../scripts/", f)), warn = FALSE), collapse = "\n")
+    expect_true(grepl("!is.na\\(d\\$complete\\)", src),
+                info = paste(f, "must guard NA complete in the sample filter"))
+  }
+})

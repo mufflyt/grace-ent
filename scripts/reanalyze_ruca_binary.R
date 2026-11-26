@@ -12,7 +12,7 @@ suppressPackageStartupMessages({library(glmmTMB); library(dplyr)})
 options(stringsAsFactors = FALSE, width = 105)
 num <- function(x) suppressWarnings(as.numeric(x))
 d <- read.csv("data/processed/ent_phase2_enriched.csv", colClasses = "character")
-d <- d[d$complete == "Complete" & d$ent_type != "" & !is.na(d$ent_type), ]
+d <- d[!is.na(d$complete) & d$complete == "Complete" & !is.na(d$ent_type) & d$ent_type != "", ]
 d$offered   <- ifelse(d$appointment_offered == "TRUE", 1L, 0L)
 d$wait_days <- num(d$wait_days_business)
 # NEW binary rurality: urban = RUCA 1-3, rural = RUCA 4-10 (Suburban + Rural)
@@ -24,8 +24,13 @@ for (v in c("ent_per_100k","medicaid_fee_index","svi_overall","dual_pct"))
 d$ent_type <- relevel(factor(d$ent_type), ref = "General")
 ct <- table(d$caller); d$caller_f <- relevel(factor(ifelse(d$caller %in% names(ct)[ct<15],"Other",d$caller)),
                                               ref = names(sort(ct,decreasing=TRUE))[1])
-clust <- d$cbsa_code; clust[!nzchar(clust)] <- d$county_fips[!nzchar(clust)]
-clust[!nzchar(clust)] <- paste0("solo_", which(!nzchar(clust))); d$cluster <- clust
+# Prefix the source coding system (CBSA codes and county FIPS are different
+# 5-digit codebooks) and handle NA explicitly - nzchar(NA) is TRUE, so the
+# old !nzchar() fallback never fired for NA codes.
+clust <- ifelse(is.na(d$cbsa_code) | !nzchar(d$cbsa_code), "", paste0("cbsa_", d$cbsa_code))
+nf <- is.na(d$county_fips) | !nzchar(d$county_fips)
+clust[clust == "" & !nf] <- paste0("cty_", d$county_fips[clust == "" & !nf])
+clust[clust == ""] <- paste0("solo_", which(clust == "")); d$cluster <- clust
 
 sink("model_output/reanalysis_ruca_binary.txt")
 
@@ -40,10 +45,10 @@ r <- sum(wait$rural2=="Rural"); u <- sum(wait$rural2=="Urban"); tot <- nrow(wait
 cat(sprintf("Analyzable wait-time n = %d (rural %d / urban %d = %.1f%% rural)\n", tot, r, u, 100*r/tot))
 cat(sprintf("Realized wait SD = %.0f days\n", sdv))
 za<-qnorm(.975); zb<-qnorm(.90); ne <- 1/(1/r+1/u)
-mde_d <- (za+zb)*sqrt(2/ne); mde_days <- mde_d*sdv
+mde_d <- (za+zb)/sqrt(ne); mde_days <- mde_d*sdv
 cat(sprintf("Detectable rural-urban gap @ 90%% power (SD=%.0f): ~%.0f days  [plan target: 6 days]\n", sdv, mde_days))
 # power to detect the plan's 8-day gap and 6-day gap at realized n/SD
-pw <- function(delta){ d0<-delta/sdv; pnorm( sqrt(ne/2)*d0 - za ) }
+pw <- function(delta){ d0<-delta/sdv; pnorm( sqrt(ne)*d0 - za ) }
 cat(sprintf("Power to detect the plan's 8-day gap = %.0f%%;  6-day gap = %.0f%%  [plan: >99%%, 90%%]\n",
             100*pw(8), 100*pw(6)))
 

@@ -12,7 +12,7 @@
 # Output: model_output/supp/
 # =============================================================================
 
-suppressMessages(devtools::load_all("~/mysterymaps", quiet = TRUE))
+suppressMessages(library(mysterymaps))
 suppressPackageStartupMessages({library(dplyr)})
 options(stringsAsFactors = FALSE)
 supp <- "model_output/supp"; dir.create(supp, showWarnings = FALSE, recursive = TRUE)
