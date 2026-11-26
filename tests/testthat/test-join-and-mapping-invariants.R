@@ -45,7 +45,7 @@ test_that("blank-npi Euler rows cannot multiply call records", {
   # The real Euler file hazard: 247 rows share npi_chr == "" (ENTHealth-only).
   # Replicate the join with an adversarial blank-keyed call row.
   euler <- data.frame(npi = c("111", "222", "", ""), zone = 1:4)
-  euler <- euler |> dplyr::filter(!is.na(npi) & nzchar(stringr::str_trim(npi)))
+  euler <- euler |> dplyr::filter(!is.na(npi) & nzchar(trimws(npi)))
   calls <- data.frame(npi = c("111", ""))  # one legit, one adversarial blank
   joined <- dplyr::left_join(calls, euler, by = "npi")
   # The blank call row must NOT multiply against the 247 blank euler rows.
