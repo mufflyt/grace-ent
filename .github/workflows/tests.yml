@@ -33,8 +33,13 @@ jobs:
       - name: Install test dependencies
         run: |
           Rscript -e 'pk <- c("testthat", "dplyr", "readr", "here", "remotes"); miss <- pk[!vapply(pk, requireNamespace, logical(1), quietly = TRUE)]; if (length(miss)) install.packages(miss)'
-          # mysteryroster carries the registry-validity analysis that tests/testthat/test-mysteryroster-parity.R checks
-          # tarball URL, not install_github: no GitHub API call, so no token or rate limit
+          # mysteryroster carries the registry-validity analysis that tests/testthat/test-mysteryroster-parity.R checks.
+          # Install mysterynpi from its tarball FIRST: mysteryroster's DESCRIPTION
+          # has `Remotes: mufflyt/mysterynpi`, and remotes resolves that through
+          # the GitHub API (api.github.com), which is rate-limited on shared CI
+          # runners. With mysterynpi already installed at a satisfying version,
+          # the dependency check is skipped and no API call is made.
+          Rscript -e 'remotes::install_url("https://github.com/mufflyt/mysterynpi/archive/refs/heads/main.tar.gz", upgrade = "never")'
           Rscript -e 'remotes::install_url("https://github.com/mufflyt/mysteryroster/archive/refs/heads/main.tar.gz", upgrade = "never")'
           Rscript -e 'cat("mysteryroster", as.character(packageVersion("mysteryroster")), "\n")'
 
