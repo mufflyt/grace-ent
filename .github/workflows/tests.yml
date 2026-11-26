@@ -32,10 +32,15 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          Rscript -e 'pk <- c("testthat", "dplyr", "readr", "here", "remotes"); miss <- pk[!vapply(pk, requireNamespace, logical(1), quietly = TRUE)]; if (length(miss)) install.packages(miss)'
-          # mysteryroster carries the registry-validity analysis that tests/testthat/test-mysteryroster-parity.R checks
-          # tarball URL, not install_github: no GitHub API call, so no token or rate limit
-          Rscript -e 'remotes::install_url("https://github.com/mufflyt/mysteryroster/archive/refs/heads/main.tar.gz", upgrade = "never")'
+          Rscript -e 'pk <- c("testthat", "dplyr", "readr", "here", "remotes", "checkmate", "survey", "tibble", "stringi"); miss <- pk[!vapply(pk, requireNamespace, logical(1), quietly = TRUE)]; if (length(miss)) install.packages(miss)'
+          # Install the mystery* packages from tarballs with R CMD INSTALL (via
+          # install.packages on the archive), NOT remotes::install_url:
+          # install_url processes DESCRIPTION `Remotes:` fields through the
+          # GitHub API (api.github.com), which is rate-limited on shared CI
+          # runners. R CMD INSTALL ignores Remotes entirely, so no API call is
+          # made and there is no token or rate-limit dependency.
+          Rscript -e 'download.file("https://github.com/mufflyt/mysterynpi/archive/refs/heads/master.tar.gz", "mysterynpi.tar.gz"); install.packages("mysterynpi.tar.gz", repos = NULL, type = "source")'
+          Rscript -e 'download.file("https://github.com/mufflyt/mysteryroster/archive/refs/heads/main.tar.gz", "mysteryroster.tar.gz"); install.packages("mysteryroster.tar.gz", repos = NULL, type = "source")'
           Rscript -e 'cat("mysteryroster", as.character(packageVersion("mysteryroster")), "\n")'
 
       - name: Run test suite

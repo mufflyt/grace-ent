@@ -89,3 +89,40 @@ test_that("missingness_access.R source uses the guarded index", {
   comp_line <- grep("comp <- d\\[", src, value = TRUE)
   expect_true(any(grepl("!is.na\\(d\\$ent_type\\)", comp_line)))
 })
+
+test_that("manuscript_outputs.R guards NA in its analytic-sample index", {
+  src <- readLines(test_path("../../scripts/manuscript_outputs.R"), warn = FALSE)
+  expect_true(any(grepl("!is.na\\(d\\$ent_type\\)", src)))
+  expect_true(any(grepl("!is.na\\(d\\$complete\\)", src)))
+})
+
+test_that("NA appointment_offered cannot poison Table 1 or STROBE counts", {
+  # Replicates the fixed construction: one NA must not reach sum()/mean().
+  ao <- c("TRUE", "FALSE", NA)
+  offered <- !is.na(ao) & ao == "TRUE"
+  expect_equal(sum(offered), 1)
+  expect_equal(mean(offered), 1/3)
+  # The fragile pattern this replaces:
+  fragile <- ao == "TRUE"
+  expect_true(is.na(sum(fragile))) # demonstrates the poisoning hazard
+})
+
+test_that("manuscript_outputs.R source uses the NA-safe offered construction", {
+  src <- readLines(test_path("../../scripts/manuscript_outputs.R"), warn = FALSE)
+  expect_true(any(grepl("!is.na\\(comp\\$appointment_offered\\)", src)))
+})
+
+test_that("latest committed call-log intermediate has the columns 05 requires", {
+  # 05_database_accuracy_paper.R filters on ruca_binary; the July intermediates
+  # predated that column and broke the script. Pin the drift: the newest
+  # ent_phase2_all file must carry every column 05 touches.
+  files <- list.files(test_path("../../data/processed"),
+                      pattern = "^ent_phase2_all_.*\\.csv$", full.names = TRUE)
+  latest <- sort(files)[length(files)]
+  hdr <- names(read.csv(latest, nrows = 1, check.names = FALSE))
+  for (col in c("ruca_binary", "datasets", "appointment_offered",
+                "wait_days_business")) {
+    expect_true(col %in% hdr,
+                info = paste("latest intermediate missing column:", col))
+  }
+})

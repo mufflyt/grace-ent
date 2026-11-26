@@ -18,8 +18,12 @@ options(stringsAsFactors = FALSE)
 outdir <- "model_output"; dir.create(outdir, showWarnings = FALSE)
 num <- function(x) suppressWarnings(as.numeric(x))
 d <- read.csv("data/processed/ent_phase2_enriched.csv", colClasses = "character")
-comp <- d[d$complete == "Complete" & d$ent_type != "", ]
-comp$offered <- comp$appointment_offered == "TRUE"
+# Explicit NA guards: NA in a logical index injects phantom all-NA rows.
+comp <- d[!is.na(d$complete) & d$complete == "Complete" &
+            !is.na(d$ent_type) & d$ent_type != "", ]
+# NA appointment_offered must not become NA in offered: sum()/mean() over the
+# column feed Table 1 and the STROBE flow, and one NA would poison every count.
+comp$offered <- !is.na(comp$appointment_offered) & comp$appointment_offered == "TRUE"
 comp$w <- num(comp$wait_days_business)
 
 # ---- 1. TABLE 1 -------------------------------------------------------------
@@ -54,7 +58,7 @@ write.csv(t1, file.path(outdir, "table1_characteristics.csv"), row.names = FALSE
 cat("Wrote table1_characteristics.csv (", nrow(t1), "rows)\n")
 
 # ---- 2. STROBE FLOW ---------------------------------------------------------
-n_total <- nrow(d); n_cplt <- sum(d$complete=="Complete")
+n_total <- nrow(d); n_cplt <- sum(!is.na(d$complete) & d$complete=="Complete")
 n_analytic <- nrow(comp); n_off <- sum(comp$offered); n_wait <- sum(!is.na(comp$w))
 dot <- sprintf('digraph strobe {
   rankdir=TB; node [shape=box, style=rounded, fontname="Helvetica"];
