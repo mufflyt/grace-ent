@@ -12,7 +12,7 @@
 # Output: model_output/supp/*.png
 # =============================================================================
 
-suppressMessages(devtools::load_all("~/mysterycall", quiet = TRUE))
+suppressMessages(library(mysterycall))
 suppressPackageStartupMessages({library(ggplot2)})
 options(stringsAsFactors = FALSE)
 supp <- "model_output/supp"; dir.create(supp, showWarnings = FALSE, recursive = TRUE)

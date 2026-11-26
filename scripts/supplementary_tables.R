@@ -13,7 +13,7 @@
 #   +   Bundled supplemental tables (.docx if pandoc) mysterycall_supplemental_tables
 # =============================================================================
 
-suppressMessages(devtools::load_all("~/mysterycall", quiet = TRUE))
+suppressMessages(library(mysterycall))
 options(stringsAsFactors = FALSE, width = 105)
 supp <- "model_output/supp"; dir.create(supp, showWarnings = FALSE, recursive = TRUE)
 num <- function(x) suppressWarnings(as.numeric(x))

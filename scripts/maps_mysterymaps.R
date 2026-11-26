@@ -11,7 +11,7 @@
 # Output: model_output/supp/
 # =============================================================================
 
-suppressMessages(devtools::load_all("~/mysterymaps", quiet = TRUE))
+suppressMessages(library(mysterymaps))
 options(stringsAsFactors = FALSE)
 supp <- "model_output/supp"; dir.create(supp, showWarnings = FALSE, recursive = TRUE)
 num <- function(x) suppressWarnings(as.numeric(x))

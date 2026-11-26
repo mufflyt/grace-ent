@@ -19,13 +19,13 @@
 # Output: model_output/supp/S8_sensitivity_analyses.csv  (+ console summary)
 # =============================================================================
 
-suppressMessages(devtools::load_all("~/mysterycall", quiet = TRUE))
+suppressMessages(library(mysterycall))
 num <- function(x) suppressWarnings(as.numeric(x))
 OUT <- "model_output"; SUPP <- file.path(OUT, "supp")
 dir.create(SUPP, showWarnings = FALSE, recursive = TRUE)
 
 d <- read.csv("data/processed/ent_phase2_enriched.csv", colClasses = "character")
-d <- d[d$complete == "Complete" & d$ent_type != "" & !is.na(d$ent_type), ]
+d <- d[!is.na(d$complete) & d$complete == "Complete" & !is.na(d$ent_type) & d$ent_type != "", ]
 d$offered   <- ifelse(d$appointment_offered == "TRUE", 1L,
                ifelse(d$appointment_offered == "FALSE", 0L, NA_integer_))
 d$wait_days <- num(d$wait_days_business)
@@ -39,9 +39,13 @@ d$ent_type <- relevel(factor(d$ent_type), ref = "General")
 ct <- table(d$caller); small <- names(ct)[ct < 15]
 d$caller_f <- ifelse(d$caller %in% small, "Other", d$caller)
 d$caller_f <- relevel(factor(d$caller_f), ref = names(sort(ct, decreasing = TRUE))[1])
-clust <- d$cbsa_code
-clust[is.na(clust) | clust == ""] <- d$county_fips[is.na(clust) | clust == ""]
-clust[is.na(clust) | clust == ""] <- paste0("solo_", which(is.na(clust) | clust == ""))
+# Prefix the source coding system: CBSA codes and county FIPS are both 5-digit
+# numerics from DIFFERENT codebooks - an unprefixed merge could silently
+# collapse a metro cluster and a rural county into one random-effect group.
+clust <- ifelse(is.na(d$cbsa_code) | !nzchar(d$cbsa_code), "", paste0("cbsa_", d$cbsa_code))
+nf <- is.na(d$county_fips) | !nzchar(d$county_fips)
+clust[clust == "" & !nf] <- paste0("cty_", d$county_fips[clust == "" & !nf])
+clust[clust == ""] <- paste0("solo_", which(clust == ""))
 d$cluster <- clust
 
 rc <- num(d$ruca_code)

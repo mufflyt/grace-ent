@@ -13,7 +13,7 @@ dir.create("manuscript", showWarnings = FALSE)
 num <- function(x) suppressWarnings(as.numeric(x))
 
 d <- read.csv("data/processed/ent_phase2_enriched.csv", colClasses = "character")
-d <- d[d$complete == "Complete" & d$ent_type != "" & !is.na(d$ent_type), ]
+d <- d[!is.na(d$complete) & d$complete == "Complete" & !is.na(d$ent_type) & d$ent_type != "", ]
 
 # column order: General (reference) first, then remaining by frequency
 lv <- c("General", setdiff(names(sort(table(d$ent_type), decreasing = TRUE)), "General"))
